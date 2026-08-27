@@ -9,9 +9,7 @@ import {
   TrendingUp,
   Users,
   Car,
-  ShieldCheck,
-  LogOut,
-  ChevronRight
+  X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
@@ -28,9 +26,16 @@ export type NavTab =
 interface SidebarProps {
   activeTab: NavTab;
   onTabChange: (tab: NavTab) => void;
+  isOpenMobile?: boolean;
+  onCloseMobile?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  activeTab,
+  onTabChange,
+  isOpenMobile = false,
+  onCloseMobile
+}) => {
   const { user } = useAuth();
 
   const sections: {
@@ -68,20 +73,39 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
     },
   ];
 
-  return (
-    <aside className="w-64 min-w-[16rem] h-screen sticky top-0 flex flex-col bg-[#0D1322] border-r border-[#1F2E4D] z-40 select-none">
+  const handleSelect = (id: NavTab) => {
+    onTabChange(id);
+    if (onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
+  const sidebarContent = (
+    <div className="flex flex-col h-full bg-[#0D1322] border-r border-[#1F2E4D] select-none">
       {/* Brand Header */}
-      <div className="h-18 px-5 flex items-center gap-3 border-b border-[#1F2E4D]">
-        <div className="w-10 h-10 rounded-xl bg-[#162036] border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
-          <Car className="w-5 h-5 text-amber-400" />
-        </div>
-        <div className="flex flex-col">
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-extrabold tracking-tight text-slate-100">CROWN CHAUFFEURS</span>
-            <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono text-[9px] font-bold">AI</span>
+      <div className="h-16 md:h-18 px-5 flex items-center justify-between border-b border-[#1F2E4D]">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-[#162036] border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-md shadow-amber-500/10">
+            <Car className="w-5 h-5 text-amber-400" />
           </div>
-          <span className="text-[11px] text-slate-400">Chauffeur Intelligence</span>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5">
+              <span className="text-sm font-extrabold tracking-tight text-slate-100">CROWN CHAUFFEURS</span>
+              <span className="px-1 py-0.2 rounded bg-amber-500/20 text-amber-400 font-mono text-[9px] font-bold">AI</span>
+            </div>
+            <span className="text-[11px] text-slate-400">Chauffeur Intelligence</span>
+          </div>
         </div>
+
+        {/* Mobile Close Button */}
+        {onCloseMobile && (
+          <button
+            onClick={onCloseMobile}
+            className="lg:hidden p-2 rounded-xl text-slate-400 hover:text-white hover:bg-[#162036] transition-colors"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {/* Navigation Groups */}
@@ -97,7 +121,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
               return (
                 <button
                   key={item.id}
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => handleSelect(item.id)}
                   className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-150 ${
                     isActive
                       ? 'bg-amber-500/15 text-amber-300 border border-amber-500/40 shadow-sm'
@@ -138,6 +162,30 @@ export const Sidebar: React.FC<SidebarProps> = ({ activeTab, onTabChange }) => {
           </span>
         </div>
       </div>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Desktop Sticky Sidebar */}
+      <aside className="hidden lg:flex w-64 min-w-[16rem] h-screen sticky top-0 flex-col z-40">
+        {sidebarContent}
+      </aside>
+
+      {/* Mobile Drawer Overlay */}
+      {isOpenMobile && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          {/* Backdrop blur */}
+          <div
+            onClick={onCloseMobile}
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm transition-opacity"
+          />
+          {/* Drawer container */}
+          <div className="relative w-72 max-w-[85vw] h-full shadow-2xl z-10 animate-in slide-in-from-left duration-200">
+            {sidebarContent}
+          </div>
+        </div>
+      )}
+    </>
   );
 };

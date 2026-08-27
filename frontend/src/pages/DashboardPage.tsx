@@ -158,10 +158,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
 
         {/* Right CTA Button (Glowing Amber Pill) */}
-        <div className="relative z-10 shrink-0">
+        <div className="relative z-10 w-full md:w-auto shrink-0">
           <button
             onClick={() => onNavigate('operate')}
-            className="flex items-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 hover:scale-[1.02] transition-all"
+            className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 hover:scale-[1.02] transition-all"
           >
             <Clock className="w-4 h-4 text-slate-950" />
             <span>Review Pending Queue (2)</span>
@@ -233,12 +233,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       {/* 3. Dual 3D Interactive Showcase Panels */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: 3D Interactive Luxury Car Showcase (7 Cols) */}
-        <div className="lg:col-span-7 h-[440px]">
+        <div className="lg:col-span-7 h-[340px] sm:h-[380px] lg:h-[440px]">
           <LuxuryCarCanvas showControls={true} />
         </div>
 
         {/* Right: 3D Holographic Dispatch Radar & Airspace (5 Cols) */}
-        <div className="lg:col-span-5 h-[440px]">
+        <div className="lg:col-span-5 h-[340px] sm:h-[380px] lg:h-[440px]">
           <RadarGlobeCanvas activeFlightsCount={6} activeDriversCount={12} />
         </div>
       </div>
