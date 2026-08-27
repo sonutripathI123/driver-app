@@ -1,0 +1,82 @@
+version: '3.8'
+
+services:
+  # 1. PostgreSQL 16 Relational Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: chauffeur_postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chauffeur_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChauffeurDBSecret2026!}
+      POSTGRES_DB: ${POSTGRES_DB:-chauffeur_platform}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-chauffeur_admin} -d ${POSTGRES_DB:-chauffeur_platform}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 2. Redis In-Memory Cache & Job Queue Broker
+  redis:
+    image: redis:7-alpine
+    container_name: chauffeur_redis
+    restart: always
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # 3. Enterprise FastAPI Application Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: chauffeur_backend
+    restart: always
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      PROJECT_NAME: "Crown Chauffeurs Platform"
+      DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-chauffeur_admin}:${POSTGRES_PASSWORD:-ChauffeurDBSecret2026!}@postgres:5432/${POSTGRES_DB:-chauffeur_platform}
+      REDIS_URL: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08}
+      CORS_ORIGINS: ${CORS_ORIGINS:-["https://app.crownchauffeurs.com.au","http://localhost:3000"]}
+      DEFAULT_ADMIN_EMAIL: ${DEFAULT_ADMIN_EMAIL:-admin@chauffeurplatform.com}
+      DEFAULT_ADMIN_PASSWORD: ${DEFAULT_ADMIN_PASSWORD:-AdminSecurePassword123!}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      AEROAPI_KEY: ${AEROAPI_KEY}
+      GOOGLE_MAPS_API_KEY: ${GOOGLE_MAPS_API_KEY}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+
+  # 4. NGINX Reverse Proxy & SSL Gateway
+  nginx:
+    image: nginx:alpine
+    container_name: chauffeur_nginx
+    restart: always
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
