@@ -1,45 +1,24 @@
 # Production Dockerfile for Enterprise Chauffeur Backend
-FROM python:3.12-slim AS builder
+FROM python:3.12-slim
 
 WORKDIR /app
 
-# Install system build dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     curl \
     libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
+# Install Python packages
 COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --prefix=/install -r requirements.txt
-
-
-# Final Runtime Stage
-FROM python:3.12-slim AS runner
-
-WORKDIR /app
-
-# Install runtime libpq for PostgreSQL
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpq5 \
-    curl \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy installed packages from builder
-COPY --from=builder /install /usr/local
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
 COPY . .
 
-# Create non-root system user for security
-RUN useradd -m -u 1001 appuser && \
-    chown -R appuser:appuser /app
-
-USER appuser
-
 EXPOSE 8000
 
-# Production execution supporting Render dynamic $PORT
-CMD ["sh", "-c", "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]
+# Start command with auto-migrations and python module invocation
+CMD ["sh", "-c", "python -m alembic upgrade head && python -m uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000} --proxy-headers --forwarded-allow-ips '*'"]
