@@ -52,13 +52,22 @@ def do_run_migrations(connection: Connection) -> None:
         context.run_migrations()
 
 
+def get_async_database_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using AsyncEngine."""
+    db_url = get_async_database_url(settings.DATABASE_URL)
     configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = settings.DATABASE_URL
+    configuration["sqlalchemy.url"] = db_url
 
     connect_args = {}
-    if settings.DATABASE_URL.startswith("sqlite"):
+    if db_url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
 
     connectable = async_engine_from_config(

@@ -13,14 +13,24 @@ class Base(DeclarativeBase):
     pass
 
 
+def get_async_database_url(url: str) -> str:
+    """Normalizes database URLs to async dialects (asyncpg for PostgreSQL, aiosqlite for SQLite)."""
+    if url.startswith("postgres://"):
+        return url.replace("postgres://", "postgresql+asyncpg://", 1)
+    if url.startswith("postgresql://") and not url.startswith("postgresql+asyncpg://"):
+        return url.replace("postgresql://", "postgresql+asyncpg://", 1)
+    return url
+
+
 # Build database engine
-# For SQLite, ensure check_same_thread is False
+db_url = get_async_database_url(settings.DATABASE_URL)
+
 connect_args = {}
-if settings.DATABASE_URL.startswith("sqlite"):
+if db_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
 
 engine = create_async_engine(
-    settings.DATABASE_URL,
+    db_url,
     echo=False,
     future=True,
     connect_args=connect_args

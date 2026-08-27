@@ -15,7 +15,9 @@ import {
   VehicleUtilizationReport,
 } from '../types';
 
-const API_BASE = '/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+  ? `${import.meta.env.VITE_API_BASE_URL}/api/v1`
+  : '/api/v1';
 
 export const apiClient = axios.create({
   baseURL: API_BASE,
