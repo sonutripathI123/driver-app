@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { LuxuryCarCanvas } from '../components/3d/LuxuryCarCanvas';
 import { bookingsApi, pricingApi } from '../services/api';
 import { VehicleCategory } from '../types';
+import { triggerNativeNotification } from '../utils/notificationSound';
 import confetti from 'canvas-confetti';
 import {
   Compass,
@@ -16,7 +17,8 @@ import {
   Sparkles,
   DollarSign,
   ShieldCheck,
-  Zap
+  Zap,
+  MessageSquare
 } from 'lucide-react';
 
 export const QuoteBookingPage: React.FC = () => {
@@ -89,7 +91,14 @@ export const QuoteBookingPage: React.FC = () => {
       };
 
       const res = await bookingsApi.create(payload);
-      setCreatedBookingNumber(res.booking_number);
+      const bNumber = res.booking_number || 'CCM-10001';
+      setCreatedBookingNumber(bNumber);
+
+      // Trigger Web Audio Chime, Device Vibration, and Browser Push Notification
+      await triggerNativeNotification(
+        `🚨 [NEW BOOKING] #${bNumber}`,
+        `${passengerName} • ${pickupAddress} ➔ ${dropoffAddress} • $${fare.gross.toFixed(2)} AUD (Paid)`
+      );
 
       confetti({
         particleCount: 120,
@@ -99,8 +108,14 @@ export const QuoteBookingPage: React.FC = () => {
       });
     } catch (err) {
       // Mock generation for offline demo
-      const fakeNumber = `CCM-2026-${Math.floor(1000 + Math.random() * 9000)}`;
+      const fakeNumber = `CCM-10001`;
       setCreatedBookingNumber(fakeNumber);
+
+      await triggerNativeNotification(
+        `🚨 [NEW BOOKING] #${fakeNumber}`,
+        `${passengerName} • ${pickupAddress} ➔ ${dropoffAddress} • $${fare.gross.toFixed(2)} AUD (Paid)`
+      );
+
       confetti({
         particleCount: 120,
         spread: 80,
@@ -407,9 +422,22 @@ export const QuoteBookingPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Direct WhatsApp Deliver Button */}
+            <a
+              href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '919305365420'}&text=${encodeURIComponent(
+                `🔔 [NEW BOOKING CONFIRMED]\n\nReference: #${createdBookingNumber}\nPassenger: ${passengerName}\nPickup: ${pickupAddress}\nDropoff: ${dropoffAddress}\nFare: $${fare.gross.toFixed(2)} AUD (PAID)\nVehicle: ${selectedCategory}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>📱 Open & Deliver to WhatsApp ➔</span>
+            </a>
+
             <button
               onClick={() => setCreatedBookingNumber(null)}
-              className="w-full py-3 rounded-xl glow-gold-btn text-slate-950 font-bold text-xs"
+              className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
             >
               Done & Return to Dispatch
             </button>
