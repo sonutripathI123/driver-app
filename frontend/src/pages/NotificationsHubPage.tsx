@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { notificationsApi } from '../services/api';
 import { ManagerNotificationSettings, NotificationItem } from '../types';
+import { triggerNativeNotification, playNotificationChime } from '../utils/notificationSound';
 import {
   Bell,
   Smartphone,
@@ -14,11 +15,9 @@ import {
   Clock,
   Car,
   Plane,
-  DollarSign,
   Save,
-  ExternalLink,
-  Info,
-  Key
+  Volume2,
+  X
 } from 'lucide-react';
 
 export const NotificationsHubPage: React.FC = () => {
@@ -48,6 +47,11 @@ export const NotificationsHubPage: React.FC = () => {
     phone: string;
   } | null>(null);
   const [browserPushAllowed, setBrowserPushAllowed] = useState(false);
+  const [activePopupAlert, setActivePopupAlert] = useState<{
+    title: string;
+    body: string;
+    time: string;
+  } | null>(null);
 
   useEffect(() => {
     loadSettings();
@@ -68,10 +72,10 @@ export const NotificationsHubPage: React.FC = () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       setBrowserPushAllowed(true);
-      new Notification('Crown Chauffeurs Alerts Enabled', {
-        body: 'You will now receive instant push alerts on this device for all new bookings and driver milestones.',
-        icon: '/favicon.svg',
-      });
+      await triggerNativeNotification(
+        '🔔 Crown Chauffeurs Alerts Activated',
+        'You will now receive instant push alerts with sound & vibration on this device!'
+      );
     }
   };
 
@@ -93,7 +97,7 @@ export const NotificationsHubPage: React.FC = () => {
           channel: 'WHATSAPP',
           template_name: 'MANAGER_NEW_BOOKING',
           content: '🔔 [CHAUFFEUR OPS] New Booking #CCM-2026-0881\nPassenger: David Warner (+61 411 222 333)\nRoute: 120 Collins St, CBD -> Melbourne Airport T2\nFare: $440.00 AUD (Paid in full)',
-          status: 'SANDBOX_LOGGED',
+          status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
         },
         {
@@ -102,7 +106,7 @@ export const NotificationsHubPage: React.FC = () => {
           channel: 'WHATSAPP',
           template_name: 'MANAGER_DRIVER_ALLOCATED',
           content: '🔔 [CHAUFFEUR OPS] Driver Allocated — #CCM-2026-0881\nChauffeur: Daniel Ricciardo\nVehicle: Mercedes S-Class (Plate: VIP-01)\nDriver Payout: $160.00 AUD',
-          status: 'SANDBOX_LOGGED',
+          status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
         },
         {
@@ -111,7 +115,7 @@ export const NotificationsHubPage: React.FC = () => {
           channel: 'SMS',
           template_name: 'MANAGER_FLIGHT_DELAY',
           content: '🚨 [URGENT DISPATCH] Flight Delay: QF400 (+25m)\nNew Pickup: 03:25 PM @ Melbourne Airport Terminal 2\nDriver: Daniel Ricciardo',
-          status: 'SANDBOX_LOGGED',
+          status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
         },
       ]);
@@ -137,32 +141,40 @@ export const NotificationsHubPage: React.FC = () => {
     return phone.replace(/[^0-9]/g, '');
   };
 
-  const handleSendTestPing = async (channel: 'WHATSAPP' | 'SMS') => {
+  const handleSendTestPing = async (channel: 'WHATSAPP' | 'SMS' | 'PUSH') => {
     try {
       setTestSending(true);
       setTestResult(null);
 
-      const sampleMsg = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!\n\nAll real-time customer bookings, chauffeur allocations, and trip milestones will be dispatched here in real-time.`;
+      const title = '🚨 [CHAUFFEUR OPS] New Booking #CCM-2026-0881';
+      const sampleMsg = `David Warner • 120 Collins St ➔ Melbourne Airport T2 • Fare: $440.00 AUD (Paid in full)`;
+      const fullText = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!\n\nAll real-time customer bookings, chauffeur allocations, and trip milestones will be dispatched here in real-time.`;
+      
       const cleanPhone = getCleanPhone(settings.manager_phone);
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sampleMsg)}`;
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullText)}`;
 
-      // 1. Trigger local browser push notification on device
-      if (browserPushAllowed && 'Notification' in window) {
-        new Notification('🚨 [CHAUFFEUR OPS] Mobile Dispatch Alert', {
-          body: `Test alert dispatched to ${settings.manager_phone}! Tap to open dispatch board.`,
-          icon: '/favicon.svg',
+      // 1. Play chime sound & trigger native system notification
+      await triggerNativeNotification(title, sampleMsg);
+
+      // 2. Show floating in-app popup alert card
+      setActivePopupAlert({
+        title,
+        body: sampleMsg,
+        time: new Date().toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
+      });
+      setTimeout(() => setActivePopupAlert(null), 8000);
+
+      // 3. Call backend API
+      if (channel !== 'PUSH') {
+        await notificationsApi.sendTestPing({
+          channel,
+          target_phone: settings.manager_phone,
+          custom_message: fullText,
         });
       }
 
-      // 2. Call backend API
-      await notificationsApi.sendTestPing({
-        channel,
-        target_phone: settings.manager_phone,
-        custom_message: sampleMsg,
-      });
-
       setTestResult({
-        message: `Alert recorded in dispatch outbox for ${settings.manager_phone}!`,
+        message: `Alert dispatched with sound chime for ${settings.manager_phone}!`,
         whatsappUrl: waUrl,
         phone: settings.manager_phone,
       });
@@ -170,8 +182,8 @@ export const NotificationsHubPage: React.FC = () => {
       loadSettings();
     } catch (err) {
       const cleanPhone = getCleanPhone(settings.manager_phone);
-      const sampleMsg = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!`;
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sampleMsg)}`;
+      const fullText = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!`;
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullText)}`;
       setTestResult({
         message: `Alert generated for ${settings.manager_phone}!`,
         whatsappUrl: waUrl,
@@ -183,7 +195,35 @@ export const NotificationsHubPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full min-w-0">
+    <div className="space-y-6 w-full max-w-full min-w-0 relative">
+      {/* Floating In-App Dispatch Alert Toast with Sound */}
+      {activePopupAlert && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-full bg-[#121A2D] border-2 border-emerald-400 shadow-2xl shadow-emerald-500/30 rounded-2xl p-4 animate-in slide-in-from-top duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Bell className="w-5 h-5 animate-bounce" />
+              </div>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black text-emerald-300">{activePopupAlert.title}</span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed font-mono">
+                  {activePopupAlert.body}
+                </p>
+                <span className="text-[10px] text-slate-400 font-mono block">Received: {activePopupAlert.time}</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setActivePopupAlert(null)}
+              className="text-slate-400 hover:text-slate-200 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* 1. Header Banner */}
       <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
         <div className="space-y-2 max-w-2xl">
@@ -204,12 +244,21 @@ export const NotificationsHubPage: React.FC = () => {
         {/* Quick Test Ping Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
           <button
+            onClick={() => handleSendTestPing('PUSH')}
+            disabled={testSending}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#162036] hover:bg-[#1E2C4A] border border-cyan-500/40 text-cyan-300 font-bold text-xs shadow-md transition-all"
+          >
+            <Bell className="w-4 h-4 text-cyan-400" />
+            <span>Test Sound Pop-up</span>
+          </button>
+
+          <button
             onClick={() => handleSendTestPing('WHATSAPP')}
             disabled={testSending}
             className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/30 transition-all"
           >
             <MessageSquare className="w-4 h-4 text-slate-950" />
-            <span>{testSending ? 'Sending Ping...' : 'Send Test WhatsApp Ping'}</span>
+            <span>{testSending ? 'Sending Ping...' : 'Send WhatsApp Ping'}</span>
           </button>
         </div>
       </div>
@@ -318,8 +367,8 @@ export const NotificationsHubPage: React.FC = () => {
                       <Bell className="w-4 h-4" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-200 block">Browser Push on Phone</span>
-                      <span className="text-[10px] text-slate-400">Instant vibration & sound alert</span>
+                      <span className="text-xs font-bold text-slate-200 block">Browser Push & Sound Alert</span>
+                      <span className="text-[10px] text-slate-400">Chime chime + screen pop-up</span>
                     </div>
                   </div>
                   {browserPushAllowed ? (
