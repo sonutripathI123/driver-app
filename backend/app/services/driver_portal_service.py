@@ -286,6 +286,17 @@ class DriverPortalService:
             )
             booking.audit_logs.append(audit)
 
+            # Dispatch Real-Time Mobile Alert to Manager's Phone
+            drv_title = f"Chauffeur Update: {target_status.value} — #{booking.booking_number}"
+            drv_body = f"Chauffeur: {driver.full_name if driver else 'Chauffeur'}\nPassenger: {booking.passenger_name}\nLocation: {leg.pickup_address} -> {leg.dropoff_address}"
+            await NotificationService.dispatch_manager_mobile_alert(
+                db=db,
+                event_type=target_status.value,
+                title=drv_title,
+                message=drv_body,
+                booking_id=booking.id
+            )
+
         await db.commit()
         await db.refresh(leg)
         return leg

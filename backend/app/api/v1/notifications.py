@@ -5,17 +5,61 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.rbac import require_ops, require_staff
 from app.models.notification import Notification
-from app.schemas.notification import NotificationRead, SendDirectMessageRequest
+from app.schemas.notification import (
+    ManagerNotificationSettings,
+    NotificationRead,
+    SendDirectMessageRequest,
+    TestMobilePingRequest,
+)
 from app.services.notification_service import NotificationService
 
 router = APIRouter(prefix="/notifications", tags=["Notifications & Outbox"])
+
+
+@router.get("/manager-settings", response_model=ManagerNotificationSettings)
+async def get_manager_notification_settings():
+    """Get current Business Owner / Manager Mobile Alert Settings."""
+    return NotificationService.get_manager_settings()
+
+
+@router.post("/manager-settings", response_model=ManagerNotificationSettings)
+async def update_manager_notification_settings(
+    settings: ManagerNotificationSettings,
+    db: AsyncSession = Depends(get_db)
+):
+    """Update Manager Mobile Alert settings (Phone, WhatsApp, Telegram, Event Filters)."""
+    return NotificationService.update_manager_settings(settings)
+
+
+@router.post("/test-mobile-ping", response_model=NotificationRead)
+async def send_test_mobile_ping(
+    payload: TestMobilePingRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Sends an immediate test alert to the Manager's mobile phone to verify SMS/WhatsApp connectivity.
+    """
+    settings = NotificationService.get_manager_settings()
+    target_phone = payload.target_phone or settings.manager_phone
+    msg_body = payload.custom_message or "🚨 [TEST ALERT] Crown Chauffeurs Mobile Dispatch system is connected! All booking & driver updates will be sent here in real-time."
+
+    notif = await NotificationService.record_and_dispatch_sms(
+        db=db,
+        recipient_phone=target_phone,
+        template_name="TEST_MOBILE_PING",
+        message=msg_body,
+        channel=payload.channel.upper()
+    )
+    await db.commit()
+    await db.refresh(notif)
+    return notif
 
 
 @router.get("/", response_model=List[NotificationRead], dependencies=[Depends(require_staff)])
 async def list_notifications(
     booking_id: Optional[str] = Query(None, description="Filter by booking ID"),
     recipient: Optional[str] = Query(None, description="Filter by recipient email or phone"),
-    channel: Optional[str] = Query(None, description="Filter by channel: EMAIL, SMS"),
+    channel: Optional[str] = Query(None, description="Filter by channel: EMAIL, SMS, WHATSAPP"),
     status_filter: Optional[str] = Query(None, alias="status", description="Filter by status: SENT, FAILED"),
     limit: int = Query(50, ge=1, le=200),
     db: AsyncSession = Depends(get_db)
@@ -62,18 +106,19 @@ async def send_direct_message(
             html_content=f"<p>{payload.message}</p>",
             booking_id=payload.booking_id
         )
-    elif payload.channel.upper() == "SMS":
+    elif payload.channel.upper() in ("SMS", "WHATSAPP"):
         notif = await NotificationService.record_and_dispatch_sms(
             db=db,
             recipient_phone=payload.recipient,
             template_name="DIRECT_CUSTOM_SMS",
             message=payload.message,
-            booking_id=payload.booking_id
+            booking_id=payload.booking_id,
+            channel=payload.channel.upper()
         )
     else:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Unsupported channel '{payload.channel}'. Use EMAIL or SMS."
+            detail=f"Unsupported channel '{payload.channel}'. Use EMAIL, SMS, or WHATSAPP."
         )
 
     await db.commit()

@@ -134,6 +134,16 @@ class FlightTrackingService:
                     db, leg.driver.phone, "FLIGHT_DELAY_DRIVER_SMS", sms_msg, leg.booking_id
                 )
 
+            # Alert Manager Mobile directly
+            b_num = leg.booking.booking_number if leg.booking else ""
+            await NotificationService.dispatch_manager_mobile_alert(
+                db=db,
+                event_type="FLIGHT_DELAY",
+                title=f"Flight Delay Alert: {leg.flight_number} (+{flight_data.delay_minutes}m)",
+                message=f"Booking #{b_num}\nNew Pickup: {new_pickup.strftime('%I:%M %p')} @ {leg.flight_terminal or 'Airport'}\nDriver: {leg.driver.full_name if leg.driver else 'Unassigned'}",
+                booking_id=leg.booking_id
+            )
+
         # Critical Cancellation Handling
         if flight_data.status == "CANCELLED":
             notes += " FLIGHT CANCELLED by airline."

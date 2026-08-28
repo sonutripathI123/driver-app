@@ -211,6 +211,19 @@ class DispatchService:
         )
         booking.audit_logs.append(audit)
 
+        # Dispatch Real-Time Mobile Alert to Manager's Phone
+        driver_obj = await db.get(Driver, driver_id)
+        veh_obj = await db.get(Vehicle, vehicle_id)
+        drv_name = driver_obj.full_name if driver_obj else driver_id
+        veh_name = f"{veh_obj.make} {veh_obj.model} ({veh_obj.registration_plate})" if veh_obj else vehicle_id
+        await NotificationService.dispatch_manager_mobile_alert(
+            db=db,
+            event_type="DRIVER_ALLOCATED",
+            title=f"Driver Allocated — #{booking.booking_number}",
+            message=f"Leg #{leg.leg_number}: {leg.pickup_address} -> {leg.dropoff_address}\nChauffeur: {drv_name}\nVehicle: {veh_name}\nDriver Payout: ${allocation_cost:.2f} AUD",
+            booking_id=booking.id
+        )
+
         await db.commit()
         await db.refresh(leg)
         return leg

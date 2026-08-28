@@ -13,6 +13,8 @@ import {
   TripProfitabilityReport,
   Vehicle,
   VehicleUtilizationReport,
+  ManagerNotificationSettings,
+  NotificationItem,
 } from '../types';
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL
@@ -229,6 +231,25 @@ export const fleetApi = {
   },
   getVehicles: async () => {
     const res = await apiClient.get<Vehicle[]>(`/vehicles/`);
+    return res.data;
+  },
+};
+
+export const notificationsApi = {
+  getManagerSettings: async () => {
+    const res = await apiClient.get<ManagerNotificationSettings>(`/notifications/manager-settings`);
+    return res.data;
+  },
+  updateManagerSettings: async (settings: ManagerNotificationSettings) => {
+    const res = await apiClient.post<ManagerNotificationSettings>(`/notifications/manager-settings`, settings);
+    return res.data;
+  },
+  sendTestPing: async (payload: { channel: string; target_phone?: string; custom_message?: string }) => {
+    const res = await apiClient.post<NotificationItem>(`/notifications/test-mobile-ping`, payload);
+    return res.data;
+  },
+  getNotificationLogs: async (limit = 50) => {
+    const res = await apiClient.get<NotificationItem[]>(`/notifications/`, { params: { limit } });
     return res.data;
   },
 };

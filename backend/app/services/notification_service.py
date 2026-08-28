@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
-from sqlalchemy import select
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -10,6 +10,7 @@ from app.integrations.notifications.sms_client import sms_gateway
 from app.models.booking import Booking
 from app.models.booking_leg import BookingLeg
 from app.models.notification import Notification
+from app.schemas.notification import ManagerNotificationSettings
 
 
 def utc_now() -> datetime:
@@ -29,14 +30,42 @@ def get_customer_contact(booking: Booking) -> Tuple[str, Optional[str], Optional
     return name, email, phone
 
 
+# In-Memory singleton for Manager Alert settings (can also be saved in database)
+MANAGER_SETTINGS = ManagerNotificationSettings(
+    manager_phone="+61400112233",
+    manager_email="owner@chauffeurplatform.com",
+    whatsapp_enabled=True,
+    sms_enabled=True,
+    browser_push_enabled=True,
+    alert_on_new_booking=True,
+    alert_on_driver_allocation=True,
+    alert_on_driver_rejection=True,
+    alert_on_unassigned_urgent=True,
+    alert_on_trip_milestones=True,
+    alert_on_flight_delay=True,
+    alert_on_payment_received=True
+)
+
+
 class NotificationService:
     """
     Central notification dispatcher managing dual ops/customer alerts,
-    automated transactional communications, and delivery outbox logging.
+    automated transactional communications, delivery outbox logging,
+    and REAL-TIME MANAGER MOBILE NOTIFICATIONS.
     """
 
-    OPS_EMAIL = "ops@crownchauffeurs.com.au"
-    OPS_PHONE = "+61390001111"
+    OPS_EMAIL = "ops@chauffeurplatform.com"
+    OPS_PHONE = "+61400112233"
+
+    @staticmethod
+    def get_manager_settings() -> ManagerNotificationSettings:
+        return MANAGER_SETTINGS
+
+    @staticmethod
+    def update_manager_settings(new_settings: ManagerNotificationSettings) -> ManagerNotificationSettings:
+        global MANAGER_SETTINGS
+        MANAGER_SETTINGS = new_settings
+        return MANAGER_SETTINGS
 
     @staticmethod
     async def record_and_dispatch_email(
@@ -73,9 +102,10 @@ class NotificationService:
         recipient_phone: str,
         template_name: str,
         message: str,
-        booking_id: Optional[str] = None
+        booking_id: Optional[str] = None,
+        channel: str = "SMS"
     ) -> Notification:
-        """Sends an SMS and records it in the notifications outbox."""
+        """Sends an SMS or WhatsApp message and records it in the notifications outbox."""
         dispatch_res = await sms_gateway.send_sms(
             to_phone=recipient_phone,
             message=message
@@ -84,7 +114,7 @@ class NotificationService:
             id=str(uuid.uuid4()),
             booking_id=booking_id,
             recipient=recipient_phone,
-            channel="SMS",
+            channel=channel.upper(),
             template_name=template_name,
             subject=None,
             content=message,
@@ -95,59 +125,93 @@ class NotificationService:
         return notif
 
     @staticmethod
+    async def dispatch_manager_mobile_alert(
+        db: AsyncSession,
+        event_type: str,
+        title: str,
+        message: str,
+        booking_id: Optional[str] = None,
+        urgency: str = "NORMAL"
+    ) -> Optional[Notification]:
+        """
+        Dispatches real-time alerts directly to the Business Owner / Manager Mobile Phone
+        via SMS, WhatsApp, and Web Push whenever bookings, dispatches, or milestones change.
+        """
+        settings = NotificationService.get_manager_settings()
+        
+        # Check event toggle
+        if event_type == "NEW_BOOKING" and not settings.alert_on_new_booking:
+            return None
+        if event_type == "DRIVER_ALLOCATED" and not settings.alert_on_driver_allocation:
+            return None
+        if event_type == "UNASSIGNED_URGENT" and not settings.alert_on_unassigned_urgent:
+            return None
+        if event_type in ("EN_ROUTE", "ARRIVED", "PICKED_UP", "COMPLETED") and not settings.alert_on_trip_milestones:
+            return None
+        if event_type == "FLIGHT_DELAY" and not settings.alert_on_flight_delay:
+            return None
+        if event_type == "PAYMENT_RECEIVED" and not settings.alert_on_payment_received:
+            return None
+
+        # Build clean formatted mobile message
+        prefix = "🚨 [URGENT DISPATCH]" if urgency == "HIGH" else "🔔 [CHAUFFEUR OPS]"
+        mobile_msg = f"{prefix} {title}\n{message}\nTime: {utc_now().strftime('%H:%M AEST')}"
+
+        channel = "WHATSAPP" if settings.whatsapp_enabled else "SMS"
+        notif = await NotificationService.record_and_dispatch_sms(
+            db=db,
+            recipient_phone=settings.manager_phone,
+            template_name=f"MANAGER_{event_type}",
+            message=mobile_msg,
+            booking_id=booking_id,
+            channel=channel
+        )
+        return notif
+
+    @staticmethod
     async def send_dual_booking_created_alert(
         db: AsyncSession,
         booking: Booking
     ) -> List[Notification]:
-        """
-        DUAL ALERT: Dispatches confirmation to Customer and new-job alert to Ops team.
-        """
+        """Dispatches immediate notification to both Ops team and Customer on booking confirmation."""
         notifs = []
         cust_name, cust_email, cust_phone = get_customer_contact(booking)
-        first_leg = booking.legs[0] if booking.legs else None
-        pickup_str = first_leg.pickup_datetime.strftime('%d %b %Y at %I:%M %p') if first_leg else "TBD"
 
-        if cust_email:
-            subj = f"Booking Confirmation #{booking.booking_number} — Crown Chauffeur Melbourne"
-            html = f"""
-            <h2>Thank you for your reservation with Crown Chauffeur Melbourne</h2>
-            <p>Dear {cust_name},</p>
-            <p>Your chauffeur booking <strong>#{booking.booking_number}</strong> has been received and logged in our system.</p>
-            <ul>
-                <li><strong>Pickup Date & Time:</strong> {pickup_str}</li>
-                <li><strong>Pickup Address:</strong> {first_leg.pickup_address if first_leg else 'N/A'}</li>
-                <li><strong>Dropoff Address:</strong> {first_leg.dropoff_address if first_leg else 'N/A'}</li>
-                <li><strong>Total Fare:</strong> ${booking.total_fare:.2f} {booking.currency}</li>
-                <li><strong>Paid Amount:</strong> ${booking.paid_amount:.2f} {booking.currency}</li>
-                <li><strong>Balance Due:</strong> ${booking.balance_amount:.2f} {booking.currency}</li>
-            </ul>
-            <p>Our dispatch team will assign your dedicated chauffeur prior to your journey.</p>
-            """
-            n_email = await NotificationService.record_and_dispatch_email(
-                db, cust_email, "CUSTOMER_BOOKING_CONFIRMATION", subj, html, booking.id
-            )
-            notifs.append(n_email)
-
+        # 1. Customer Confirmation SMS
         if cust_phone:
-            sms_text = f"Crown Chauffeur: Booking #{booking.booking_number} confirmed for {pickup_str}. Total: ${booking.total_fare:.2f}. Thank you!"
+            sms_body = f"Crown Chauffeur: Booking #{booking.booking_number} confirmed for {cust_name}. Total: ${booking.total_fare:.2f} AUD. Thank you for choosing us."
             n_sms = await NotificationService.record_and_dispatch_sms(
-                db, cust_phone, "CUSTOMER_BOOKING_SMS", sms_text, booking.id
+                db, cust_phone, "BOOKING_CONFIRMED_SMS", sms_body, booking.id
             )
             notifs.append(n_sms)
 
-        # 2. Dual Ops Alert
-        ops_subj = f"[OPS ALERT] New Booking #{booking.booking_number} created (${booking.total_fare:.2f})"
-        ops_html = f"""
-        <h3>New Master Booking Logged</h3>
-        <p><strong>Booking Number:</strong> {booking.booking_number}</p>
-        <p><strong>Customer:</strong> {cust_name} ({cust_email or 'N/A'} / {cust_phone or 'N/A'})</p>
-        <p><strong>Pickup Time:</strong> {pickup_str}</p>
-        <p><strong>Fare:</strong> ${booking.total_fare:.2f} | <strong>Status:</strong> {booking.status.value}</p>
-        """
-        n_ops = await NotificationService.record_and_dispatch_email(
-            db, NotificationService.OPS_EMAIL, "OPS_NEW_BOOKING_ALERT", ops_subj, ops_html, booking.id
+        # 2. Customer Confirmation Email
+        if cust_email:
+            subj = f"Booking Confirmation #{booking.booking_number} — Crown Chauffeurs"
+            html = f"""
+            <h2>Your Chauffeur Booking is Confirmed</h2>
+            <p>Dear {cust_name},</p>
+            <p>Thank you for booking with Crown Chauffeurs. Your booking reference is <strong>#{booking.booking_number}</strong>.</p>
+            <p><strong>Total Fare:</strong> ${booking.total_fare:.2f} AUD (Inc GST)<br/>
+            <strong>Paid:</strong> ${booking.paid_amount:.2f} AUD<br/>
+            <strong>Balance Due:</strong> ${booking.balance_amount:.2f} AUD</p>
+            """
+            n_email = await NotificationService.record_and_dispatch_email(
+                db, cust_email, "BOOKING_CONFIRMED_EMAIL", subj, html, booking.id
+            )
+            notifs.append(n_email)
+
+        # 3. Dispatches Real-Time Mobile Alert directly to the Manager's Phone
+        pickup_addr = booking.legs[0].pickup_address if booking.legs else "Location"
+        manager_alert = await NotificationService.dispatch_manager_mobile_alert(
+            db=db,
+            event_type="NEW_BOOKING",
+            title=f"New Booking #{booking.booking_number}",
+            message=f"Passenger: {cust_name} ({booking.passenger_phone or cust_phone})\nRoute: {pickup_addr}\nFare: ${booking.total_fare:.2f} AUD (Paid: ${booking.paid_amount:.2f})",
+            booking_id=booking.id
         )
-        notifs.append(n_ops)
+        if manager_alert:
+            notifs.append(manager_alert)
 
         return notifs
 
@@ -157,64 +221,49 @@ class NotificationService:
         booking: Booking,
         milestone: str  # "7_DAYS", "5_DAYS", "3_DAYS"
     ) -> List[Notification]:
-        """
-        Dispatches 7/5/3-day balance reminder with hosted payment link.
-        """
+        """Dispatches automated balance chasing SMS and Email."""
         notifs = []
         cust_name, cust_email, cust_phone = get_customer_contact(booking)
+
         first_leg = booking.legs[0] if booking.legs else None
-        pickup_str = first_leg.pickup_datetime.strftime('%d %b %Y at %I:%M %p') if first_leg else "TBD"
+        pickup_str = first_leg.pickup_datetime.strftime("%d %b %Y %H:%M") if first_leg else "Upcoming"
 
-        urgency_label = {
-            "7_DAYS": "Reminder: Upcoming Journey Balance Due",
-            "5_DAYS": "Action Required: Outstanding Balance for Chauffeur Booking",
-            "3_DAYS": "URGENT: Final Notice for Booking Balance Settlement"
-        }.get(milestone, "Balance Payment Reminder")
-
-        if cust_email:
-            subj = f"{urgency_label} — #{booking.booking_number}"
-            html = f"""
-            <h2>{urgency_label}</h2>
-            <p>Dear {cust_name},</p>
-            <p>This is a reminder regarding your upcoming luxury transfer on <strong>{pickup_str}</strong>.</p>
-            <p><strong>Outstanding Balance:</strong> ${booking.balance_amount:.2f} {booking.currency}</p>
-            <p>Please settle the outstanding balance securely via credit card before your scheduled pickup.</p>
-            <p><a href="https://pay.crownchauffeurs.com.au/checkout/{booking.id}" style="background:#1a1a1a;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;">Pay Balance Now (${booking.balance_amount:.2f})</a></p>
-            """
-            n_email = await NotificationService.record_and_dispatch_email(
-                db, cust_email, f"BALANCE_REMINDER_{milestone}", subj, html, booking.id
-            )
-            notifs.append(n_email)
-
-        if cust_phone and milestone in ("5_DAYS", "3_DAYS"):
-            sms_text = f"Crown Chauffeur: Balance reminder for Booking #{booking.booking_number}. Remaining: ${booking.balance_amount:.2f} due for trip on {pickup_str}."
+        sms_text = f"Crown Chauffeur Reminder: A balance of ${booking.balance_amount:.2f} AUD is pending for your upcoming booking #{booking.booking_number} on {pickup_str}. Please settle online."
+        if cust_phone:
             n_sms = await NotificationService.record_and_dispatch_sms(
-                db, cust_phone, f"BALANCE_SMS_{milestone}", sms_text, booking.id
+                db, cust_phone, f"BALANCE_REMINDER_{milestone}_SMS", sms_text, booking.id
             )
             notifs.append(n_sms)
+
+        if cust_email:
+            subj = f"Payment Reminder: Outstanding Balance for Booking #{booking.booking_number}"
+            html = f"""
+            <h3>Upcoming Chauffeur Booking Balance Reminder</h3>
+            <p>Dear {cust_name},</p>
+            <p>This is a friendly reminder that a balance of <strong>${booking.balance_amount:.2f} AUD</strong> remains outstanding for booking <strong>#{booking.booking_number}</strong>.</p>
+            """
+            n_email = await NotificationService.record_and_dispatch_email(
+                db, cust_email, f"BALANCE_REMINDER_{milestone}_EMAIL", subj, html, booking.id
+            )
+            notifs.append(n_email)
 
         return notifs
 
     @staticmethod
-    async def send_driver_handover_package(
+    async def send_pre_trip_handover_package(
         db: AsyncSession,
+        booking: Booking,
         leg: BookingLeg
     ) -> List[Notification]:
-        """
-        2-HOUR PRE-TRIP HANDOVER:
-        Dispatches chauffeur contact and vehicle plate to customer,
-        and passenger details & notes to driver.
-        """
+        """Dispatches 2-hour pre-trip handover package with driver and vehicle details."""
         notifs = []
-        booking = leg.booking
+        cust_name, cust_email, cust_phone = get_customer_contact(booking)
         driver = leg.driver
         vehicle = leg.vehicle
         partner = leg.partner
 
-        cust_name, cust_email, cust_phone = get_customer_contact(booking)
-        pickup_str = leg.pickup_datetime.strftime('%I:%M %p')
+        pickup_str = leg.pickup_datetime.strftime("%H:%M")
 
-        # 1. Customer Handover
         if driver and vehicle:
             chauffeur_info = f"{driver.full_name} (Phone: {driver.phone})"
             veh_info = f"{vehicle.color} {vehicle.make} {vehicle.model} (Plate: {vehicle.registration_plate})"
@@ -250,7 +299,7 @@ class NotificationService:
             )
             notifs.append(n_email)
 
-        # 2. Driver Handover (if internal driver)
+        # Driver Handover (if internal driver)
         if driver and driver.phone:
             drv_sms = f"Crown Chauffeur Job: Pickup {booking.passenger_name or cust_name} ({booking.passenger_phone or cust_phone}) at {pickup_str} @ {leg.pickup_address} -> {leg.dropoff_address}."
             if leg.pickup_notes:
@@ -268,9 +317,7 @@ class NotificationService:
         booking: Booking,
         reason: Optional[str] = None
     ) -> List[Notification]:
-        """
-        Dispatches cancellation circuit breaker alert to customer and Ops team.
-        """
+        """Dispatches cancellation circuit breaker alert to customer and Ops team."""
         notifs = []
         cust_name, cust_email, cust_phone = get_customer_contact(booking)
 
@@ -281,19 +328,22 @@ class NotificationService:
             <p>Dear {cust_name},</p>
             <p>Your booking <strong>#{booking.booking_number}</strong> has been cancelled.</p>
             <p><strong>Reason:</strong> {reason or 'Requested by client'}</p>
-            <p>If a refund is applicable under our cancellation policy, our accounting team will process it within 2-3 business days.</p>
             """
             n_email = await NotificationService.record_and_dispatch_email(
                 db, cust_email, "CUSTOMER_CANCELLATION", subj, html, booking.id
             )
             notifs.append(n_email)
 
-        # Ops alert
-        ops_subj = f"[OPS ALERT] Booking #{booking.booking_number} CANCELLED"
-        ops_html = f"<p>Booking #{booking.booking_number} for {cust_name} has been cancelled. Reason: {reason}</p>"
-        n_ops = await NotificationService.record_and_dispatch_email(
-            db, NotificationService.OPS_EMAIL, "OPS_CANCELLATION_ALERT", ops_subj, ops_html, booking.id
+        # Dispatches Manager Mobile Cancellation Alert
+        mgr_notif = await NotificationService.dispatch_manager_mobile_alert(
+            db=db,
+            event_type="BOOKING_CANCELLED",
+            title=f"Booking #{booking.booking_number} CANCELLED",
+            message=f"Passenger: {cust_name}\nReason: {reason or 'Requested by client'}",
+            booking_id=booking.id,
+            urgency="HIGH"
         )
-        notifs.append(n_ops)
+        if mgr_notif:
+            notifs.append(mgr_notif)
 
         return notifs

@@ -59,18 +59,17 @@ export interface Customer {
 
 export interface Driver {
   id: string;
-  user_id?: string;
   full_name: string;
-  phone: string;
   email: string;
-  license_number: string;
+  phone: string;
+  license_number?: string;
   status: 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY' | 'SUSPENDED';
   rating: number;
-  total_trips_completed: number;
+  completed_trips_count?: number;
+  total_trips_completed?: number;
+  payout_rate_pct?: number;
   current_lat?: number;
   current_lng?: number;
-  last_location_update?: string;
-  default_vehicle_id?: string;
 }
 
 export interface Vehicle {
@@ -79,11 +78,41 @@ export interface Vehicle {
   make: string;
   model: string;
   year: number;
-  color?: string;
   registration_plate: string;
   passenger_capacity: number;
   luggage_capacity: number;
   is_active: boolean;
+  status?: string;
+}
+
+export interface Partner {
+  id: string;
+  company_name: string;
+  contact_person?: string;
+  contact_name?: string;
+  email: string;
+  phone: string;
+  city?: string;
+  abn?: string;
+  accreditation_number?: string;
+  commission_rate?: number;
+  is_active: boolean;
+  is_compliance_verified?: boolean;
+  is_compliant?: boolean;
+  public_liability_expiry?: string;
+  insurance_expiry?: string;
+  insurance_policy_number?: string;
+}
+
+export interface PartnerJobOffer {
+  id: string;
+  partner_id: string;
+  partner_name: string;
+  leg_id: string;
+  offered_payout: number;
+  status: 'PENDING' | 'ACCEPTED' | 'REJECTED' | 'EXPIRED';
+  expires_at: string;
+  notes?: string;
 }
 
 export interface BookingLeg {
@@ -96,26 +125,21 @@ export interface BookingLeg {
   pickup_datetime: string;
   is_airport_pickup: boolean;
   flight_number?: string;
-  flight_terminal?: string;
   flight_delay_minutes: number;
   wait_time_minutes: number;
   wait_time_charge: number;
   vehicle_category: VehicleCategory;
   driver_id?: string;
+  driver_name?: string;
   vehicle_id?: string;
+  vehicle_plate?: string;
   partner_id?: string;
+  partner_name?: string;
   allocation_cost: number;
   partner_payout_amount: number;
-  partner_reference?: string;
-  distance_km?: number;
-  duration_minutes?: number;
   fare_share?: number;
+  pickup_notes?: string;
   passenger_notes?: string;
-  en_route_at?: string;
-  arrived_at?: string;
-  picked_up_at?: string;
-  completed_at?: string;
-  settled_at?: string;
 }
 
 export interface Booking {
@@ -129,71 +153,11 @@ export interface Booking {
   deposit_required: number;
   paid_amount: number;
   balance_amount: number;
-  passenger_name?: string;
-  passenger_phone?: string;
+  passenger_name: string;
   passenger_email?: string;
-  special_requests?: string;
+  passenger_phone: string;
   created_at: string;
   legs: BookingLeg[];
-  customer?: Customer;
-}
-
-export interface Partner {
-  id: string;
-  company_name: string;
-  contact_name: string;
-  email: string;
-  phone: string;
-  abn?: string;
-  commission_rate: number;
-  city?: string;
-  is_active: boolean;
-  insurance_policy_number?: string;
-  insurance_expiry?: string;
-  accreditation_number?: string;
-  accreditation_expiry?: string;
-  is_compliance_verified: boolean;
-}
-
-export interface PartnerJobOffer {
-  id: string;
-  leg_id: string;
-  partner_id: string;
-  offered_payout: number;
-  status: 'PENDING' | 'ACCEPTED' | 'DECLINED' | 'EXPIRED' | 'CANCELLED';
-  expires_at: string;
-  responded_at?: string;
-  notes?: string;
-  created_at: string;
-}
-
-export interface Invoice {
-  id: string;
-  invoice_number: string;
-  booking_id?: string;
-  customer_id?: string;
-  status: 'DRAFT' | 'ISSUED' | 'PAID' | 'PARTIALLY_PAID' | 'OVERDUE' | 'VOID' | 'CREDITED';
-  issue_date: string;
-  due_date: string;
-  subtotal_ex_gst: number;
-  gst_amount: number;
-  total_inc_gst: number;
-  amount_paid: number;
-  balance_due: number;
-  currency: string;
-  paid_at?: string;
-  notes?: string;
-  line_items?: InvoiceLineItem[];
-}
-
-export interface InvoiceLineItem {
-  id: string;
-  invoice_id: string;
-  description: string;
-  quantity: number;
-  unit_price_ex_gst: number;
-  gst_amount: number;
-  total_inc_gst: number;
 }
 
 export interface ExecutiveDashboardSummary {
@@ -214,23 +178,40 @@ export interface ExecutiveDashboardSummary {
   average_booking_value: number;
 }
 
+export interface Invoice {
+  id: string;
+  invoice_number: string;
+  booking_id?: string;
+  customer_name?: string;
+  issue_date: string;
+  due_date: string;
+  total_amount?: number;
+  total_inc_gst: number;
+  subtotal?: number;
+  subtotal_ex_gst: number;
+  gst_amount: number;
+  amount_paid: number;
+  balance_due: number;
+  currency?: string;
+  paid_at?: string;
+  line_items?: any[];
+  status: 'DRAFT' | 'ISSUED' | 'PARTIALLY_PAID' | 'PAID' | 'OVERDUE' | 'VOID';
+}
+
 export interface TripProfitItem {
   booking_id: string;
   booking_number: string;
-  leg_id: string;
-  leg_number: number;
-  pickup_address: string;
-  dropoff_address: string;
+  passenger_name: string;
+  route_summary: string;
   pickup_datetime: string;
   vehicle_category: string;
-  status: string;
-  customer_fare_inc_gst: number;
-  customer_fare_ex_gst: number;
-  driver_allocation_cost: number;
-  partner_payout_amount: number;
-  direct_cost: number;
+  gross_customer_fare: number;
+  net_revenue_ex_gst: number;
+  driver_payout: number;
+  partner_payout: number;
+  total_direct_cost: number;
   gross_profit: number;
-  margin_pct: number;
+  margin_percentage: number;
   is_low_margin: boolean;
   is_negative_margin: boolean;
 }
@@ -288,4 +269,34 @@ export interface TaxSummaryBASReport {
   net_sales_ex_gst: number;
   driver_payouts_total: number;
   net_operating_margin: number;
+}
+
+export interface ManagerNotificationSettings {
+  manager_phone: string;
+  manager_email: string;
+  whatsapp_enabled: boolean;
+  sms_enabled: boolean;
+  telegram_bot_token?: string;
+  telegram_chat_id?: string;
+  browser_push_enabled: boolean;
+  alert_on_new_booking: boolean;
+  alert_on_driver_allocation: boolean;
+  alert_on_driver_rejection: boolean;
+  alert_on_unassigned_urgent: boolean;
+  alert_on_trip_milestones: boolean;
+  alert_on_flight_delay: boolean;
+  alert_on_payment_received: boolean;
+}
+
+export interface NotificationItem {
+  id: string;
+  booking_id?: string;
+  recipient: string;
+  channel: string;
+  template_name: string;
+  subject?: string;
+  content: string;
+  status: string;
+  error_message?: string;
+  created_at: string;
 }
