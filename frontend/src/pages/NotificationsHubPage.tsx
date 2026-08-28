@@ -16,12 +16,14 @@ import {
   Plane,
   DollarSign,
   Save,
-  RotateCw
+  ExternalLink,
+  Info,
+  Key
 } from 'lucide-react';
 
 export const NotificationsHubPage: React.FC = () => {
   const [settings, setSettings] = useState<ManagerNotificationSettings>({
-    manager_phone: '+61400112233',
+    manager_phone: '+919385365428',
     manager_email: 'owner@chauffeurplatform.com',
     whatsapp_enabled: true,
     sms_enabled: true,
@@ -40,7 +42,11 @@ export const NotificationsHubPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [testSending, setTestSending] = useState(false);
-  const [testSuccessMsg, setTestSuccessMsg] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    message: string;
+    whatsappUrl?: string;
+    phone: string;
+  } | null>(null);
   const [browserPushAllowed, setBrowserPushAllowed] = useState(false);
 
   useEffect(() => {
@@ -79,33 +85,33 @@ export const NotificationsHubPage: React.FC = () => {
       setSettings(sData);
       setNotificationLogs(lData || []);
     } catch (err) {
-      // Demo mock logs for immediate visual feedback
+      // Demo mock logs
       setNotificationLogs([
         {
           id: 'n-01',
-          recipient: '+61 400 112 233',
+          recipient: settings.manager_phone,
           channel: 'WHATSAPP',
           template_name: 'MANAGER_NEW_BOOKING',
-          content: '🔔 [CHAUFFEUR OPS] New Booking #CCM-2026-0881\nPassenger: David Warner\nRoute: 120 Collins St -> Melbourne Airport T2\nFare: $440.00 AUD (Paid in full)',
-          status: 'SENT',
+          content: '🔔 [CHAUFFEUR OPS] New Booking #CCM-2026-0881\nPassenger: David Warner (+61 411 222 333)\nRoute: 120 Collins St, CBD -> Melbourne Airport T2\nFare: $440.00 AUD (Paid in full)',
+          status: 'SANDBOX_LOGGED',
           created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
         },
         {
           id: 'n-02',
-          recipient: '+61 400 112 233',
+          recipient: settings.manager_phone,
           channel: 'WHATSAPP',
           template_name: 'MANAGER_DRIVER_ALLOCATED',
-          content: '🔔 [CHAUFFEUR OPS] Driver Allocated — #CCM-2026-0881\nChauffeur: Daniel Ricciardo\nVehicle: Mercedes S-Class (VIP-01)\nDriver Payout: $160.00 AUD',
-          status: 'SENT',
+          content: '🔔 [CHAUFFEUR OPS] Driver Allocated — #CCM-2026-0881\nChauffeur: Daniel Ricciardo\nVehicle: Mercedes S-Class (Plate: VIP-01)\nDriver Payout: $160.00 AUD',
+          status: 'SANDBOX_LOGGED',
           created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
         },
         {
           id: 'n-03',
-          recipient: '+61 400 112 233',
+          recipient: settings.manager_phone,
           channel: 'SMS',
           template_name: 'MANAGER_FLIGHT_DELAY',
-          content: '🚨 [URGENT DISPATCH] Flight Delay Alert: QF400 (+25m)\nNew Pickup: 03:25 PM @ Melbourne Airport T2\nDriver: Daniel Ricciardo',
-          status: 'SENT',
+          content: '🚨 [URGENT DISPATCH] Flight Delay: QF400 (+25m)\nNew Pickup: 03:25 PM @ Melbourne Airport Terminal 2\nDriver: Daniel Ricciardo',
+          status: 'SANDBOX_LOGGED',
           created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
         },
       ]);
@@ -127,31 +133,50 @@ export const NotificationsHubPage: React.FC = () => {
     }
   };
 
+  const getCleanPhone = (phone: string) => {
+    return phone.replace(/[^0-9]/g, '');
+  };
+
   const handleSendTestPing = async (channel: 'WHATSAPP' | 'SMS') => {
     try {
       setTestSending(true);
-      setTestSuccessMsg(null);
+      setTestResult(null);
 
-      // Trigger local browser push if enabled
+      const sampleMsg = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!\n\nAll real-time customer bookings, chauffeur allocations, and trip milestones will be dispatched here in real-time.`;
+      const cleanPhone = getCleanPhone(settings.manager_phone);
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sampleMsg)}`;
+
+      // 1. Trigger local browser push notification on device
       if (browserPushAllowed && 'Notification' in window) {
-        new Notification('🚨 [TEST ALERT] Crown Chauffeurs Mobile Dispatch', {
-          body: `Live dispatch link active for ${settings.manager_phone}. All booking and driver updates are transmitting in real-time.`,
+        new Notification('🚨 [CHAUFFEUR OPS] Mobile Dispatch Alert', {
+          body: `Test alert dispatched to ${settings.manager_phone}! Tap to open dispatch board.`,
           icon: '/favicon.svg',
         });
       }
 
+      // 2. Call backend API
       await notificationsApi.sendTestPing({
         channel,
         target_phone: settings.manager_phone,
-        custom_message: `🚨 [TEST ALERT] Crown Chauffeurs Mobile Dispatch system is connected! All booking & driver updates will be sent to ${settings.manager_phone} in real-time.`,
+        custom_message: sampleMsg,
       });
 
-      setTestSuccessMsg(`Test ${channel} alert successfully dispatched to ${settings.manager_phone}!`);
-      setTimeout(() => setTestSuccessMsg(null), 5000);
+      setTestResult({
+        message: `Alert recorded in dispatch outbox for ${settings.manager_phone}!`,
+        whatsappUrl: waUrl,
+        phone: settings.manager_phone,
+      });
+
       loadSettings();
     } catch (err) {
-      setTestSuccessMsg(`Simulated ${channel} test alert dispatched to ${settings.manager_phone}!`);
-      setTimeout(() => setTestSuccessMsg(null), 5000);
+      const cleanPhone = getCleanPhone(settings.manager_phone);
+      const sampleMsg = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!`;
+      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(sampleMsg)}`;
+      setTestResult({
+        message: `Alert generated for ${settings.manager_phone}!`,
+        whatsappUrl: waUrl,
+        phone: settings.manager_phone,
+      });
     } finally {
       setTestSending(false);
     }
@@ -164,7 +189,7 @@ export const NotificationsHubPage: React.FC = () => {
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-            <span>Real-Time Mobile Dispatch Pings Active</span>
+            <span>Real-Time Mobile Dispatch Center</span>
           </div>
 
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-100">
@@ -172,28 +197,47 @@ export const NotificationsHubPage: React.FC = () => {
           </h1>
 
           <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
-            Get instant WhatsApp, SMS, and Mobile Push alerts on your phone whenever a new booking arrives, a driver is allocated, or a trip milestone changes. No need to keep checking this dashboard manually.
+            Get instant WhatsApp, SMS, and Mobile Push alerts directly on your phone whenever a new booking arrives, a driver is allocated, or a trip milestone changes.
           </p>
         </div>
 
-        {/* Quick Test Ping Button */}
+        {/* Quick Test Ping Buttons */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
           <button
             onClick={() => handleSendTestPing('WHATSAPP')}
             disabled={testSending}
             className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/30 transition-all"
           >
-            <Send className="w-4 h-4" />
+            <MessageSquare className="w-4 h-4 text-slate-950" />
             <span>{testSending ? 'Sending Ping...' : 'Send Test WhatsApp Ping'}</span>
           </button>
         </div>
       </div>
 
-      {/* Success Toast */}
-      {testSuccessMsg && (
-        <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center gap-3 animate-in fade-in">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          <span>{testSuccessMsg}</span>
+      {/* Test Result Action Banner */}
+      {testResult && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/40 text-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-emerald-300">Test Alert Generated for {testResult.phone}</p>
+              <p className="text-xs text-slate-400">Click below to open and receive this message directly in your WhatsApp app/web:</p>
+            </div>
+          </div>
+
+          {testResult.whatsappUrl && (
+            <a
+              href={testResult.whatsappUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 shrink-0 transition-all"
+            >
+              <MessageSquare className="w-4 h-4" />
+              <span>📱 Open In WhatsApp Web / App ➔</span>
+            </a>
+          )}
         </div>
       )}
 
@@ -202,9 +246,11 @@ export const NotificationsHubPage: React.FC = () => {
         {/* Left Column: Mobile Phone & Delivery Channels (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
           <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-5">
-            <div className="flex items-center gap-2.5 border-b border-[#1F2E4D] pb-3">
-              <Smartphone className="w-5 h-5 text-amber-400" />
-              <h3 className="text-sm font-bold text-slate-100">Owner Mobile Device Configuration</h3>
+            <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-3">
+              <div className="flex items-center gap-2.5">
+                <Smartphone className="w-5 h-5 text-amber-400" />
+                <h3 className="text-sm font-bold text-slate-100">Owner Mobile Device Configuration</h3>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -212,13 +258,13 @@ export const NotificationsHubPage: React.FC = () => {
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
                   <span>Manager Mobile Phone Number</span>
-                  <span className="text-[10px] text-amber-400 font-mono">With Country Code</span>
+                  <span className="text-[10px] text-amber-400 font-mono">With Country Code (+91 / +61)</span>
                 </label>
                 <input
                   type="text"
                   value={settings.manager_phone}
                   onChange={(e) => setSettings({ ...settings, manager_phone: e.target.value })}
-                  placeholder="+61 400 112 233"
+                  placeholder="+91 9385365428"
                   className="w-full px-4 py-2.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] text-slate-100 font-mono text-xs focus:border-amber-400 focus:outline-none"
                 />
               </div>
@@ -235,7 +281,7 @@ export const NotificationsHubPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-200 block">WhatsApp Dispatch Alerts</span>
-                      <span className="text-[10px] text-slate-400">Rich formatted cards with quick-view links</span>
+                      <span className="text-[10px] text-slate-400">Rich formatted cards with direct view links</span>
                     </div>
                   </div>
                   <input
@@ -254,7 +300,7 @@ export const NotificationsHubPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-200 block">SMS Direct Gateway</span>
-                      <span className="text-[10px] text-slate-400">Carrier SMS for offline delivery</span>
+                      <span className="text-[10px] text-slate-400">Cellular telecom carrier SMS</span>
                     </div>
                   </div>
                   <input
@@ -273,7 +319,7 @@ export const NotificationsHubPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-200 block">Browser Push on Phone</span>
-                      <span className="text-[10px] text-slate-400">Vibration & sound when tab is closed</span>
+                      <span className="text-[10px] text-slate-400">Instant vibration & sound alert</span>
                     </div>
                   </div>
                   {browserPushAllowed ? (
@@ -281,9 +327,9 @@ export const NotificationsHubPage: React.FC = () => {
                   ) : (
                     <button
                       onClick={requestBrowserPermission}
-                      className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-[10px] font-bold"
+                      className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-[10px] font-bold hover:bg-cyan-400"
                     >
-                      Allow
+                      Allow Push
                     </button>
                   )}
                 </div>
@@ -310,7 +356,7 @@ export const NotificationsHubPage: React.FC = () => {
                 <Shield className="w-5 h-5 text-emerald-400" />
                 <h3 className="text-sm font-bold text-slate-100">Live Dispatch Trigger Rules</h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-400">Instant Automated Ping</span>
+              <span className="text-[10px] font-mono text-slate-400">Instant Mobile Ping</span>
             </div>
 
             {/* Triggers List */}
@@ -425,36 +471,46 @@ export const NotificationsHubPage: React.FC = () => {
         </div>
 
         <div className="space-y-3">
-          {notificationLogs.map((log) => (
-            <div
-              key={log.id}
-              className="p-4 rounded-xl bg-[#0D1322] border border-[#1F2E4D] hover:border-amber-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs"
-            >
-              <div className="space-y-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                    log.channel === 'WHATSAPP' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
-                  }`}>
-                    {log.channel}
-                  </span>
-                  <span className="font-mono text-slate-400">{log.recipient}</span>
-                  <span className="text-slate-600">•</span>
-                  <span className="text-[11px] text-slate-400 font-mono">
-                    {new Date(log.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
+          {notificationLogs.map((log) => {
+            const cleanPhone = getCleanPhone(log.recipient || settings.manager_phone);
+            const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(log.content)}`;
+            return (
+              <div
+                key={log.id}
+                className="p-4 rounded-xl bg-[#0D1322] border border-[#1F2E4D] hover:border-amber-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs"
+              >
+                <div className="space-y-1 min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
+                      log.channel === 'WHATSAPP' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
+                    }`}>
+                      {log.channel}
+                    </span>
+                    <span className="font-mono text-slate-300 font-bold">{log.recipient}</span>
+                    <span className="text-slate-600">•</span>
+                    <span className="text-[11px] text-slate-400 font-mono">
+                      {new Date(log.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="text-slate-200 whitespace-pre-line font-mono text-[11px] mt-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                    {log.content}
+                  </p>
                 </div>
-                <p className="text-slate-200 whitespace-pre-line font-mono text-[11px] mt-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
-                  {log.content}
-                </p>
-              </div>
 
-              <div className="shrink-0 flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
-                  ✓ {log.status}
-                </span>
+                <div className="shrink-0 flex items-center gap-2.5 pt-2 md:pt-0">
+                  <a
+                    href={waUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] transition-all"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Open in WhatsApp ➔</span>
+                  </a>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
     </div>
