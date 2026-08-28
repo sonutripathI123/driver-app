@@ -32,7 +32,7 @@ def get_customer_contact(booking: Booking) -> Tuple[str, Optional[str], Optional
 
 # In-Memory singleton for Manager Alert settings (can also be saved in database)
 MANAGER_SETTINGS = ManagerNotificationSettings(
-    manager_phone="+919385365428",
+    manager_phone="+919305365420",
     manager_email="owner@chauffeurplatform.com",
     whatsapp_enabled=True,
     sms_enabled=True,
