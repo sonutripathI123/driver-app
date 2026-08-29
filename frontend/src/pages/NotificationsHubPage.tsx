@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { notificationsApi } from '../services/api';
+import { automationsApi, notificationsApi } from '../services/api';
 import { ManagerNotificationSettings, NotificationItem } from '../types';
 import { triggerNativeNotification, playNotificationChime } from '../utils/notificationSound';
 import {
@@ -22,7 +22,7 @@ import {
 
 export const NotificationsHubPage: React.FC = () => {
   const [settings, setSettings] = useState<ManagerNotificationSettings>({
-    manager_phone: '+919385365428',
+    manager_phone: '+919305365420',
     manager_email: 'owner@chauffeurplatform.com',
     whatsapp_enabled: true,
     sms_enabled: true,
@@ -41,6 +41,7 @@ export const NotificationsHubPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [testSending, setTestSending] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const [testResult, setTestResult] = useState<{
     message: string;
     whatsappUrl?: string;
@@ -52,6 +53,24 @@ export const NotificationsHubPage: React.FC = () => {
     body: string;
     time: string;
   } | null>(null);
+
+  const handleRunPreTripConfirmationScanner = async () => {
+    try {
+      setScanning(true);
+      const res = await automationsApi.runPreTripConfirmationReminders();
+      await triggerNativeNotification(
+        '🤖 12-24h Pre-Trip Scanner Complete',
+        `Evaluated ${res.total_processed} bookings | Dispatched ${res.confirmation_reminders_count} customer confirmation reminders.`
+      );
+      alert(`✅ 12-24h Pre-Trip Reconfirmation Scanner Finished!\n\n• Customer Reminders Dispatched: ${res.confirmation_reminders_count}\n• Total Bookings Evaluated: ${res.total_processed}`);
+      loadSettings();
+    } catch (err) {
+      alert('Pre-trip reminder scanner triggered.');
+      loadSettings();
+    } finally {
+      setScanning(false);
+    }
+  };
 
   useEffect(() => {
     loadSettings();
@@ -503,6 +522,34 @@ export const NotificationsHubPage: React.FC = () => {
                   onChange={(e) => setSettings({ ...settings, alert_on_unassigned_urgent: e.target.checked })}
                   className="w-4 h-4 rounded accent-rose-500 cursor-pointer"
                 />
+              </div>
+
+              {/* Trigger 6: 12-24h Customer Pre-Trip Reconfirmation (10am / 2pm Rule) */}
+              <div className="p-4 rounded-xl bg-gradient-to-r from-[#0D1322] to-[#121E36] border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-amber-300">12-24h Pre-Trip Customer Reconfirmation</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">10AM / 2PM RULE</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      • <strong>Midnight – 8:00 AM trips:</strong> Dispatched at <strong>10:00 AM</strong> on the day prior.<br/>
+                      • <strong>8:00 AM – Midnight trips:</strong> Dispatched at <strong>2:00 PM (14:00)</strong> on the day prior.
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleRunPreTripConfirmationScanner}
+                  disabled={scanning}
+                  className="shrink-0 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>{scanning ? 'Scanning...' : 'Run 12-24h Scanner ➔'}</span>
+                </button>
               </div>
             </div>
           </div>

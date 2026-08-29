@@ -201,7 +201,15 @@ class NotificationService:
             )
             notifs.append(n_email)
 
-        # 3. Dispatches Real-Time Mobile Alert directly to the Manager's Phone
+        # 3. Ops Team Email Alert
+        ops_subj = f"OPS ALERT: New Booking #{booking.booking_number} ({cust_name})"
+        ops_html = f"<p>New Booking #{booking.booking_number} received from {cust_name}. Fare: ${booking.total_fare:.2f} AUD</p>"
+        n_ops = await NotificationService.record_and_dispatch_email(
+            db, "ops@crownchauffeurs.com.au", "BOOKING_CREATED_OPS_EMAIL", ops_subj, ops_html, booking.id
+        )
+        notifs.append(n_ops)
+
+        # 4. Dispatches Real-Time Mobile Alert directly to the Manager's Phone
         pickup_addr = booking.legs[0].pickup_address if booking.legs else "Location"
         manager_alert = await NotificationService.dispatch_manager_mobile_alert(
             db=db,
@@ -236,7 +244,7 @@ class NotificationService:
             notifs.append(n_sms)
 
         if cust_email:
-            subj = f"Payment Reminder: Outstanding Balance for Booking #{booking.booking_number}"
+            subj = f"Payment Reminder: Outstanding Balance Due ({milestone}) for Booking #{booking.booking_number}"
             html = f"""
             <h3>Upcoming Chauffeur Booking Balance Reminder</h3>
             <p>Dear {cust_name},</p>
@@ -312,6 +320,83 @@ class NotificationService:
         return notifs
 
     @staticmethod
+    async def send_customer_pre_trip_confirmation_reminder(
+        db: AsyncSession,
+        booking: Booking,
+        leg: BookingLeg,
+        scheduled_window_label: str = "12-24h"
+    ) -> List[Notification]:
+        """
+        Dispatches automated 12-24h pre-trip booking confirmation reminder to the customer.
+        - Bookings midnight to 8am: Dispatched at 10am on the day prior.
+        - Bookings 8am to midnight: Dispatched at 2pm on the day prior.
+        """
+        notifs = []
+        cust_name, cust_email, cust_phone = get_customer_contact(booking)
+        pickup_str = leg.pickup_datetime.strftime("%A, %d %B %Y at %I:%M %p")
+        pickup_date_only = leg.pickup_datetime.strftime("%d %b %Y")
+
+        if cust_phone:
+            sms_text = (
+                f"Crown Chauffeurs Reconfirmation: Your upcoming booking #{booking.booking_number} "
+                f"is confirmed for {pickup_str}. Pickup: {leg.pickup_address}. "
+                f"Dedicated chauffeur details will be dispatched 2 hours prior to pickup."
+            )
+            n_sms = await NotificationService.record_and_dispatch_sms(
+                db, cust_phone, "PRE_TRIP_CONFIRMATION_REMINDER_SMS", sms_text, booking.id
+            )
+            notifs.append(n_sms)
+
+        if cust_email:
+            subj = f"Booking Reconfirmation: Your Journey on {pickup_date_only} #{booking.booking_number} — Crown Chauffeurs"
+            html = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #0f172a; color: #f8fafc; padding: 24px; border-radius: 16px; border: 1px solid #334155;">
+                <div style="border-bottom: 1px solid #334155; padding-bottom: 16px; margin-bottom: 20px;">
+                    <span style="color: #fbbf24; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Crown Chauffeurs Melbourne</span>
+                    <h2 style="color: #ffffff; margin: 8px 0 0 0; font-size: 22px;">Upcoming Journey Reconfirmation</h2>
+                </div>
+                <p>Dear <strong>{cust_name}</strong>,</p>
+                <p style="color: #cbd5e1; line-height: 1.6;">
+                    This is an automated reconfirmation for your upcoming chauffeur service scheduled with Crown Chauffeurs.
+                </p>
+                <div style="background-color: #1e293b; padding: 18px; border-radius: 12px; margin: 20px 0; border: 1px solid #334155;">
+                    <p style="margin: 0 0 10px 0;"><strong>Booking Reference:</strong> <span style="color: #fbbf24; font-family: monospace;">#{booking.booking_number}</span></p>
+                    <p style="margin: 0 0 10px 0;"><strong>Scheduled Pickup:</strong> <span style="color: #38bdf8;">{pickup_str}</span></p>
+                    <p style="margin: 0 0 10px 0;"><strong>Pickup Location:</strong> {leg.pickup_address}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Destination:</strong> {leg.dropoff_address}</p>
+                    <p style="margin: 0 0 10px 0;"><strong>Vehicle Category:</strong> {leg.vehicle_category.value if hasattr(leg.vehicle_category, 'value') else leg.vehicle_category}</p>
+                    {f'<p style="margin: 0 0 10px 0; color: #a78bfa;"><strong>Airport Flight:</strong> {leg.flight_number} (Live Radar Tracked)</p>' if leg.flight_number else ''}
+                    <p style="margin: 0;"><strong>Payment Status:</strong> <span style="color: #4ade80;">PAID / CONFIRMED</span></p>
+                </div>
+                <div style="background-color: #064e3b; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px; margin: 20px 0;">
+                    <p style="margin: 0; color: #a7f3d0; font-size: 13px;">
+                        <strong>Next Step:</strong> Your allocated chauffeur's direct contact details and vehicle registration plate will be dispatched to you <strong>2 hours prior to pickup</strong>.
+                    </p>
+                </div>
+                <p style="color: #94a3b8; font-size: 12px; margin-top: 24px; border-top: 1px solid #334155; padding-top: 16px;">
+                    24/7 Operations Desk: +61 400 112 233 | concierge@crownchauffeurs.com.au
+                </p>
+            </div>
+            """
+            n_email = await NotificationService.record_and_dispatch_email(
+                db, cust_email, "PRE_TRIP_CONFIRMATION_REMINDER_EMAIL", subj, html, booking.id
+            )
+            notifs.append(n_email)
+
+        # Dispatches Real-Time Mobile Alert directly to the Manager's Phone
+        mgr_alert = await NotificationService.dispatch_manager_mobile_alert(
+            db=db,
+            event_type="CUSTOMER_CONFIRMATION_REMINDER",
+            title=f"12-24h Reconfirmation Dispatched #{booking.booking_number}",
+            message=f"Passenger: {cust_name}\nScheduled Pickup: {pickup_str}\nRule: {scheduled_window_label} Scheduled Dispatch",
+            booking_id=booking.id
+        )
+        if mgr_alert:
+            notifs.append(mgr_alert)
+
+        return notifs
+
+    @staticmethod
     async def send_cancellation_circuit_alert(
         db: AsyncSession,
         booking: Booking,
@@ -333,6 +418,14 @@ class NotificationService:
                 db, cust_email, "CUSTOMER_CANCELLATION", subj, html, booking.id
             )
             notifs.append(n_email)
+
+        # Dispatch Ops Cancellation Email
+        ops_subj = f"OPS ALERT: Booking #{booking.booking_number} CANCELLED"
+        ops_html = f"<p>Booking #{booking.booking_number} for {cust_name} has been cancelled. Reason: {reason or 'Requested by client'}</p>"
+        n_ops = await NotificationService.record_and_dispatch_email(
+            db, "ops@crownchauffeurs.com.au", "OPS_CANCELLATION", ops_subj, ops_html, booking.id
+        )
+        notifs.append(n_ops)
 
         # Dispatches Manager Mobile Cancellation Alert
         mgr_notif = await NotificationService.dispatch_manager_mobile_alert(

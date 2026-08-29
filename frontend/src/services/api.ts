@@ -253,3 +253,23 @@ export const notificationsApi = {
     return res.data;
   },
 };
+
+export const automationsApi = {
+  runBalanceChase: async () => {
+    const res = await apiClient.post(`/automations/run-balance-chase`);
+    return res.data;
+  },
+  runPreTripConfirmationReminders: async () => {
+    const res = await apiClient.post(`/automations/run-pre-trip-confirmation-reminders`);
+    return res.data;
+  },
+  runPreTripHandover: async () => {
+    const res = await apiClient.post(`/automations/run-pre-trip-handover`);
+    return res.data;
+  },
+  runAllAutomations: async () => {
+    const res = await apiClient.post(`/automations/run-all-automations`);
+    return res.data;
+  },
+};
+

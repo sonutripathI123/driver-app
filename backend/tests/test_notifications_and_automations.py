@@ -284,5 +284,91 @@ async def test_notifications_api_and_direct_messaging(
     handover_resp = await client.post("/api/v1/automations/run-pre-trip-handover", headers=ops_headers)
     assert handover_resp.status_code == 200
 
+    reminders_resp = await client.post("/api/v1/automations/run-pre-trip-confirmation-reminders", headers=ops_headers)
+    assert reminders_resp.status_code == 200
+
+    all_auto_resp = await client.post("/api/v1/automations/run-all-automations", headers=ops_headers)
+    assert all_auto_resp.status_code == 200
+
     # 5. Customer blocked from outbox log (403 Forbidden)
     assert (await client.get("/api/v1/notifications/", headers=cust_headers)).status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_pre_trip_confirmation_reminders_rules(db_session: AsyncSession):
+    email_gateway.sent_emails.clear()
+    sms_gateway.sent_sms.clear()
+
+    # --- Booking 1: Early Morning Trip (5:00 AM on Oct 15) ---
+    b_early = await BookingService.create_booking(
+        db_session,
+        BookingCreate(
+            customer_name="Early Bird Passenger",
+            customer_email="early@chauffeur-test.com",
+            customer_phone="+61411000111",
+            total_fare=280.0,
+            legs=[
+                BookingLegCreate(
+                    leg_number=1,
+                    pickup_address="100 Flinders St, Melbourne",
+                    dropoff_address="Melbourne Airport T2",
+                    pickup_datetime=datetime(2026, 10, 15, 5, 0, tzinfo=timezone.utc),  # 5:00 AM
+                    vehicle_category=VehicleCategory.SEDAN_EXECUTIVE
+                )
+            ]
+        )
+    )
+
+    # --- Booking 2: Daytime/Evening Trip (6:00 PM on Oct 15) ---
+    b_day = await BookingService.create_booking(
+        db_session,
+        BookingCreate(
+            customer_name="Evening Dinner Passenger",
+            customer_email="evening@chauffeur-test.com",
+            customer_phone="+61422000222",
+            total_fare=350.0,
+            legs=[
+                BookingLegCreate(
+                    leg_number=1,
+                    pickup_address="Crown Towers, Melbourne",
+                    dropoff_address="Yarra Valley Winery",
+                    pickup_datetime=datetime(2026, 10, 15, 18, 0, tzinfo=timezone.utc),  # 6:00 PM (18:00)
+                    vehicle_category=VehicleCategory.SEDAN_EXECUTIVE
+                )
+            ]
+        )
+    )
+    b_early.status = BookingStatus.CONFIRMED
+    b_day.status = BookingStatus.CONFIRMED
+    await db_session.commit()
+
+    email_gateway.sent_emails.clear()
+    sms_gateway.sent_sms.clear()
+
+    # 1. At Oct 14 09:00 AM (Before 10:00 AM on day prior) -> Neither should trigger
+    t_09am = datetime(2026, 10, 14, 9, 0, tzinfo=timezone.utc)
+    res1 = await AutomationService.process_pre_trip_confirmation_reminders(db_session, reference_now=t_09am)
+    assert res1.confirmation_reminders_count == 0
+
+    # 2. At Oct 14 10:30 AM (After 10:00 AM on day prior) -> Early morning trip triggers (10am rule)
+    t_1030am = datetime(2026, 10, 14, 10, 30, tzinfo=timezone.utc)
+    res2 = await AutomationService.process_pre_trip_confirmation_reminders(db_session, reference_now=t_1030am)
+    assert res2.confirmation_reminders_count == 1
+    assert any(e["to"] == "early@chauffeur-test.com" for e in email_gateway.sent_emails)
+
+    # 3. At Oct 14 01:00 PM (13:00) -> Daytime trip (2pm rule) still shouldn't trigger
+    t_01pm = datetime(2026, 10, 14, 13, 0, tzinfo=timezone.utc)
+    res3 = await AutomationService.process_pre_trip_confirmation_reminders(db_session, reference_now=t_01pm)
+    assert res3.confirmation_reminders_count == 0
+
+    # 4. At Oct 14 02:30 PM (14:30) -> Daytime trip triggers (2pm rule)
+    t_0230pm = datetime(2026, 10, 14, 14, 30, tzinfo=timezone.utc)
+    res4 = await AutomationService.process_pre_trip_confirmation_reminders(db_session, reference_now=t_0230pm)
+    assert res4.confirmation_reminders_count == 1
+    assert any(e["to"] == "evening@chauffeur-test.com" for e in email_gateway.sent_emails)
+
+    # 5. Idempotency test: running again at Oct 14 03:00 PM -> Should NOT duplicate
+    t_03pm = datetime(2026, 10, 14, 15, 0, tzinfo=timezone.utc)
+    res5 = await AutomationService.process_pre_trip_confirmation_reminders(db_session, reference_now=t_03pm)
+    assert res5.confirmation_reminders_count == 0
+

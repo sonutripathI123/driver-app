@@ -27,6 +27,7 @@ from app.schemas.dispatch import (
     OperateBoardResponse,
     OperateBoardSummary,
 )
+from app.services.notification_service import NotificationService
 
 
 def utc_now() -> datetime:

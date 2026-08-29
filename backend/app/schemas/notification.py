@@ -33,6 +33,7 @@ class AutomationRunSummary(BaseModel):
     milestone_3d_count: int = 0
     overdue_escalations: int = 0
     driver_handovers_count: int = 0
+    confirmation_reminders_count: int = 0
     total_processed: int = 0
 
 

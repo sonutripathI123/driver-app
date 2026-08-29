@@ -192,6 +192,11 @@ class Booking(Base):
         default=False,
         nullable=False
     )
+    customer_reminder_12_24h_sent: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False
+    )
 
     # Relationships
     customer: Mapped["Customer"] = relationship(
