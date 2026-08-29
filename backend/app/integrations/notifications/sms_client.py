@@ -131,5 +131,33 @@ class SMSGateway:
             "provider": "SANDBOX_GATEWAY"
         }
 
+    async def send_telegram(
+        self,
+        bot_token: str,
+        chat_id: str,
+        message: str
+    ) -> Dict[str, Any]:
+        """
+        Dispatches 100% Free live instant push alert directly to Telegram app on mobile/desktop.
+        """
+        try:
+            url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
+            payload = {
+                "chat_id": chat_id,
+                "text": message,
+                "parse_mode": "HTML"
+            }
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(url, json=payload, timeout=10.0)
+                if resp.status_code == 200:
+                    logger.info(f"[LIVE TELEGRAM ALERT SENT] Chat ID: {chat_id}")
+                    return {"status": "SENT", "provider": "TELEGRAM_LIVE"}
+                else:
+                    logger.error(f"[TELEGRAM ERROR] Status {resp.status_code}: {resp.text}")
+        except Exception as ex:
+            logger.error(f"[TELEGRAM DISPATCH EXCEPTION] {str(ex)}")
+        return {"status": "FAILED", "provider": "TELEGRAM_LIVE"}
+
 
 sms_gateway = SMSGateway()
+

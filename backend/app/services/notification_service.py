@@ -158,14 +158,40 @@ class NotificationService:
         mobile_msg = f"{prefix} {title}\n{message}\nTime: {utc_now().strftime('%H:%M AEST')}"
 
         channel = "WHATSAPP" if settings.whatsapp_enabled else "SMS"
-        notif = await NotificationService.record_and_dispatch_sms(
-            db=db,
-            recipient_phone=settings.manager_phone,
-            template_name=f"MANAGER_{event_type}",
-            message=mobile_msg,
-            booking_id=booking_id,
-            channel=channel
-        )
+        
+        # Dispatch WhatsApp/SMS
+        if settings.whatsapp_enabled:
+            dispatch_res = await sms_gateway.send_whatsapp(settings.manager_phone, mobile_msg)
+            notif = Notification(
+                id=str(uuid.uuid4()),
+                booking_id=booking_id,
+                recipient=settings.manager_phone,
+                channel="WHATSAPP",
+                template_name=f"MANAGER_{event_type}",
+                subject=title,
+                content=mobile_msg,
+                status=dispatch_res.get("status", "SENT").upper(),
+                external_message_id=dispatch_res.get("message_id")
+            )
+            db.add(notif)
+        else:
+            notif = await NotificationService.record_and_dispatch_sms(
+                db=db,
+                recipient_phone=settings.manager_phone,
+                template_name=f"MANAGER_{event_type}",
+                message=mobile_msg,
+                booking_id=booking_id,
+                channel="SMS"
+            )
+
+        # Dispatch Telegram Bot (if token configured)
+        if settings.telegram_bot_token and settings.telegram_chat_id:
+            await sms_gateway.send_telegram(
+                settings.telegram_bot_token,
+                settings.telegram_chat_id,
+                f"<b>{prefix} {title}</b>\n\n{message}"
+            )
+
         return notif
 
     @staticmethod
