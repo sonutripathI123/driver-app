@@ -63,7 +63,10 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     AEROAPI_KEY: Optional[str] = None
-    GOOGLE_MAPS_API_KEY: Optional[str] = None
+    # Web Push VAPID Keys for Background Chrome/Safari Mobile Push
+    VAPID_PUBLIC_KEY: str = "BC83SPc-2FsmI9kDBZWw_JiVvYLhGONl_In6RaUZDwpgWF-JPhjiB9qh3Cn8YgN5VWwVMOFYCGi26mExGvTwyqY"
+    VAPID_PRIVATE_KEY: str = "8aVp7hlfMtpQX5W_S14oeoMZLqD7QG4GA0-8G_Q_r6k"
+    VAPID_CLAIMS_EMAIL: str = "mailto:concierge@crownchauffeurs.com.au"
 
     # Business Defaults
     DEFAULT_CURRENCY: str = "AUD"
@@ -72,3 +75,4 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+

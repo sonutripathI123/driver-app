@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { automationsApi, notificationsApi } from '../services/api';
 import { ManagerNotificationSettings, NotificationItem } from '../types';
-import { triggerNativeNotification, playNotificationChime } from '../utils/notificationSound';
+import { triggerNativeNotification, playNotificationChime, subscribeToWebPush } from '../utils/notificationSound';
 import {
   Bell,
   Smartphone,
@@ -77,9 +77,13 @@ export const NotificationsHubPage: React.FC = () => {
     checkBrowserPermission();
   }, []);
 
-  const checkBrowserPermission = () => {
+  const checkBrowserPermission = async () => {
     if ('Notification' in window) {
-      setBrowserPushAllowed(Notification.permission === 'granted');
+      const isGranted = Notification.permission === 'granted';
+      setBrowserPushAllowed(isGranted);
+      if (isGranted) {
+        await subscribeToWebPush();
+      }
     }
   };
 
@@ -91,9 +95,10 @@ export const NotificationsHubPage: React.FC = () => {
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
       setBrowserPushAllowed(true);
+      await subscribeToWebPush();
       await triggerNativeNotification(
         '🔔 Crown Chauffeurs Alerts Activated',
-        'You will now receive instant push alerts with sound & vibration on this device!'
+        'You will now receive instant push alerts with sound & vibration on this device even when the browser is closed!'
       );
     }
   };

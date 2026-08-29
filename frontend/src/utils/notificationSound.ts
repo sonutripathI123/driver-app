@@ -117,3 +117,51 @@ export const triggerNativeNotification = async (title: string, body: string) => 
     return false;
   }
 };
+
+// Helper to convert base64 VAPID key to Uint8Array
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
+
+// Subscribes browser to Google FCM / Apple APNs for background push when tab is closed
+export const subscribeToWebPush = async (): Promise<boolean> => {
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    return false;
+  }
+  try {
+    let reg = swRegistration;
+    if (!reg) {
+      reg = await navigator.serviceWorker.ready;
+    }
+    const vapidPublicKey = "BC83SPc-2FsmI9kDBZWw_JiVvYLhGONl_In6RaUZDwpgWF-JPhjiB9qh3Cn8YgN5VWwVMOFYCGi26mExGvTwyqY";
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+
+    let subscription = await reg.pushManager.getSubscription();
+    if (!subscription) {
+      subscription = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey,
+      });
+    }
+
+    // Send subscription to backend
+    const apiBase = import.meta.env.VITE_API_URL || '/api/v1';
+    await fetch(`${apiBase}/notifications/webpush-subscription`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(subscription.toJSON()),
+    });
+    return true;
+  } catch (err) {
+    console.warn('Web push background subscription failed:', err);
+    return false;
+  }
+};
+

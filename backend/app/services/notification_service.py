@@ -7,6 +7,7 @@ from sqlalchemy.orm import selectinload
 
 from app.integrations.notifications.email_client import email_gateway
 from app.integrations.notifications.sms_client import sms_gateway
+from app.integrations.notifications.webpush_client import webpush_gateway
 from app.models.booking import Booking
 from app.models.booking_leg import BookingLeg
 from app.models.notification import Notification
@@ -190,6 +191,14 @@ class NotificationService:
                 settings.telegram_bot_token,
                 settings.telegram_chat_id,
                 f"<b>{prefix} {title}</b>\n\n{message}"
+            )
+
+        # Dispatch OS-level Background Web Push (Delivers even when browser is closed)
+        if settings.browser_push_enabled:
+            webpush_gateway.send_push_to_all(
+                title=f"{prefix} {title}",
+                body=message.replace('\n', ' • '),
+                url="/operate"
             )
 
         return notif

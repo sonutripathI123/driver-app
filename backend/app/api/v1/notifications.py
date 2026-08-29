@@ -13,7 +13,22 @@ from app.schemas.notification import (
 )
 from app.services.notification_service import NotificationService
 
+from app.integrations.notifications.webpush_client import webpush_gateway
+
 router = APIRouter(prefix="/notifications", tags=["Notifications & Outbox"])
+
+
+@router.get("/vapid-public-key")
+async def get_vapid_public_key():
+    """Returns the VAPID Public Key for browser push registration."""
+    return {"public_key": webpush_gateway.get_public_key()}
+
+
+@router.post("/webpush-subscription")
+async def register_webpush_subscription(subscription: dict):
+    """Registers a browser push subscription for background OS notifications."""
+    success = webpush_gateway.register_subscription(subscription)
+    return {"status": "registered" if success else "failed"}
 
 
 @router.get("/manager-settings", response_model=ManagerNotificationSettings)
