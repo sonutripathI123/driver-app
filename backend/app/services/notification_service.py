@@ -246,11 +246,15 @@ class NotificationService:
 
         # 4. Dispatches Real-Time Mobile Alert directly to the Manager's Phone
         pickup_addr = booking.legs[0].pickup_address if booking.legs else "Location"
+        dropoff_addr = booking.legs[0].dropoff_address if booking.legs else "Destination"
+        pickup_dt = booking.legs[0].pickup_datetime if booking.legs else None
+        pickup_time_str = pickup_dt.strftime("%d %b %Y at %I:%M %p AEST") if pickup_dt else "Scheduled Time"
+
         manager_alert = await NotificationService.dispatch_manager_mobile_alert(
             db=db,
             event_type="NEW_BOOKING",
             title=f"New Booking #{booking.booking_number}",
-            message=f"Passenger: {cust_name} ({booking.passenger_phone or cust_phone})\nRoute: {pickup_addr}\nFare: ${booking.total_fare:.2f} AUD (Paid: ${booking.paid_amount:.2f})",
+            message=f"Passenger: {cust_name} ({booking.passenger_phone or cust_phone})\n📅 Pickup: {pickup_time_str}\n📍 Route: {pickup_addr} ➔ {dropoff_addr}\n💰 Fare: ${booking.total_fare:.2f} AUD (Paid: ${booking.paid_amount:.2f})\n🚘 Vehicle: {booking.legs[0].vehicle_category if booking.legs else 'SEDAN'}",
             booking_id=booking.id
         )
         if manager_alert:

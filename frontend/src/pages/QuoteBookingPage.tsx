@@ -425,7 +425,9 @@ export const QuoteBookingPage: React.FC = () => {
             {/* Direct WhatsApp Deliver Button */}
             <a
               href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '919305365420'}&text=${encodeURIComponent(
-                `🔔 [NEW BOOKING CONFIRMED]\n\nReference: #${createdBookingNumber}\nPassenger: ${passengerName}\nPickup: ${pickupAddress}\nDropoff: ${dropoffAddress}\nFare: $${fare.gross.toFixed(2)} AUD (PAID)\nVehicle: ${selectedCategory}`
+                `🔔 [NEW BOOKING CONFIRMED] 🚘\n\nReference: #${createdBookingNumber}\nPassenger: ${passengerName}\nPhone: ${passengerPhone}\n📅 Pickup Date: ${pickupDate}\n⏰ Pickup Time: ${pickupTime} AEST\n📍 Pickup: ${pickupAddress}\n🏁 Dropoff: ${dropoffAddress}${
+                  isAirport && flightNumber ? `\n✈️ Flight: ${flightNumber} (Meet & Greet - 60m Free Buffer)` : ''
+                }\n🚘 Vehicle: ${selectedCategory}\n💰 Fare: $${fare.gross.toFixed(2)} AUD (${paymentOption === 'FULL' ? 'PAID IN FULL' : '25% DEPOSIT PAID'})\n\n✅ Thank you for choosing Crown Chauffeurs Melbourne!`
               )}`}
               target="_blank"
               rel="noopener noreferrer"
