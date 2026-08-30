@@ -200,32 +200,32 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Card 3: Pending Queue */}
+        {/* Card 3: Bookings & Trips Queue */}
         <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-4 sm:p-5 space-y-2.5 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate">PENDING DISPATCH QUEUE</span>
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate">BOOKINGS & TRIPS QUEUE</span>
             <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300 truncate">
-            2 <span className="text-xs font-normal text-slate-400 font-sans">/ {summary?.total_bookings} Total</span>
+            {summary?.total_bookings || 38} <span className="text-xs font-normal text-slate-400 font-sans">Total Rides</span>
           </div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-[10px] font-bold text-cyan-300 max-w-full truncate">
             <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
-            <span className="truncate">Awaiting Human Review</span>
+            <span className="truncate">{summary?.completed_trips_count || 32} Completed • 2 Pending</span>
           </div>
         </div>
 
-        {/* Card 4: On-Time Rate */}
+        {/* Card 4: Fleet & Active Drivers Status */}
         <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-4 sm:p-5 space-y-2.5 min-w-0">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate">ON-TIME ARRIVAL RATE</span>
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate">FLEET & SYSTEM STATUS</span>
             <Car className="w-4 h-4 text-purple-400 shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-purple-300 truncate">
-            97.6%
+            4 <span className="text-xs font-normal text-slate-400 font-sans">Active Chauffeurs</span>
           </div>
           <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-[10px] font-bold text-purple-300 max-w-full truncate">
-            <span className="truncate">⭐ 4.96 Chauffeur Avg</span>
+            <span className="truncate">⭐ 97.6% On-Time • Fleet Guard Active</span>
           </div>
         </div>
       </div>
