@@ -5,11 +5,13 @@ import { Plane, Radio, ShieldCheck } from 'lucide-react';
 interface RadarGlobeProps {
   activeFlightsCount?: number;
   activeDriversCount?: number;
+  onOpenFlightModal?: () => void;
 }
 
 export const RadarGlobeCanvas: React.FC<RadarGlobeProps> = ({
-  activeFlightsCount = 8,
-  activeDriversCount = 14,
+  activeFlightsCount = 6,
+  activeDriversCount = 12,
+  onOpenFlightModal,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -147,27 +149,39 @@ export const RadarGlobeCanvas: React.FC<RadarGlobeProps> = ({
         </div>
       </div>
 
-      {/* Live Airspace Radar Stats Bar */}
-      <div className="absolute bottom-3 left-3 right-3 grid grid-cols-2 gap-2 bg-slate-950/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 z-10">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
-            <Plane className="w-3.5 h-3.5" />
+      {/* Live Airspace Radar Stats Bar with Interactive Button */}
+      <div className="absolute bottom-3 left-3 right-3 bg-slate-950/90 backdrop-blur-md p-2.5 rounded-xl border border-slate-800 z-10 space-y-2">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 shrink-0">
+              <Plane className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-slate-400 truncate">Airport Flights</p>
+              <p className="text-xs font-bold text-slate-100 truncate">{activeFlightsCount} In-Bound</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-slate-400 truncate">Airport Flights</p>
-            <p className="text-xs font-bold text-slate-100 truncate">{activeFlightsCount} In-Bound</p>
+
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
+              <Radio className="w-3.5 h-3.5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] text-slate-400 truncate">Telemetry Pings</p>
+              <p className="text-xs font-bold text-amber-300 truncate">{activeDriversCount} Active Drivers</p>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-400 shrink-0">
-            <Radio className="w-3.5 h-3.5" />
-          </div>
-          <div className="min-w-0">
-            <p className="text-[10px] text-slate-400 truncate">Telemetry Pings</p>
-            <p className="text-xs font-bold text-amber-300 truncate">{activeDriversCount} Active Drivers</p>
-          </div>
-        </div>
+        {onOpenFlightModal && (
+          <button
+            onClick={onOpenFlightModal}
+            className="w-full py-1.5 px-3 rounded-lg bg-gradient-to-r from-cyan-500 to-cyan-400 hover:from-cyan-400 hover:to-cyan-300 text-slate-950 font-bold text-[11px] shadow transition-all flex items-center justify-center gap-1.5"
+          >
+            <Plane className="w-3.5 h-3.5" />
+            <span>Check Flight Bookings & Delays ➔</span>
+          </button>
+        )}
       </div>
     </div>
   );

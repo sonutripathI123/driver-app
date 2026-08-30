@@ -72,7 +72,7 @@ interface DriverRosterItem {
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [summary, setSummary] = useState<ExecutiveDashboardSummary | null>(null);
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
-  const [activeModal, setActiveModal] = useState<'REVENUE' | 'PROFIT' | 'BOOKINGS' | 'FLEET' | null>(null);
+  const [activeModal, setActiveModal] = useState<'REVENUE' | 'PROFIT' | 'BOOKINGS' | 'FLEET' | 'FLIGHTS' | null>(null);
   const [bookingFilter, setBookingFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'>('ALL');
   const [driverFilter, setDriverFilter] = useState<'ALL' | 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -593,7 +593,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         {/* Right: 3D Holographic Dispatch Radar & Airspace (5 Cols) */}
         <div className="lg:col-span-5 h-[360px] sm:h-[400px] lg:h-[440px] w-full min-w-0 overflow-hidden">
-          <RadarGlobeCanvas activeFlightsCount={6} activeDriversCount={12} />
+          <RadarGlobeCanvas
+            activeFlightsCount={6}
+            activeDriversCount={12}
+            onOpenFlightModal={() => setActiveModal('FLIGHTS')}
+          />
         </div>
       </div>
 
@@ -1125,6 +1129,281 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         </div>
       )}
+
+      {/* MODAL 5: AIRPORT FLIGHT RADAR & CUSTOMER DELAYS MONITOR */}
+      {activeModal === 'FLIGHTS' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#121A2D] border border-cyan-500/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+            {/* Modal Header */}
+            <div className="p-5 sm:p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                  <Plane className="w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-black text-slate-100">Live Airport Flight Radar & Customer Delays</h2>
+                  <p className="text-xs text-slate-400">Real-time FlightAware radar tracking with customer delay compensation</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setActiveModal(null)}
+                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="p-4 bg-[#0E1526] border-b border-[#1F2E4D] flex flex-col sm:flex-row items-center justify-between gap-3">
+              {/* Filter Tabs */}
+              <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
+                <span className="text-xs font-bold text-slate-400 mr-2 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5" /> Filter:
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+                  ✈️ 6 Active Flights Tracked
+                </span>
+                <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                  🚨 3 Delayed Flights
+                </span>
+              </div>
+
+              {/* Search Bar */}
+              <div className="relative w-full sm:w-64">
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Search passenger, flight, airline..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#121A2D] border border-[#1F2E4D] rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                />
+              </div>
+            </div>
+
+            {/* Flights List */}
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3">
+              {[
+                {
+                  id: 'fl-01',
+                  flightNumber: 'QF400',
+                  airline: 'Qantas Airways',
+                  origin: 'Sydney (SYD)',
+                  destination: 'Melbourne (MEL - Terminal 2)',
+                  passengerName: 'David Warner',
+                  passengerPhone: '+61 411 222 333',
+                  bookingNumber: 'CCM-2026-0881',
+                  scheduledTime: 'Today, 14:30 AEST',
+                  estimatedLanding: 'Today, 14:55 AEST',
+                  delayMinutes: 25,
+                  status: 'DELAYED',
+                  assignedDriver: 'Fernando Alonso',
+                  driverPhone: '+61 433 778 899',
+                  vehiclePlate: 'FA-14-VIC (Mercedes S450)',
+                  gate: 'Terminal 2 Int / Bay 14',
+                  bufferNote: 'Pickup buffer auto-extended by +25 mins. Chauffeur notified ✓',
+                },
+                {
+                  id: 'fl-02',
+                  flightNumber: 'EK408',
+                  airline: 'Emirates Airlines',
+                  origin: 'Dubai (DXB)',
+                  destination: 'Melbourne (MEL - Terminal 2)',
+                  passengerName: 'Elena Rostova (VIP)',
+                  passengerPhone: '+61 488 444 222',
+                  bookingNumber: 'CCM-2026-0880',
+                  scheduledTime: 'Today, 13:00 AEST',
+                  estimatedLanding: 'Today, 13:45 AEST',
+                  delayMinutes: 45,
+                  status: 'DELAYED',
+                  assignedDriver: 'Max Verstappen',
+                  driverPhone: '+61 400 999 111',
+                  vehiclePlate: 'MV-01-VIC (Mercedes S450)',
+                  gate: 'Terminal 2 Gate 9',
+                  bufferNote: 'Heavy headwind delay detected. Chauffeur pickup rescheduled to 14:15 AEST ✓',
+                },
+                {
+                  id: 'fl-03',
+                  flightNumber: 'CX135',
+                  airline: 'Cathay Pacific',
+                  origin: 'Hong Kong (HKG)',
+                  destination: 'Melbourne (MEL - Terminal 2)',
+                  passengerName: 'Dr. Arthur Pendelton',
+                  passengerPhone: '+61 499 111 444',
+                  bookingNumber: 'CCM-2026-0885',
+                  scheduledTime: 'Today, 19:20 AEST',
+                  estimatedLanding: 'Today, 19:35 AEST',
+                  delayMinutes: 15,
+                  status: 'DELAYED',
+                  assignedDriver: 'Oscar Piastri',
+                  driverPhone: '+61 466 222 888',
+                  vehiclePlate: 'OP-81-VIC (Audi A8 L)',
+                  gate: 'Terminal 2 Gate 11',
+                  bufferNote: 'Air traffic holding pattern. Chauffeur dispatch delayed by +15 mins to avoid parking fees.',
+                },
+                {
+                  id: 'fl-04',
+                  flightNumber: 'SQ237',
+                  airline: 'Singapore Airlines',
+                  origin: 'Singapore Changi (SIN)',
+                  destination: 'Melbourne (MEL - Terminal 2)',
+                  passengerName: 'Sir James McCauley',
+                  passengerPhone: '+61 412 888 333',
+                  bookingNumber: 'CCM-2026-0884',
+                  scheduledTime: 'Today, 16:15 AEST',
+                  estimatedLanding: 'Today, 16:15 AEST (On Time)',
+                  delayMinutes: 0,
+                  status: 'ON_TIME',
+                  assignedDriver: 'Daniel Ricciardo',
+                  driverPhone: '+61 411 998 877',
+                  vehiclePlate: 'DR-03-VIC (BMW 740i)',
+                  gate: 'Terminal 2 Gate 4',
+                  bufferNote: 'Flight on schedule. Chauffeur meet-and-greet in holding bay.',
+                },
+                {
+                  id: 'fl-05',
+                  flightNumber: 'Bombardier Global 7500 (VH-VHN)',
+                  airline: 'VIP Private Charter Jet',
+                  origin: 'Sydney Kingsford Smith (SYD)',
+                  destination: 'Essendon Airport Jet Base',
+                  passengerName: 'BHP Executive Delegation',
+                  passengerPhone: '+61 423 777 999',
+                  bookingNumber: 'CCM-2026-0883',
+                  scheduledTime: 'Today, 17:30 AEST',
+                  estimatedLanding: 'Today, 17:30 AEST (On Time)',
+                  delayMinutes: 0,
+                  status: 'ON_TIME',
+                  assignedDriver: 'Lewis Hamilton',
+                  driverPhone: '+61 499 001 122',
+                  vehiclePlate: 'LH-44-VIC (Mercedes V-Class)',
+                  gate: 'Essendon Jet Base Tarmac Gate 1',
+                  bufferNote: 'Direct VIP tarmac security clearance approved.',
+                },
+                {
+                  id: 'fl-06',
+                  flightNumber: 'VA820',
+                  airline: 'Virgin Australia',
+                  origin: 'Brisbane (BNE)',
+                  destination: 'Melbourne (MEL - Terminal 4)',
+                  passengerName: 'Marcus Aurelius Vance',
+                  passengerPhone: '+61 418 555 666',
+                  bookingNumber: 'CCM-2026-0878',
+                  scheduledTime: 'Today, 08:45 AEST',
+                  estimatedLanding: 'Today, 08:35 AEST (Early -10m)',
+                  delayMinutes: -10,
+                  status: 'EARLY',
+                  assignedDriver: 'Charles Leclerc',
+                  driverPhone: '+61 455 123 456',
+                  vehiclePlate: 'CL-16-VIC (Mercedes E300)',
+                  gate: 'Terminal 4 Baggage Carousel 2',
+                  bufferNote: 'Early touchdown. Chauffeur positioned at Terminal 4 pickup lane.',
+                },
+              ]
+                .filter(
+                  (f) =>
+                    searchQuery === '' ||
+                    f.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    f.flightNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    f.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    f.assignedDriver.toLowerCase().includes(searchQuery.toLowerCase())
+                )
+                .map((f) => (
+                  <div
+                    key={f.id}
+                    className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] hover:border-cyan-500/40 transition-all space-y-3"
+                  >
+                    {/* Header Row */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span className="font-mono font-black text-cyan-400 text-sm">✈️ {f.flightNumber}</span>
+                        <span className="text-slate-400 text-xs font-semibold">({f.airline})</span>
+                        <span className="text-slate-500">•</span>
+                        <span className="font-mono font-bold text-amber-400 text-xs">{f.bookingNumber}</span>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {f.delayMinutes > 0 ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">
+                            🚨 LATE (+{f.delayMinutes} MIN DELAY)
+                          </span>
+                        ) : f.delayMinutes < 0 ? (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                            🟢 EARLY (-10 MIN)
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                            🟢 ON TIME (0 MIN DELAY)
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Flight & Passenger Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                      {/* Left: Customer & Flight Schedule */}
+                      <div className="space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-100 text-sm">{f.passengerName}</span>
+                          <span className="text-slate-400 text-xs">({f.passengerPhone})</span>
+                        </div>
+                        <p className="text-slate-300">
+                          🛫 <strong>Route:</strong> {f.origin} ➔ {f.destination}
+                        </p>
+                        <p className="text-slate-300">
+                          📍 <strong>Meeting Bay / Gate:</strong> {f.gate}
+                        </p>
+                        <div className="pt-1 font-mono text-xs">
+                          <span className="text-slate-400">Scheduled Time: {f.scheduledTime}</span>
+                          <br />
+                          <span className={f.delayMinutes > 0 ? 'text-amber-300 font-bold' : 'text-emerald-400 font-bold'}>
+                            Updated Real-Time Landing: {f.estimatedLanding}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right: Assigned Chauffeur & Buffer Action */}
+                      <div className="p-3 rounded-xl bg-[#121A2D] border border-slate-800/80 space-y-2 text-xs">
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Assigned Chauffeur:</span>
+                          <span className="font-bold text-slate-100">{f.assignedDriver}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Driver Phone:</span>
+                          <span className="font-mono text-slate-300">{f.driverPhone}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-slate-400">Vehicle Plate:</span>
+                          <span className="font-mono text-cyan-300">{f.vehiclePlate}</span>
+                        </div>
+                        <div className="pt-1.5 border-t border-slate-800">
+                          <p className="text-[11px] text-emerald-300 font-medium leading-relaxed bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                            🛡️ {f.bufferNote}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
+              <span className="text-xs text-slate-400">Automated Flight Delay Compensation Active</span>
+              <button
+                onClick={() => {
+                  setActiveModal(null);
+                  onNavigate('flights');
+                }}
+                className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+              >
+                <Plane className="w-4 h-4" />
+                <span>Open Full Flight Radar Page ➔</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
+
