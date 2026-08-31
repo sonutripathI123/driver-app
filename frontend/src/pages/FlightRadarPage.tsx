@@ -62,6 +62,34 @@ export const FlightRadarPage: React.FC = () => {
   const [waitMinutes, setWaitMinutes] = useState(75);
   const excessWaitTimeCharge = Math.max(0, waitMinutes - 60) * 1.5;
 
+  // Query live flight data on page mount
+  React.useEffect(() => {
+    const fetchInitial = async () => {
+      try {
+        const data = await flightsApi.lookup('QF400');
+        if (data && data.airline) {
+          const delay = data.delay_minutes || 0;
+          setFlightData({
+            flight_number: 'QF400',
+            airline: data.airline,
+            origin_airport: data.origin_airport || 'SYD (Sydney Kingsford Smith)',
+            origin_gate: 'Gate 4',
+            destination_airport: 'MEL (Melbourne Tullamarine)',
+            terminal: data.terminal || 'T1 Domestic',
+            gate: 'Gate 14',
+            scheduled_arrival: '10:10 AEST',
+            estimated_arrival: delay > 0 ? `10:${10 + delay} AEST` : '10:10 AEST',
+            delay_minutes: delay,
+            status: data.status || (delay > 0 ? 'DELAYED' : 'ON_TIME'),
+            rescheduled_pickup_time: delay > 0 ? `Today at 10:${(10 + delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 10:40 AEST (+30m buffer)',
+            wait_time_policy: '60 minutes complimentary from touchdown',
+          });
+        }
+      } catch (e) {}
+    };
+    fetchInitial();
+  }, []);
+
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanQuery = flightQuery.trim().toUpperCase().replace(/\s+/g, '');
@@ -75,13 +103,14 @@ export const FlightRadarPage: React.FC = () => {
       gate: 'Gate 12',
       origin: 'SYD (Sydney Kingsford Smith)',
       originGate: 'Gate 4',
-      defaultDelay: cleanQuery.includes('400') || cleanQuery.includes('214') || cleanQuery.includes('404') ? 25 : 0,
+      defaultDelay: 0,
     };
 
     try {
       const data = await flightsApi.lookup(cleanQuery);
       if (data && data.airline) {
         const delay = data.delay_minutes || 0;
+        const liveStatus = data.status || (delay > 0 ? 'DELAYED' : 'ON_TIME');
         setFlightData({
           flight_number: cleanQuery,
           airline: data.airline,
@@ -93,8 +122,8 @@ export const FlightRadarPage: React.FC = () => {
           scheduled_arrival: '18:30 AEST',
           estimated_arrival: delay > 0 ? `18:${30 + delay} AEST` : '18:30 AEST',
           delay_minutes: delay,
-          status: delay > 0 ? 'DELAYED' : 'ON_TIME',
-          rescheduled_pickup_time: delay > 0 ? `Today at 19:${(delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 19:00 AEST',
+          status: liveStatus,
+          rescheduled_pickup_time: delay > 0 ? `Today at 19:${(delay + 30) % 60 < 10 ? '0' + (delay + 30) % 60 : (delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 19:00 AEST',
           wait_time_policy: '60 minutes complimentary from touchdown',
         });
         return;
@@ -103,9 +132,9 @@ export const FlightRadarPage: React.FC = () => {
       console.log('Using local aviation intelligence engine');
     }
 
-    // Dynamic resolution
-    const delay = meta.defaultDelay;
-    const status = delay > 0 ? 'DELAYED' : 'ON_TIME';
+    // Dynamic resolution fallback
+    const delay = 0;
+    const status = 'ON_TIME';
 
     setFlightData({
       flight_number: cleanQuery,
@@ -116,10 +145,10 @@ export const FlightRadarPage: React.FC = () => {
       terminal: meta.terminal,
       gate: meta.gate,
       scheduled_arrival: '18:30 AEST',
-      estimated_arrival: delay > 0 ? `18:${30 + delay} AEST` : '18:30 AEST',
+      estimated_arrival: '18:30 AEST',
       delay_minutes: delay,
       status: status,
-      rescheduled_pickup_time: delay > 0 ? `Today at 19:${(delay + 30) % 60 < 10 ? '0' + (delay + 30) % 60 : (delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 19:00 AEST',
+      rescheduled_pickup_time: 'On Schedule at 19:00 AEST (+30m buffer)',
       wait_time_policy: '60 minutes complimentary from touchdown',
     });
   };
