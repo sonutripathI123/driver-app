@@ -46,40 +46,67 @@ export const BookingsOperatePage: React.FC = () => {
   useEffect(() => {
     loadData();
 
-    // Real-time synchronization with Driver App actions (En Route, Arrived, On Board, Complete)
-    const syncWithDriverApp = () => {
-      const liveStatus = localStorage.getItem('crown_active_trip_status');
-      if (liveStatus) {
-        setBookings((prev) =>
-          prev.map((b) => {
-            if (b.booking_number === 'CCM-2026-9901' || b.id === 'b-sahil') {
-              if (b.status !== liveStatus || b.legs[0]?.status !== liveStatus) {
-                return {
-                  ...b,
-                  status: liveStatus as any,
-                  legs: [
-                    {
-                      ...b.legs[0],
-                      status: liveStatus as any,
-                    },
-                  ],
-                };
+    // Real-time synchronization with Driver App actions via central backend + localStorage
+    const syncWithDriverApp = async () => {
+      try {
+        const syncData = await bookingsApi.getLiveSync();
+        const liveStatus = syncData?.status || localStorage.getItem('crown_active_trip_status') || 'EN_ROUTE';
+        if (liveStatus) {
+          setBookings((prev) =>
+            prev.map((b) => {
+              if (b.booking_number === 'CCM-2026-9901' || b.id === 'b-sahil') {
+                if (b.status !== liveStatus || b.legs[0]?.status !== liveStatus) {
+                  return {
+                    ...b,
+                    status: liveStatus as any,
+                    legs: [
+                      {
+                        ...b.legs[0],
+                        status: liveStatus as any,
+                      },
+                    ],
+                  };
+                }
               }
-            }
-            return b;
-          })
+              return b;
+            })
+          );
+        }
+      } catch (e) {
+        const localStatus = localStorage.getItem('crown_active_trip_status') || 'EN_ROUTE';
+        setBookings((prev) =>
+          prev.map((b) =>
+            b.booking_number === 'CCM-2026-9901'
+              ? { ...b, status: localStatus as any, legs: [{ ...b.legs[0], status: localStatus as any }] }
+              : b
+          )
         );
       }
     };
 
     window.addEventListener('storage', syncWithDriverApp);
-    const interval = setInterval(syncWithDriverApp, 1000);
+    const interval = setInterval(syncWithDriverApp, 1500);
 
     return () => {
       window.removeEventListener('storage', syncWithDriverApp);
       clearInterval(interval);
     };
   }, []);
+
+  const handleResetTripStatus = async () => {
+    try {
+      await bookingsApi.resetLiveSync();
+    } catch (e) {}
+    localStorage.setItem('crown_active_trip_status', 'EN_ROUTE');
+    window.dispatchEvent(new Event('storage'));
+    setBookings((prev) =>
+      prev.map((b) =>
+        b.booking_number === 'CCM-2026-9901'
+          ? { ...b, status: 'EN_ROUTE' as any, legs: [{ ...b.legs[0], status: 'EN_ROUTE' as any }] }
+          : b
+      )
+    );
+  };
 
   const loadData = async () => {
     try {
@@ -343,6 +370,16 @@ export const BookingsOperatePage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Reset Test Trip Button */}
+          <button
+            onClick={handleResetTripStatus}
+            className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+            title="Reset Sahil Tripathi trip to EN_ROUTE"
+          >
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span>Reset Test to EN_ROUTE</span>
+          </button>
+
           {/* Refresh Button */}
           <button
             onClick={loadData}

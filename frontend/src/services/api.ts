@@ -60,6 +60,18 @@ export const bookingsApi = {
     });
     return res.data;
   },
+  getLiveSync: async () => {
+    const res = await apiClient.get<any>(`/bookings/live-sync`);
+    return res.data;
+  },
+  updateLiveSync: async (status: string) => {
+    const res = await apiClient.post<any>(`/bookings/live-sync`, { status });
+    return res.data;
+  },
+  resetLiveSync: async () => {
+    const res = await apiClient.post<any>(`/bookings/live-sync/reset`);
+    return res.data;
+  },
 };
 
 export const dispatchApi = {

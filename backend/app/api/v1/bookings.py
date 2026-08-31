@@ -24,6 +24,47 @@ from app.services.booking_service import BookingService
 
 router = APIRouter(prefix="/bookings", tags=["Booking Management"])
 
+# In-memory fast live sync cache for real-time mobile driver <-> desktop admin panel sync
+_LIVE_TRIP_CACHE = {
+    "booking_number": "CCM-2026-9901",
+    "status": "EN_ROUTE",
+    "passenger_name": "Sahil Tripathi",
+    "passenger_phone": "+91 6386154107",
+    "driver_name": "Sonu Tripathi (Live Driver)",
+    "driver_phone": "+91 9305365420",
+    "pickup_address": "Crown Towers, 8 Whiteman St, Southbank VIC 3006",
+    "dropoff_address": "Melbourne Airport Terminal 2 (Tullamarine)",
+    "pickup_time": "Today, 18:30 AEST",
+    "flight_number": "QF400",
+    "driver_payout": 170.0,
+    "last_updated": ""
+}
+
+
+@router.get("/live-sync")
+async def get_live_trip_sync():
+    """Real-time trip status query for cross-device mobile driver <-> desktop admin sync."""
+    return _LIVE_TRIP_CACHE
+
+
+@router.post("/live-sync")
+async def update_live_trip_sync(payload: dict):
+    """Real-time trip status update from Mobile Driver App."""
+    from datetime import datetime
+    new_status = payload.get("status", _LIVE_TRIP_CACHE["status"])
+    _LIVE_TRIP_CACHE["status"] = new_status
+    _LIVE_TRIP_CACHE["last_updated"] = datetime.now().isoformat()
+    return _LIVE_TRIP_CACHE
+
+
+@router.post("/live-sync/reset")
+async def reset_live_trip_sync():
+    """Reset live trip status back to EN_ROUTE for fresh testing."""
+    from datetime import datetime
+    _LIVE_TRIP_CACHE["status"] = "EN_ROUTE"
+    _LIVE_TRIP_CACHE["last_updated"] = datetime.now().isoformat()
+    return _LIVE_TRIP_CACHE
+
 
 @router.post("/", response_model=BookingRead, status_code=status.HTTP_201_CREATED)
 async def create_booking(

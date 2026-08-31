@@ -188,8 +188,25 @@ export const DriverPortalPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Fetch initial live status on page load
+  useEffect(() => {
+    const fetchServerSync = async () => {
+      try {
+        const syncData = await bookingsApi.getLiveSync();
+        if (syncData?.status) {
+          setActiveTrip((prev) => ({ ...prev, status: syncData.status }));
+          localStorage.setItem('crown_active_trip_status', syncData.status);
+        }
+      } catch (e) {}
+    };
+    fetchServerSync();
+  }, []);
+
   // Reset Trip State to EN_ROUTE (For Easy Testing)
-  const handleResetTrip = () => {
+  const handleResetTrip = async () => {
+    try {
+      await bookingsApi.resetLiveSync();
+    } catch (e) {}
     localStorage.setItem('crown_active_trip_status', 'EN_ROUTE');
     window.dispatchEvent(new Event('storage'));
     setActiveTrip((prev) => ({ ...prev, status: 'EN_ROUTE' }));
@@ -204,6 +221,12 @@ export const DriverPortalPage: React.FC = () => {
     // Persist to localStorage for immediate real-time cross-device sync
     localStorage.setItem('crown_active_trip_status', nextStatus);
     window.dispatchEvent(new Event('storage'));
+
+    try {
+      await bookingsApi.updateLiveSync(nextStatus);
+    } catch (e) {
+      console.log('Central backend sync', e);
+    }
 
     if (nextStatus === 'EN_ROUTE') {
       setShiftStatus('ON_TRIP');
