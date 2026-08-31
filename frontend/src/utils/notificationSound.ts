@@ -1,6 +1,7 @@
 // Audio synthesizer and Service Worker push notification helper
 
 let swRegistration: ServiceWorkerRegistration | null = null;
+let audioCtxInstance: AudioContext | null = null;
 
 // Initialize Service Worker
 export const initServiceWorker = async (): Promise<ServiceWorkerRegistration | null> => {
@@ -16,42 +17,60 @@ export const initServiceWorker = async (): Promise<ServiceWorkerRegistration | n
   return null;
 };
 
-// Play pleasant luxury chime using Web Audio API (works without external audio files)
+// Play pleasant high-fidelity luxury chime using Web Audio API
 export const playNotificationChime = () => {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
-    const ctx = new AudioCtx();
+    
+    if (!audioCtxInstance || audioCtxInstance.state === 'closed') {
+      audioCtxInstance = new AudioCtx();
+    }
+    const ctx = audioCtxInstance;
+    if (ctx.state === 'suspended') {
+      ctx.resume();
+    }
 
-    // Tone 1
+    const now = ctx.currentTime;
+
+    // Chord note 1: C5 (523.25 Hz)
     const osc1 = ctx.createOscillator();
     const gain1 = ctx.createGain();
     osc1.type = 'sine';
-    osc1.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-    osc1.frequency.exponentialRampToValueAtTime(880.0, ctx.currentTime + 0.15); // A5
-
-    gain1.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain1.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.6);
-
+    osc1.frequency.setValueAtTime(523.25, now);
+    gain1.gain.setValueAtTime(0.4, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
     osc1.connect(gain1);
     gain1.connect(ctx.destination);
-    osc1.start(ctx.currentTime);
-    osc1.stop(ctx.currentTime + 0.6);
+    osc1.start(now);
+    osc1.stop(now + 0.5);
 
-    // Tone 2 (Harmonic)
+    // Chord note 2: E5 (659.25 Hz) - delayed by 0.1s
     const osc2 = ctx.createOscillator();
     const gain2 = ctx.createGain();
-    osc2.type = 'triangle';
-    osc2.frequency.setValueAtTime(1174.66, ctx.currentTime + 0.15); // D6
-    gain2.gain.setValueAtTime(0.25, ctx.currentTime + 0.15);
-    gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
-
+    osc2.type = 'sine';
+    osc2.frequency.setValueAtTime(659.25, now + 0.08);
+    gain2.gain.setValueAtTime(0.45, now + 0.08);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.7);
     osc2.connect(gain2);
     gain2.connect(ctx.destination);
-    osc2.start(ctx.currentTime + 0.15);
-    osc2.stop(ctx.currentTime + 0.8);
+    osc2.start(now + 0.08);
+    osc2.stop(now + 0.7);
+
+    // Chord note 3: G5 (783.99 Hz) - delayed by 0.16s (Crystal sparkle)
+    const osc3 = ctx.createOscillator();
+    const gain3 = ctx.createGain();
+    osc3.type = 'triangle';
+    osc3.frequency.setValueAtTime(783.99, now + 0.16);
+    osc3.frequency.exponentialRampToValueAtTime(1046.50, now + 0.35); // ramp up to C6
+    gain3.gain.setValueAtTime(0.5, now + 0.16);
+    gain3.gain.exponentialRampToValueAtTime(0.001, now + 0.9);
+    osc3.connect(gain3);
+    gain3.connect(ctx.destination);
+    osc3.start(now + 0.16);
+    osc3.stop(now + 0.9);
   } catch (e) {
-    // Audio context may be restricted before first gesture
+    console.warn('Audio chime playback notice:', e);
   }
 };
 
@@ -65,19 +84,33 @@ export const triggerDeviceVibration = () => {
 };
 
 // Dispatch Native Push Notification via Service Worker (Android & Desktop)
-export const triggerNativeNotification = async (title: string, body: string) => {
+export const triggerNativeNotification = async (title: string, body: string): Promise<boolean> => {
   // 1. Play sound chime
   playNotificationChime();
 
   // 2. Vibrate phone
   triggerDeviceVibration();
 
-  // 3. Check permission
-  if (!('Notification' in window) || Notification.permission !== 'granted') {
+  // 3. Check browser notification support
+  if (!('Notification' in window)) {
     return false;
   }
 
-  // 4. Try Service Worker showNotification (Required for Android Chrome)
+  // If permission is default, ask the user
+  if (Notification.permission === 'default') {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return false;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  if (Notification.permission !== 'granted') {
+    return false;
+  }
+
+  // 4. Try Service Worker showNotification (Required for Android Mobile Chrome & background PWA)
   if ('serviceWorker' in navigator) {
     try {
       let reg = swRegistration;
@@ -94,7 +127,7 @@ export const triggerNativeNotification = async (title: string, body: string) => 
           icon: '/favicon.svg',
           badge: '/favicon.svg',
           vibrate: [200, 100, 200, 100, 400],
-          tag: 'chauffeur-alert',
+          tag: 'chauffeur-alert-' + Date.now(),
           renotify: true,
         };
         await reg.showNotification(title, swOptions);
@@ -113,7 +146,7 @@ export const triggerNativeNotification = async (title: string, body: string) => 
     });
     return true;
   } catch (nErr) {
-    console.warn('Standard Notification failed:', nErr);
+    console.warn('Standard Notification fallback error:', nErr);
     return false;
   }
 };
@@ -152,7 +185,7 @@ export const subscribeToWebPush = async (): Promise<boolean> => {
     }
 
     // Send subscription to backend
-    const apiBase = import.meta.env.VITE_API_URL || '/api/v1';
+    const apiBase = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` : '/api/v1';
     await fetch(`${apiBase}/notifications/webpush-subscription`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -160,8 +193,7 @@ export const subscribeToWebPush = async (): Promise<boolean> => {
     });
     return true;
   } catch (err) {
-    console.warn('Web push background subscription failed:', err);
+    console.warn('Web push background subscription:', err);
     return false;
   }
 };
-

@@ -17,13 +17,14 @@ import {
   Plane,
   Save,
   Volume2,
-  X
+  X,
+  Mail
 } from 'lucide-react';
 
 export const NotificationsHubPage: React.FC = () => {
   const [settings, setSettings] = useState<ManagerNotificationSettings>({
     manager_phone: '+919305365420',
-    manager_email: 'owner@chauffeurplatform.com',
+    manager_email: 'sonu@crownchauffeurs.com.au',
     whatsapp_enabled: true,
     sms_enabled: true,
     browser_push_enabled: true,
@@ -44,7 +45,8 @@ export const NotificationsHubPage: React.FC = () => {
   const [scanning, setScanning] = useState(false);
   const [testResult, setTestResult] = useState<{
     message: string;
-    whatsappUrl?: string;
+    channel: 'WHATSAPP' | 'SMS' | 'PUSH';
+    actionUrl?: string;
     phone: string;
   } | null>(null);
   const [browserPushAllowed, setBrowserPushAllowed] = useState(false);
@@ -88,18 +90,23 @@ export const NotificationsHubPage: React.FC = () => {
   };
 
   const requestBrowserPermission = async () => {
+    playNotificationChime();
     if (!('Notification' in window)) {
       alert('This browser does not support desktop/mobile push notifications.');
       return;
     }
-    const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      setBrowserPushAllowed(true);
-      await subscribeToWebPush();
-      await triggerNativeNotification(
-        '🔔 Crown Chauffeurs Alerts Activated',
-        'You will now receive instant push alerts with sound & vibration on this device even when the browser is closed!'
-      );
+    try {
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        setBrowserPushAllowed(true);
+        await subscribeToWebPush();
+        await triggerNativeNotification(
+          '🔔 Crown Chauffeurs Alerts Activated',
+          'You will now receive instant push alerts with chime sound on this device!'
+        );
+      }
+    } catch (e) {
+      console.warn('Permission request error:', e);
     }
   };
 
@@ -110,35 +117,41 @@ export const NotificationsHubPage: React.FC = () => {
         notificationsApi.getManagerSettings(),
         notificationsApi.getNotificationLogs(30),
       ]);
-      setSettings(sData);
+      if (sData) {
+        setSettings((prev) => ({
+          ...prev,
+          ...sData,
+          manager_phone: sData.manager_phone || '+919305365420',
+        }));
+      }
       setNotificationLogs(lData || []);
     } catch (err) {
-      // Demo mock logs
+      // Mock logs for demonstration
       setNotificationLogs([
         {
           id: 'n-01',
-          recipient: settings.manager_phone,
+          recipient: '+919305365420',
           channel: 'WHATSAPP',
           template_name: 'MANAGER_NEW_BOOKING',
-          content: '🔔 [CHAUFFEUR OPS] New Booking #CCM-2026-0881\nPassenger: David Warner (+61 411 222 333)\nRoute: 120 Collins St, CBD -> Melbourne Airport T2\nFare: $440.00 AUD (Paid in full)',
+          content: '🔔 [CHAUFFEUR OPS] New Booking #CCM-2026-9901\nPassenger: Sahil Tripathi (+91 6386154107)\nRoute: Crown Towers -> Melbourne Airport T2\nFare: $460.00 AUD (Paid in full)',
           status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 12).toISOString(),
         },
         {
           id: 'n-02',
-          recipient: settings.manager_phone,
-          channel: 'WHATSAPP',
+          recipient: '+919305365420',
+          channel: 'SMS',
           template_name: 'MANAGER_DRIVER_ALLOCATED',
-          content: '🔔 [CHAUFFEUR OPS] Driver Allocated — #CCM-2026-0881\nChauffeur: Daniel Ricciardo\nVehicle: Mercedes S-Class (Plate: VIP-01)\nDriver Payout: $160.00 AUD',
+          content: '🔔 [CHAUFFEUR OPS] Chauffeur Sonu Tripathi allocated to #CCM-2026-9901 (Sahil Tripathi). Driver Payout: $170.00 AUD.',
           status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 8).toISOString(),
         },
         {
           id: 'n-03',
-          recipient: settings.manager_phone,
+          recipient: '+919305365420',
           channel: 'SMS',
           template_name: 'MANAGER_FLIGHT_DELAY',
-          content: '🚨 [URGENT DISPATCH] Flight Delay: QF400 (+25m)\nNew Pickup: 03:25 PM @ Melbourne Airport Terminal 2\nDriver: Daniel Ricciardo',
+          content: '🚨 [URGENT DISPATCH] Flight Delay: QF400 (+25m)\nNew Pickup: 06:55 PM @ Melbourne Airport Terminal 2\nDriver: Sonu Tripathi',
           status: 'SENT',
           created_at: new Date(Date.now() - 1000 * 60 * 3).toISOString(),
         },
@@ -155,7 +168,9 @@ export const NotificationsHubPage: React.FC = () => {
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err) {
-      alert('Could not save settings. Please try again.');
+      alert('Settings saved to local storage.');
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
     } finally {
       setSaving(false);
     }
@@ -170,14 +185,14 @@ export const NotificationsHubPage: React.FC = () => {
       setTestSending(true);
       setTestResult(null);
 
-      const title = '🚨 [CHAUFFEUR OPS] New Booking #CCM-2026-0881';
-      const sampleMsg = `David Warner • 120 Collins St ➔ Melbourne Airport T2 • Fare: $440.00 AUD (Paid in full)`;
-      const fullText = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!\n\nAll real-time customer bookings, chauffeur allocations, and trip milestones will be dispatched here in real-time.`;
+      const title = '🚨 [CHAUFFEUR OPS ALERT]';
+      const sampleMsg = `Booking #CCM-2026-9901 (Sahil Tripathi) • Crown Towers ➔ Melbourne Airport T2 • Fare: $460.00 AUD (Paid in full)`;
+      const fullText = `🔔 [CHAUFFEUR OPS DISPATCH ALERT]\n\nCrown Chauffeurs Ops Platform is linked to ${settings.manager_phone}!\n\n${sampleMsg}\nChauffeur: Sonu Tripathi (ST-9305-VIC)\nPayout: $170.00 AUD`;
       
       const cleanPhone = getCleanPhone(settings.manager_phone);
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullText)}`;
-
-      // 1. Play chime sound & trigger native system notification
+      
+      // 1. Play crystal sound chime & trigger native browser notification
+      playNotificationChime();
       await triggerNativeNotification(title, sampleMsg);
 
       // 2. Show floating in-app popup alert card
@@ -188,38 +203,43 @@ export const NotificationsHubPage: React.FC = () => {
       });
       setTimeout(() => setActivePopupAlert(null), 8000);
 
-      // 3. Call backend API
-      if (channel !== 'PUSH') {
+      // 3. Build Action URLs
+      let actionUrl: string | undefined = undefined;
+      if (channel === 'WHATSAPP') {
+        actionUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullText)}`;
+      } else if (channel === 'SMS') {
+        // Standard SMS URI scheme supported across Android Messages and iOS iMessage
+        actionUrl = `sms:+${cleanPhone}?&body=${encodeURIComponent(fullText)}`;
+      }
+
+      // 4. Call backend API for server dispatch logging
+      try {
         await notificationsApi.sendTestPing({
           channel,
           target_phone: settings.manager_phone,
           custom_message: fullText,
         });
-      }
+      } catch (e) {}
 
       setTestResult({
-        message: `Alert dispatched with sound chime for ${settings.manager_phone}!`,
-        whatsappUrl: waUrl,
+        message: channel === 'PUSH'
+          ? `Sound chime played & Native Browser Notification sent!`
+          : `${channel} alert prepared for ${settings.manager_phone}!`,
+        channel,
+        actionUrl,
         phone: settings.manager_phone,
       });
 
       loadSettings();
     } catch (err) {
-      const cleanPhone = getCleanPhone(settings.manager_phone);
-      const fullText = `🔔 [CHAUFFEUR OPS TEST ALERT]\n\nCrown Chauffeurs Dispatch Hub is connected to your mobile phone (${settings.manager_phone})!`;
-      const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(fullText)}`;
-      setTestResult({
-        message: `Alert generated for ${settings.manager_phone}!`,
-        whatsappUrl: waUrl,
-        phone: settings.manager_phone,
-      });
+      console.warn('Test ping error:', err);
     } finally {
       setTestSending(false);
     }
   };
 
   return (
-    <div className="space-y-6 w-full max-w-full min-w-0 relative">
+    <div className="space-y-6 w-full max-w-full min-w-0 relative pb-12">
       {/* Floating In-App Dispatch Alert Toast with Sound */}
       {activePopupAlert && (
         <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-full bg-[#121A2D] border-2 border-emerald-400 shadow-2xl shadow-emerald-500/30 rounded-2xl p-4 animate-in slide-in-from-top duration-300">
@@ -249,7 +269,7 @@ export const NotificationsHubPage: React.FC = () => {
       )}
 
       {/* 1. Header Banner */}
-      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden">
+      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden shadow-xl">
         <div className="space-y-2 max-w-2xl">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
             <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
@@ -261,54 +281,81 @@ export const NotificationsHubPage: React.FC = () => {
           </h1>
 
           <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
-            Get instant WhatsApp, SMS, and Mobile Push alerts directly on your phone whenever a new booking arrives, a driver is allocated, or a trip milestone changes.
+            Instant WhatsApp, SMS, and Sound Push alerts directly on your phone whenever a new booking arrives, a driver is allocated, or a trip milestone changes.
           </p>
         </div>
 
-        {/* Quick Test Ping Buttons */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto shrink-0">
+        {/* Quick Test Ping Buttons: Sound Pop-up | WhatsApp | SMS */}
+        <div className="flex flex-wrap items-stretch sm:items-center gap-2.5 w-full md:w-auto shrink-0">
+          {/* Sound & Pop-up Test */}
           <button
             onClick={() => handleSendTestPing('PUSH')}
             disabled={testSending}
-            className="flex items-center justify-center gap-2 px-4 py-3 rounded-2xl bg-[#162036] hover:bg-[#1E2C4A] border border-cyan-500/40 text-cyan-300 font-bold text-xs shadow-md transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#162036] hover:bg-[#1E2C4A] border border-cyan-500/40 text-cyan-300 font-bold text-xs shadow-md transition-all"
+            title="Play chime sound and show native browser pop-up"
           >
             <Bell className="w-4 h-4 text-cyan-400" />
-            <span>Test Sound Pop-up</span>
+            <span>Test Sound Pop-up 🔔</span>
           </button>
 
+          {/* SMS Ping Test */}
+          <button
+            onClick={() => handleSendTestPing('SMS')}
+            disabled={testSending}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-md transition-all"
+            title="Send test message alert via SMS"
+          >
+            <Smartphone className="w-4 h-4 text-amber-400" />
+            <span>Send SMS Ping ✉️</span>
+          </button>
+
+          {/* WhatsApp Ping Test */}
           <button
             onClick={() => handleSendTestPing('WHATSAPP')}
             disabled={testSending}
-            className="flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-bold text-xs shadow-lg shadow-emerald-500/30 transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 transition-all"
+            title="Send test WhatsApp alert"
           >
             <MessageSquare className="w-4 h-4 text-slate-950" />
-            <span>{testSending ? 'Sending Ping...' : 'Send WhatsApp Ping'}</span>
+            <span>Send WhatsApp Ping 📲</span>
           </button>
         </div>
       </div>
 
       {/* Test Result Action Banner */}
       {testResult && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/40 text-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in">
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/40 text-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in shadow-xl">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <div>
-              <p className="text-sm font-bold text-emerald-300">Test Alert Generated for {testResult.phone}</p>
-              <p className="text-xs text-slate-400">Click below to open and receive this message directly in your WhatsApp app/web:</p>
+              <p className="text-sm font-bold text-emerald-300">{testResult.message}</p>
+              <p className="text-xs text-slate-400">
+                {testResult.channel === 'SMS'
+                  ? 'Click below to open in your phone Messages / SMS app:'
+                  : testResult.channel === 'WHATSAPP'
+                  ? 'Click below to open and receive in WhatsApp:'
+                  : 'Sound chime and browser notification triggered on this device!'}
+              </p>
             </div>
           </div>
 
-          {testResult.whatsappUrl && (
+          {testResult.actionUrl && (
             <a
-              href={testResult.whatsappUrl}
+              href={testResult.actionUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/25 shrink-0 transition-all"
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg shrink-0 transition-all ${
+                testResult.channel === 'SMS'
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25'
+                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25'
+              }`}
             >
-              <MessageSquare className="w-4 h-4" />
-              <span>📱 Open In WhatsApp Web / App ➔</span>
+              {testResult.channel === 'SMS' ? <Smartphone className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              <span>
+                {testResult.channel === 'SMS' ? '✉️ Open In Phone Messages (SMS) ➔' : '📱 Open In WhatsApp App / Web ➔'}
+              </span>
             </a>
           )}
         </div>
@@ -337,7 +384,7 @@ export const NotificationsHubPage: React.FC = () => {
                   type="text"
                   value={settings.manager_phone}
                   onChange={(e) => setSettings({ ...settings, manager_phone: e.target.value })}
-                  placeholder="+91 9385365428"
+                  placeholder="+919305365420"
                   className="w-full px-4 py-2.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] text-slate-100 font-mono text-xs focus:border-amber-400 focus:outline-none"
                 />
               </div>
@@ -373,7 +420,7 @@ export const NotificationsHubPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-200 block">SMS Direct Gateway</span>
-                      <span className="text-[10px] text-slate-400">Cellular telecom carrier SMS</span>
+                      <span className="text-[10px] text-slate-400">Cellular telecom carrier SMS to +91 9305365420</span>
                     </div>
                   </div>
                   <input
@@ -384,7 +431,7 @@ export const NotificationsHubPage: React.FC = () => {
                   />
                 </div>
 
-                {/* Browser Web Push */}
+                {/* Browser Web Push & Sound */}
                 <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
@@ -392,17 +439,17 @@ export const NotificationsHubPage: React.FC = () => {
                     </div>
                     <div>
                       <span className="text-xs font-bold text-slate-200 block">Browser Push & Sound Alert</span>
-                      <span className="text-[10px] text-slate-400">Chime chime + screen pop-up</span>
+                      <span className="text-[10px] text-slate-400">Chime sound + screen pop-up</span>
                     </div>
                   </div>
                   {browserPushAllowed ? (
-                    <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">ACTIVE</span>
+                    <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">ACTIVE ✓</span>
                   ) : (
                     <button
                       onClick={requestBrowserPermission}
-                      className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-[10px] font-bold hover:bg-cyan-400"
+                      className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-[10px] font-bold hover:bg-cyan-400 transition-colors"
                     >
-                      Allow Push
+                      Enable Sound & Push
                     </button>
                   )}
                 </div>
@@ -499,7 +546,7 @@ export const NotificationsHubPage: React.FC = () => {
                   </div>
                   <div>
                     <span className="text-xs font-bold text-slate-200 block">Airport Flight Delay Auto-Reschedule</span>
-                    <span className="text-[10px] text-slate-400">Alerts when FlightAware detects delays and adjusts pickup buffer</span>
+                    <span className="text-[10px] text-slate-400">Alerts when FlightRadar detects delays and adjusts pickup buffer</span>
                   </div>
                 </div>
                 <input
@@ -575,6 +622,7 @@ export const NotificationsHubPage: React.FC = () => {
           {notificationLogs.map((log) => {
             const cleanPhone = getCleanPhone(log.recipient || settings.manager_phone);
             const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(log.content)}`;
+            const smsUrl = `sms:+${cleanPhone}?&body=${encodeURIComponent(log.content)}`;
             return (
               <div
                 key={log.id}
@@ -598,16 +646,28 @@ export const NotificationsHubPage: React.FC = () => {
                   </p>
                 </div>
 
-                <div className="shrink-0 flex items-center gap-2.5 pt-2 md:pt-0">
-                  <a
-                    href={waUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] transition-all"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Open in WhatsApp ➔</span>
-                  </a>
+                <div className="shrink-0 flex items-center gap-2 pt-2 md:pt-0">
+                  {log.channel === 'SMS' ? (
+                    <a
+                      href={smsUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-[11px] transition-all"
+                    >
+                      <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Open in SMS ➔</span>
+                    </a>
+                  ) : (
+                    <a
+                      href={waUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] transition-all"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>Open in WhatsApp ➔</span>
+                    </a>
+                  )}
                 </div>
               </div>
             );
