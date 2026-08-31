@@ -80,6 +80,25 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   // Sample detailed booking audit records
   const sampleBookings: DetailedBookingItem[] = [
     {
+      id: 'b-sahil',
+      bookingNumber: 'CCM-2026-9901',
+      passengerName: 'Sahil Tripathi',
+      passengerPhone: '+91 6386154107',
+      passengerEmail: 'sahil.tripathi@gmail.com',
+      pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
+      dropoffAddress: 'Melbourne Airport Terminal 2 (Tullamarine)',
+      pickupTime: 'Today, 18:30 AEST',
+      vehicleCategory: 'Executive Sedan',
+      totalFare: 460.0,
+      paymentStatus: 'PAID_IN_FULL',
+      driverName: 'Sonu Tripathi (Live Driver)',
+      driverPhone: '+91 9305365420',
+      vehiclePlate: 'ST-9305-VIC (Mercedes S450)',
+      driverPayout: 170.0,
+      netProfit: 248.18,
+      status: (localStorage.getItem('crown_active_trip_status') as any) || 'ALLOCATED',
+    },
+    {
       id: 'b-01',
       bookingNumber: 'CCM-2026-0881',
       passengerName: 'David Warner',
@@ -198,6 +217,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
   // Sample live driver roster
   const sampleDrivers: DriverRosterItem[] = [
+    {
+      id: 'drv-sonu',
+      name: 'Sonu Tripathi (Live Driver)',
+      phone: '+91 9305365420',
+      email: 'sonu@crownchauffeurs.com.au',
+      vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)',
+      plate: 'ST-9305-VIC',
+      status: 'ON_TRIP',
+      currentBookingNumber: 'CCM-2026-9901',
+      currentRoute: 'Crown Towers, Southbank ➔ Melbourne Airport T2',
+      todayCompletedTrips: 2,
+      todayEarnings: 340.0,
+      rating: 5.0,
+      onTimeRate: 100,
+    },
     {
       id: 'drv-01',
       name: 'Daniel Ricciardo',

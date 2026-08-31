@@ -45,6 +45,40 @@ export const BookingsOperatePage: React.FC = () => {
 
   useEffect(() => {
     loadData();
+
+    // Real-time synchronization with Driver App actions (En Route, Arrived, On Board, Complete)
+    const syncWithDriverApp = () => {
+      const liveStatus = localStorage.getItem('crown_active_trip_status');
+      if (liveStatus) {
+        setBookings((prev) =>
+          prev.map((b) => {
+            if (b.booking_number === 'CCM-2026-9901' || b.id === 'b-sahil') {
+              if (b.status !== liveStatus || b.legs[0]?.status !== liveStatus) {
+                return {
+                  ...b,
+                  status: liveStatus as any,
+                  legs: [
+                    {
+                      ...b.legs[0],
+                      status: liveStatus as any,
+                    },
+                  ],
+                };
+              }
+            }
+            return b;
+          })
+        );
+      }
+    };
+
+    window.addEventListener('storage', syncWithDriverApp);
+    const interval = setInterval(syncWithDriverApp, 1000);
+
+    return () => {
+      window.removeEventListener('storage', syncWithDriverApp);
+      clearInterval(interval);
+    };
   }, []);
 
   const loadData = async () => {
@@ -69,7 +103,44 @@ export const BookingsOperatePage: React.FC = () => {
   };
 
   const injectDemoData = () => {
+    const savedStatus = (localStorage.getItem('crown_active_trip_status') as any) || 'ALLOCATED';
+
     const demoBookings: Booking[] = [
+      {
+        id: 'b-sahil',
+        booking_number: 'CCM-2026-9901',
+        source: 'WEBSITE',
+        status: savedStatus,
+        payment_status: 'PAID_IN_FULL',
+        currency: 'AUD',
+        total_fare: 460.0,
+        deposit_required: 460.0,
+        paid_amount: 460.0,
+        balance_amount: 0.0,
+        passenger_name: 'Sahil Tripathi',
+        passenger_phone: '+91 6386154107',
+        created_at: new Date().toISOString(),
+        legs: [
+          {
+            id: 'l-sahil',
+            booking_id: 'b-sahil',
+            leg_number: 1,
+            status: savedStatus,
+            pickup_address: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
+            dropoff_address: 'Melbourne Airport Terminal 2 (Tullamarine)',
+            pickup_datetime: new Date(Date.now() + 3600000 * 2).toISOString(),
+            is_airport_pickup: true,
+            flight_number: 'QF400',
+            flight_delay_minutes: 0,
+            wait_time_minutes: 0,
+            wait_time_charge: 0,
+            vehicle_category: 'SEDAN_EXECUTIVE',
+            driver_id: 'drv-sonu',
+            allocation_cost: 170.0,
+            partner_payout_amount: 0,
+          },
+        ],
+      },
       {
         id: 'b-01',
         booking_number: 'CCM-2026-0881',
