@@ -15,6 +15,10 @@ import { PartnersFleetPage } from './pages/PartnersFleetPage';
 export const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<NavTab>('dashboard');
 
+  // Check if opened directly by a driver via WhatsApp/SMS link (e.g. /driver or ?view=driver)
+  const isDirectDriverLink =
+    window.location.pathname.includes('/driver') || window.location.search.includes('view=driver');
+
   const renderActivePage = () => {
     switch (activeTab) {
       case 'dashboard':
@@ -39,6 +43,16 @@ export const App: React.FC = () => {
         return <DashboardPage onNavigate={setActiveTab} />;
     }
   };
+
+  if (isDirectDriverLink) {
+    return (
+      <AuthProvider>
+        <div className="min-h-screen bg-[#070B14] text-slate-100 p-3 sm:p-6 flex flex-col justify-start">
+          <DriverPortalPage />
+        </div>
+      </AuthProvider>
+    );
+  }
 
   return (
     <AuthProvider>
