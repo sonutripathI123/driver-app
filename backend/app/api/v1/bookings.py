@@ -40,6 +40,116 @@ async def create_booking(
     )
 
 
+@router.post("/webhook", status_code=status.HTTP_200_OK)
+async def ingest_external_website_webhook(
+    payload: dict,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Universal Ingestion Webhook for external websites (WordPress Elementor, Contact Form 7, WPForms, etc.).
+    Automatically parses multi-site form submissions from:
+    - https://corporatecarsmelbourne.com.au/
+    - https://melbourneairportchauffeurservice.com.au/
+    - https://www.opalchauffeurs.com.au/
+    """
+    from datetime import datetime, timedelta
+    from app.schemas.booking import BookingCreate, BookingLegCreate
+    from app.models.enums import BookingSource, VehicleCategory
+
+    # Extract raw fields (supports flat JSON, Elementor form structure, and nested fields)
+    raw = payload
+    form_data = payload.get("fields", payload.get("form_fields", payload.get("data", payload)))
+    
+    # Helper to extract value from diverse form naming conventions
+    def extract_val(keys: list, default: str = "") -> str:
+        for k in keys:
+            if isinstance(form_data, dict):
+                v = form_data.get(k)
+                if isinstance(v, dict) and "value" in v:
+                    return str(v["value"]).strip()
+                if v is not None:
+                    return str(v).strip()
+            if isinstance(raw, dict):
+                v = raw.get(k)
+                if v is not None:
+                    return str(v).strip()
+        return default
+
+    passenger_name = extract_val(["name", "passenger_name", "customer_name", "your-name", "first_name", "full_name"], "VIP Passenger")
+    passenger_phone = extract_val(["phone", "passenger_phone", "customer_phone", "your-tel", "mobile", "contact_number"], "+61 400 000 000")
+    passenger_email = extract_val(["email", "passenger_email", "customer_email", "your-email"], "concierge@crownchauffeurs.com.au")
+    pickup_address = extract_val(["pickup", "pickup_address", "from", "origin", "pickup_location"], "Melbourne CBD")
+    dropoff_address = extract_val(["dropoff", "dropoff_address", "to", "destination", "dropoff_location"], "Melbourne Airport Terminal 2")
+    pickup_date = extract_val(["date", "pickup_date", "journey_date", "service_date"], datetime.now().strftime("%Y-%m-%d"))
+    pickup_time = extract_val(["time", "pickup_time", "journey_time"], "09:00")
+    flight_number = extract_val(["flight", "flight_number", "flight_no", "flight_details"], "")
+    vehicle_raw = extract_val(["vehicle", "vehicle_category", "car_type", "car_model", "fleet_type"], "SEDAN_PREMIUM").upper()
+    source_url = extract_val(["source", "site_url", "referrer", "website", "url"], "WEBSITE").lower()
+
+    # Determine origin source
+    if "corporatecarsmelbourne" in source_url:
+        booking_source = BookingSource.WEBSITE
+    elif "melbourneairport" in source_url:
+        booking_source = BookingSource.WEBSITE
+    elif "opalchauffeurs" in source_url:
+        booking_source = BookingSource.WEBSITE
+    else:
+        booking_source = BookingSource.WEBSITE
+
+    # Map vehicle category
+    if "EXECUTIVE" in vehicle_raw or "S-CLASS" in vehicle_raw or "BMW" in vehicle_raw:
+        category = VehicleCategory.SEDAN_EXECUTIVE
+    elif "SUV" in vehicle_raw or "Q7" in vehicle_raw:
+        category = VehicleCategory.SUV_PREMIUM
+    elif "VAN" in vehicle_raw or "V-CLASS" in vehicle_raw or "PEOPLE" in vehicle_raw:
+        category = VehicleCategory.PEOPLE_MOVER
+    elif "SPRINTER" in vehicle_raw or "MINIBUS" in vehicle_raw or "BUS" in vehicle_raw:
+        category = VehicleCategory.MINIBUS
+    else:
+        category = VehicleCategory.SEDAN_PREMIUM
+
+    # Calculate ISO pickup datetime
+    try:
+        dt_str = f"{pickup_date} {pickup_time}"
+        dt = datetime.strptime(dt_str, "%Y-%m-%d %H:%M")
+    except Exception:
+        dt = datetime.now() + timedelta(hours=3)
+
+    is_airport = bool(flight_number) or "airport" in pickup_address.lower() or "airport" in dropoff_address.lower()
+
+    booking_in = BookingCreate(
+        source=booking_source,
+        currency="AUD",
+        total_fare=440.0 if category == VehicleCategory.SEDAN_EXECUTIVE else 360.0,
+        deposit_required=440.0 if category == VehicleCategory.SEDAN_EXECUTIVE else 360.0,
+        paid_amount=0.0,
+        customer_name=passenger_name,
+        customer_phone=passenger_phone,
+        customer_email=passenger_email,
+        legs=[
+            BookingLegCreate(
+                leg_number=1,
+                pickup_address=pickup_address,
+                dropoff_address=dropoff_address,
+                pickup_datetime=dt,
+                is_airport_pickup=is_airport,
+                flight_number=flight_number if flight_number else None,
+                vehicle_category=category
+            )
+        ]
+    )
+
+    created = await BookingService.create_booking(db=db, booking_in=booking_in)
+    return {
+        "status": "success",
+        "message": "Booking received and ingested into Master Operations Hub",
+        "booking_number": created.booking_number,
+        "booking_id": created.id,
+        "passenger": passenger_name,
+        "pickup_datetime": dt.isoformat()
+    }
+
+
 @router.get("/", response_model=BookingListResponse, dependencies=[Depends(require_staff)])
 async def list_bookings(
     status_filter: Optional[BookingStatus] = Query(None, alias="status", description="Filter by booking status"),
