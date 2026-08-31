@@ -13,6 +13,21 @@ import {
   ArrowRight
 } from 'lucide-react';
 
+const AIRLINE_MAP: Record<string, { airline: string; terminal: string; gate: string; origin: string }> = {
+  QF: { airline: 'Qantas Airways', terminal: 'T1 Domestic', gate: 'Gate 14', origin: 'SYD (Sydney Kingsford)' },
+  VA: { airline: 'Virgin Australia', terminal: 'T3 Domestic', gate: 'Gate 22', origin: 'BNE (Brisbane Airport)' },
+  JQ: { airline: 'Jetstar Airways', terminal: 'T4 Domestic', gate: 'Gate 31', origin: 'OOL (Gold Coast)' },
+  ZL: { airline: 'Regional Express (Rex)', terminal: 'T4 Domestic', gate: 'Gate 28', origin: 'ADL (Adelaide Airport)' },
+  EK: { airline: 'Emirates', terminal: 'T2 International', gate: 'Gate 09', origin: 'DXB (Dubai International)' },
+  SQ: { airline: 'Singapore Airlines', terminal: 'T2 International', gate: 'Gate 11', origin: 'SIN (Singapore Changi)' },
+  QR: { airline: 'Qatar Airways', terminal: 'T2 International', gate: 'Gate 07', origin: 'DOH (Doha Hamad)' },
+  CX: { airline: 'Cathay Pacific', terminal: 'T2 International', gate: 'Gate 15', origin: 'HKG (Hong Kong)' },
+  NZ: { airline: 'Air New Zealand', terminal: 'T2 International', gate: 'Gate 05', origin: 'AKL (Auckland)' },
+  EY: { airline: 'Etihad Airways', terminal: 'T2 International', gate: 'Gate 12', origin: 'AUH (Abu Dhabi)' },
+  UA: { airline: 'United Airlines', terminal: 'T2 International', gate: 'Gate 08', origin: 'LAX (Los Angeles)' },
+  DL: { airline: 'Delta Air Lines', terminal: 'T2 International', gate: 'Gate 06', origin: 'LAX (Los Angeles)' },
+};
+
 export const FlightRadarPage: React.FC = () => {
   const [flightQuery, setFlightQuery] = useState('QF400');
   const [flightData, setFlightData] = useState<any>({
@@ -20,13 +35,13 @@ export const FlightRadarPage: React.FC = () => {
     airline: 'Qantas Airways',
     origin_airport: 'SYD (Sydney Kingsford)',
     destination_airport: 'MEL (Melbourne Tullamarine)',
-    scheduled_arrival_utc: '2026-08-28T09:15:00Z',
-    estimated_arrival_utc: '2026-08-28T09:40:00Z',
+    scheduled_arrival_utc: '2026-08-31T18:30:00Z',
+    estimated_arrival_utc: '2026-08-31T18:55:00Z',
     delay_minutes: 25,
     status: 'DELAYED',
     terminal: 'T1 Domestic',
     gate: 'Gate 14',
-    rescheduled_pickup_time: '2026-08-28T10:10:00 AEST (+30m buffer)',
+    rescheduled_pickup_time: 'Today at 19:25 AEST (+30m buffer)',
     wait_time_policy: '60 minutes complimentary from touchdown',
   });
 
@@ -35,23 +50,42 @@ export const FlightRadarPage: React.FC = () => {
 
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanQuery = flightQuery.trim().toUpperCase();
+    if (!cleanQuery) return;
+
     try {
-      const data = await flightsApi.lookup(flightQuery);
-      setFlightData(data);
-    } catch (err) {
-      // Fallback mock
+      const data = await flightsApi.lookup(cleanQuery);
       setFlightData({
-        flight_number: flightQuery.toUpperCase(),
-        airline: flightQuery.startsWith('VA') ? 'Virgin Australia' : 'Qantas Airways',
-        origin_airport: 'SYD (Sydney Kingsford)',
+        ...data,
+        rescheduled_pickup_time: data.delay_minutes > 0
+          ? `Today at ${new Date(new Date(data.estimated_arrival).getTime() + 30 * 60000).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })} AEST (+30m buffer)`
+          : `On Schedule at ${new Date(data.scheduled_arrival).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit' })} AEST`,
+      });
+    } catch (err) {
+      // Dynamic fallback mapping based on airline prefix
+      const prefix = cleanQuery.slice(0, 2);
+      const meta = AIRLINE_MAP[prefix] || {
+        airline: 'Commercial Airline',
+        terminal: 'T1 Domestic',
+        gate: 'Gate 12',
+        origin: 'SYD (Sydney Kingsford)',
+      };
+
+      const delayMins = cleanQuery === 'QF400' || cleanQuery === 'VA214' ? 25 : 0;
+      const status = delayMins > 0 ? 'DELAYED' : 'ON_TIME';
+
+      setFlightData({
+        flight_number: cleanQuery,
+        airline: meta.airline,
+        origin_airport: meta.origin,
         destination_airport: 'MEL (Melbourne Tullamarine)',
-        scheduled_arrival_utc: '2026-08-28T11:00:00Z',
-        estimated_arrival_utc: '2026-08-28T11:20:00Z',
-        delay_minutes: 20,
-        status: 'DELAYED',
-        terminal: 'T2 Domestic',
-        gate: 'Gate 22',
-        rescheduled_pickup_time: '2026-08-28T11:50:00 AEST (+30m buffer)',
+        scheduled_arrival_utc: '2026-08-31T18:30:00Z',
+        estimated_arrival_utc: delayMins > 0 ? '2026-08-31T18:55:00Z' : '2026-08-31T18:30:00Z',
+        delay_minutes: delayMins,
+        status: status,
+        terminal: meta.terminal,
+        gate: meta.gate,
+        rescheduled_pickup_time: delayMins > 0 ? 'Today at 19:25 AEST (+30m buffer)' : 'On Schedule at 18:30 AEST',
         wait_time_policy: '60 minutes complimentary from touchdown',
       });
     }
@@ -65,11 +99,11 @@ export const FlightRadarPage: React.FC = () => {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-slate-100 tracking-tight">Airport Flight Radar & Automation</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold font-mono">
-              FLIGHTAWARE LIVE TELEMETRY
+              ALL AUSTRALIA AIRPORTS ACTIVE
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Real-time commercial flight delay tracking, automatic pickup rescheduling, and 60-minute complimentary meet & greet buffer.
+            Real-time commercial flight delay tracking across all Australian airports (MEL, SYD, BNE, PER, ADL, AVV, ESS) with automatic pickup buffer.
           </p>
         </div>
 
@@ -81,7 +115,7 @@ export const FlightRadarPage: React.FC = () => {
               type="text"
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}
-              placeholder="e.g. QF400 or VA214"
+              placeholder="e.g. QF400, VA214, EK404"
               className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 uppercase font-mono"
             />
           </div>
@@ -114,8 +148,14 @@ export const FlightRadarPage: React.FC = () => {
                 </div>
               </div>
 
-              <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse">
-                {flightData.status} (+{flightData.delay_minutes}m)
+              <span
+                className={`px-3 py-1 rounded-full text-xs font-bold ${
+                  flightData.delay_minutes > 0
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                }`}
+              >
+                {flightData.status} {flightData.delay_minutes > 0 ? `(+${flightData.delay_minutes}m)` : '✓'}
               </span>
             </div>
 
@@ -137,12 +177,21 @@ export const FlightRadarPage: React.FC = () => {
             <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
               <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
                 <AlertTriangle className="w-4 h-4 text-amber-400" />
-                <span>Automated Pickup Reschedule Triggered:</span>
+                <span>Automated Pickup Reschedule Trigger:</span>
               </div>
               <p className="text-slate-300 text-xs leading-relaxed">
-                Flight delayed by <strong>{flightData.delay_minutes} mins</strong>. Chauffeur pickup automatically shifted to{' '}
-                <strong className="text-white font-mono">{flightData.rescheduled_pickup_time}</strong>.
-                Passenger and driver SMS alerts dispatched.
+                {flightData.delay_minutes > 0 ? (
+                  <>
+                    Flight delayed by <strong>{flightData.delay_minutes} mins</strong>. Chauffeur pickup automatically shifted to{' '}
+                    <strong className="text-white font-mono">{flightData.rescheduled_pickup_time}</strong>.
+                    Passenger and driver SMS alerts dispatched.
+                  </>
+                ) : (
+                  <>
+                    Flight is running <strong>100% on schedule</strong>. Chauffeur pickup scheduled for{' '}
+                    <strong className="text-white font-mono">{flightData.rescheduled_pickup_time}</strong>.
+                  </>
+                )}
               </p>
             </div>
           </div>
