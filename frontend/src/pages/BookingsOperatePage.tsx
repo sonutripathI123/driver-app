@@ -141,6 +141,7 @@ export const BookingsOperatePage: React.FC = () => {
     ];
 
     const demoDrivers: Driver[] = [
+      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+91 9305365420', email: 'sonu@crownchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64 },
       { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@f1.com', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142 },
       { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@f1.com', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98 },
     ];
@@ -155,6 +156,8 @@ export const BookingsOperatePage: React.FC = () => {
     setVehicles(demoVehicles);
   };
 
+  const [allocatedWhatsAppUrl, setAllocatedWhatsAppUrl] = useState<string | null>(null);
+
   const handleOpenAllocation = (booking: Booking, leg: BookingLeg) => {
     setSelectedLeg({ bookingId: booking.id, leg });
     setAllocationDriverId(leg.driver_id || (drivers[0]?.id || ''));
@@ -162,10 +165,30 @@ export const BookingsOperatePage: React.FC = () => {
     setAllocationCost(leg.allocation_cost > 0 ? leg.allocation_cost : 140);
     setAllocationError(null);
     setAllocationSuccess(null);
+    setAllocatedWhatsAppUrl(null);
   };
 
   const handleExecuteAllocation = async () => {
     if (!selectedLeg) return;
+    
+    const assignedDriver = drivers.find((d) => d.id === allocationDriverId) || drivers[0];
+    const parentBooking = bookings.find((b) => b.id === selectedLeg.bookingId);
+    const cleanPhone = (assignedDriver?.phone || '919305365420').replace(/[^0-9]/g, '');
+
+    const waText =
+      `🚗 *[CROWN CHAUFFEURS - DRIVER TRIP ALLOCATION]* 🧑‍✈️\n\n` +
+      `📋 *Booking Ref:* #${parentBooking?.booking_number || 'CCM-2026-0881'}\n` +
+      `👤 *Passenger:* ${parentBooking?.passenger_name || 'VIP Client'} (${parentBooking?.passenger_phone || '+61 411 222 333'})\n` +
+      `📅 *Pickup Time:* ${new Date(selectedLeg.leg.pickup_datetime).toLocaleString('en-AU')}\n` +
+      `📍 *Pickup:* ${selectedLeg.leg.pickup_address}\n` +
+      `🏁 *Dropoff:* ${selectedLeg.leg.dropoff_address}\n` +
+      `💰 *Guaranteed Driver Payout:* $${allocationCost.toFixed(2)} AUD\n\n` +
+      `📲 *Click your Driver Portal link below to open live manifest, 1-tap call & maps:*\n` +
+      `👉 https://driver-frontend-q3fh.onrender.com/driver`;
+
+    const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(waText)}`;
+    setAllocatedWhatsAppUrl(waUrl);
+
     try {
       setAllocationError(null);
       await dispatchApi.allocateDriver(
@@ -175,10 +198,6 @@ export const BookingsOperatePage: React.FC = () => {
         allocationCost
       );
       setAllocationSuccess('Chauffeur allocated successfully without schedule conflict!');
-      setTimeout(() => {
-        setSelectedLeg(null);
-        loadData();
-      }, 1000);
     } catch (err: any) {
       // Graceful fallback for mock/demo IDs or network drops: update state seamlessly
       setBookings((prev) =>
@@ -204,9 +223,6 @@ export const BookingsOperatePage: React.FC = () => {
         })
       );
       setAllocationSuccess('Chauffeur allocated successfully without schedule conflict!');
-      setTimeout(() => {
-        setSelectedLeg(null);
-      }, 1000);
     }
   };
 
@@ -514,6 +530,23 @@ export const BookingsOperatePage: React.FC = () => {
               </div>
             </div>
 
+            {allocatedWhatsAppUrl && (
+              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
+                <span className="text-[11px] font-bold text-emerald-300 block">
+                  ✓ Chauffeur Allocated! Send trip link to Driver WhatsApp:
+                </span>
+                <a
+                  href={allocatedWhatsAppUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>📱 Send Driver Portal Link to WhatsApp ➔</span>
+                </a>
+              </div>
+            )}
+
             <div className="flex items-center justify-between pt-4 border-t border-slate-800">
               <button
                 onClick={() => setOffloadModalOpen(true)}
@@ -522,12 +555,25 @@ export const BookingsOperatePage: React.FC = () => {
                 Subcontractor Offload &rarr;
               </button>
 
-              <button
-                onClick={handleExecuteAllocation}
-                className="px-6 py-2.5 rounded-xl glow-gold-btn text-slate-950 font-bold text-xs"
-              >
-                Confirm Allocation
-              </button>
+              <div className="flex items-center gap-2">
+                {allocatedWhatsAppUrl && (
+                  <button
+                    onClick={() => {
+                      setSelectedLeg(null);
+                      setAllocatedWhatsAppUrl(null);
+                    }}
+                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                  >
+                    Done & Close
+                  </button>
+                )}
+                <button
+                  onClick={handleExecuteAllocation}
+                  className="px-6 py-2.5 rounded-xl glow-gold-btn text-slate-950 font-bold text-xs"
+                >
+                  Confirm Allocation
+                </button>
+              </div>
             </div>
           </div>
         </div>
