@@ -17,8 +17,11 @@ import {
   Users,
   X,
   AlertCircle,
-  Send
+  Send,
+  UserPlus,
+  Check
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 export const BookingsOperatePage: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -28,6 +31,15 @@ export const BookingsOperatePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Add Driver Modal State
+  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+  const [newDriverName, setNewDriverName] = useState('');
+  const [newDriverPhone, setNewDriverPhone] = useState('+91 ');
+  const [newDriverEmail, setNewDriverEmail] = useState('');
+  const [newDriverVehicle, setNewDriverVehicle] = useState('Mercedes-Benz S-Class S450');
+  const [newDriverPlate, setNewDriverPlate] = useState('VIC-VIP-');
+  const [newDriverLicense, setNewDriverLicense] = useState('VIC-DA-');
 
   // Allocation Modal State
   const [selectedLeg, setSelectedLeg] = useState<{ bookingId: string; leg: BookingLeg } | null>(null);
@@ -42,6 +54,64 @@ export const BookingsOperatePage: React.FC = () => {
   const [offloadPartnerId, setOffloadPartnerId] = useState('');
   const [offloadPayout, setOffloadPayout] = useState<number>(150);
   const [offloadNotes, setOffloadNotes] = useState('');
+
+  const handleSaveNewDriver = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDriverName.trim() || !newDriverPhone.trim()) {
+      alert('Please enter driver name and phone number.');
+      return;
+    }
+
+    const newDriverId = `drv-${Date.now()}`;
+    const newDriverObj: Driver = {
+      id: newDriverId,
+      full_name: newDriverName.trim(),
+      phone: newDriverPhone.trim(),
+      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
+      license_number: newDriverLicense.trim() || 'VIC-DA-88',
+      status: 'AVAILABLE',
+      rating: 5.0,
+      total_trips_completed: 0,
+    };
+
+    const updatedDrivers = [newDriverObj, ...drivers];
+    setDrivers(updatedDrivers);
+    setAllocationDriverId(newDriverId);
+
+    // Save to localStorage for cross-page persistence
+    const savedCustom = localStorage.getItem('crown_custom_drivers');
+    let customList = [];
+    try {
+      customList = savedCustom ? JSON.parse(savedCustom) : [];
+    } catch (e) {}
+    customList = [
+      {
+        id: newDriverId,
+        name: newDriverObj.full_name,
+        phone: newDriverObj.phone,
+        email: newDriverObj.email,
+        vehicle: newDriverVehicle,
+        plate: newDriverPlate,
+        license: newDriverObj.license_number,
+        rating: 5.0,
+      },
+      ...customList,
+    ];
+    localStorage.setItem('crown_custom_drivers', JSON.stringify(customList));
+    window.dispatchEvent(new Event('storage'));
+
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.5 },
+      colors: ['#fbbf24', '#10b981', '#06b6d4'],
+    });
+
+    setIsAddDriverOpen(false);
+    setNewDriverName('');
+    setNewDriverPhone('+91 ');
+    setNewDriverEmail('');
+  };
 
   useEffect(() => {
     loadData();
@@ -389,7 +459,17 @@ export const BookingsOperatePage: React.FC = () => {
           </p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Onboard New Driver Button */}
+          <button
+            onClick={() => setIsAddDriverOpen(true)}
+            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+            title="Onboard and add a new chauffeur"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Onboard Driver</span>
+          </button>
+
           {/* Reset Test Trip Button */}
           <button
             onClick={handleResetTripStatus}
@@ -758,6 +838,123 @@ export const BookingsOperatePage: React.FC = () => {
               <Send className="w-4 h-4" />
               <span>Broadcast Offer (15-Min Timer)</span>
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Onboard New Chauffeur Modal (ADMIN PANEL ONLY) */}
+      {isAddDriverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0D1322] border-2 border-amber-500/50 max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl shadow-amber-500/10">
+            <button
+              onClick={() => setIsAddDriverOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-100">Onboard New Fleet Chauffeur</h3>
+                <p className="text-xs text-slate-400">Add driver credentials for automated WhatsApp dispatch & job allocations.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveNewDriver} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Driver Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Amit Sharma"
+                    value={newDriverName}
+                    onChange={(e) => setNewDriverName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">WhatsApp / Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+91 9876543210 or +61 400..."
+                    value={newDriverPhone}
+                    onChange={(e) => setNewDriverPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="driver@crownchauffeurs.com.au"
+                    value={newDriverEmail}
+                    onChange={(e) => setNewDriverEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Accreditation / License No</label>
+                  <input
+                    type="text"
+                    placeholder="VIC-DA-88219"
+                    value={newDriverLicense}
+                    onChange={(e) => setNewDriverLicense(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Assigned Vehicle</label>
+                  <input
+                    type="text"
+                    placeholder="Mercedes-Benz S-Class S450"
+                    value={newDriverVehicle}
+                    onChange={(e) => setNewDriverVehicle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Registration Plate</label>
+                  <input
+                    type="text"
+                    placeholder="VIC-VIP-77"
+                    value={newDriverPlate}
+                    onChange={(e) => setNewDriverPlate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#1F2E4D] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddDriverOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/30 transition-all"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save & Onboard Driver</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

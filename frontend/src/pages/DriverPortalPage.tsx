@@ -19,11 +19,7 @@ import {
   LogOut,
   Calendar,
   Sparkles,
-  AlertCircle,
-  RotateCcw,
-  UserPlus,
-  X,
-  Check
+  AlertCircle
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -67,88 +63,65 @@ const DEFAULT_DRIVERS: ChauffeurProfileItem[] = [
 
 export const DriverPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ACTIVE' | 'UPCOMING' | 'HISTORY'>('ACTIVE');
-  const [shiftStatus, setShiftStatus] = useState<'ON_DUTY' | 'ON_TRIP' | 'OFF_DUTY'>('ON_TRIP');
-  const [selectedDriverId, setSelectedDriverId] = useState<string>('drv-sonu');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Driver Roster State (Loads custom added drivers from localStorage)
-  const [driverProfiles, setDriverProfiles] = useState<ChauffeurProfileItem[]>(() => {
-    const savedCustom = localStorage.getItem('crown_custom_drivers');
-    if (savedCustom) {
+  // Default to Sonu Tripathi
+  const currentDriver = DEFAULT_DRIVERS[0];
+
+  // Active Trip State (Live synced with Sahil Tripathi booking)
+  const [activeTrip, setActiveTrip] = useState<DriverTripItem>({
+    id: 'leg-sahil',
+    bookingNumber: 'CCM-2026-9901',
+    tripType: 'AIRPORT VIP CHAUFFEUR TRANSFER',
+    passengerName: 'Sahil Tripathi',
+    passengerPhone: '+91 6386154107',
+    paxCount: 2,
+    luggageCount: 2,
+    pickupDate: 'Today, 31 Aug 2026',
+    pickupTime: '18:30 AEST',
+    pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
+    dropoffAddress: 'Melbourne Airport (MEL), Terminal 2 International',
+    isAirport: true,
+    flightNumber: 'QF400 (Qantas Airways)',
+    flightStatus: 'ON_TIME',
+    driverPayout: 170.0,
+    status: 'EN_ROUTE',
+    notes: 'VIP Client. Cold bottled water and luggage assistance required.',
+  });
+
+  // Fetch initial live status on page load & poll server
+  useEffect(() => {
+    const fetchServerSync = async () => {
       try {
-        const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed;
+        const syncData = await bookingsApi.getLiveSync();
+        if (syncData?.status) {
+          setActiveTrip((prev) => ({ ...prev, status: syncData.status }));
+          localStorage.setItem('crown_active_trip_status', syncData.status);
         }
-      } catch (e) {}
-    }
-    return DEFAULT_DRIVERS;
-  });
-
-  // Onboard New Driver Modal State
-  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
-  const [newDriverName, setNewDriverName] = useState('');
-  const [newDriverPhone, setNewDriverPhone] = useState('+91 ');
-  const [newDriverEmail, setNewDriverEmail] = useState('');
-  const [newDriverVehicle, setNewDriverVehicle] = useState('Mercedes-Benz S-Class S450');
-  const [newDriverPlate, setNewDriverPlate] = useState('VIC-VIP-');
-  const [newDriverLicense, setNewDriverLicense] = useState('VIC-DA-');
-
-  // Active Trip State (Defaults to EN_ROUTE as requested by user)
-  const [activeTrip, setActiveTrip] = useState<DriverTripItem>(() => {
-    const saved = localStorage.getItem('crown_active_trip_status') as any;
-    const initialStatus = saved && saved !== 'COMPLETED' ? saved : 'EN_ROUTE';
-    return {
-      id: 'leg-sahil',
-      bookingNumber: 'CCM-2026-9901',
-      tripType: 'AIRPORT VIP CHAUFFEUR TRANSFER',
-      passengerName: 'Sahil Tripathi',
-      passengerPhone: '+91 6386154107',
-      paxCount: 2,
-      luggageCount: 2,
-      pickupDate: 'Today, 31 Aug 2026',
-      pickupTime: '18:30 AEST',
-      pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
-      dropoffAddress: 'Melbourne Airport (MEL), Terminal 2 International',
-      isAirport: true,
-      flightNumber: 'QF400 (Qantas Airways)',
-      flightStatus: 'ON_TIME',
-      driverPayout: 170.0,
-      status: initialStatus,
-      notes: 'VIP Client. Cold bottled water and luggage assistance required.',
+      } catch (e) {
+        const localStatus = localStorage.getItem('crown_active_trip_status') as any;
+        if (localStatus) {
+          setActiveTrip((prev) => ({ ...prev, status: localStatus }));
+        }
+      }
     };
-  });
 
-  // Check URL query parameters for force status reset
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const forceStatus = params.get('status') as any;
-    if (forceStatus) {
-      localStorage.setItem('crown_active_trip_status', forceStatus);
-      setActiveTrip((prev) => ({ ...prev, status: forceStatus }));
-    }
-  }, []);
+    fetchServerSync();
+    const interval = setInterval(fetchServerSync, 1500);
 
-  // Listen to cross-window storage events
-  useEffect(() => {
     const handleStorageChange = () => {
       const live = localStorage.getItem('crown_active_trip_status') as any;
       if (live && live !== activeTrip.status) {
         setActiveTrip((prev) => ({ ...prev, status: live }));
       }
-      const savedCustom = localStorage.getItem('crown_custom_drivers');
-      if (savedCustom) {
-        try {
-          const parsed = JSON.parse(savedCustom);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setDriverProfiles(parsed);
-          }
-        } catch (e) {}
-      }
     };
     window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, [activeTrip.status]);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Upcoming Trips
   const [upcomingTrips, setUpcomingTrips] = useState<DriverTripItem[]>([
@@ -226,89 +199,15 @@ export const DriverPortalPage: React.FC = () => {
     },
   ]);
 
-  const currentDriver = driverProfiles.find((d) => d.id === selectedDriverId) || driverProfiles[0];
-
   const showToast = (msg: string) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 4000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Fetch initial live status on page load
-  useEffect(() => {
-    const fetchServerSync = async () => {
-      try {
-        const syncData = await bookingsApi.getLiveSync();
-        if (syncData?.status) {
-          setActiveTrip((prev) => ({ ...prev, status: syncData.status }));
-          localStorage.setItem('crown_active_trip_status', syncData.status);
-        }
-      } catch (e) {}
-    };
-    fetchServerSync();
-  }, []);
-
-  // Handle Onboarding New Driver
-  const handleSaveNewDriver = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newDriverName.trim() || !newDriverPhone.trim()) {
-      showToast('⚠️ Please enter driver full name and phone number.');
-      return;
-    }
-
-    const newDriverId = `drv-${Date.now()}`;
-    const newDriverObj: ChauffeurProfileItem = {
-      id: newDriverId,
-      name: newDriverName.trim(),
-      phone: newDriverPhone.trim(),
-      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
-      vehicle: newDriverVehicle.trim() || 'Mercedes-Benz S-Class S450',
-      plate: newDriverPlate.trim() || 'VIC-VIP-99',
-      license: newDriverLicense.trim() || 'VIC-DA-8821',
-      rating: 5.0,
-    };
-
-    const updatedDrivers = [newDriverObj, ...driverProfiles];
-    setDriverProfiles(updatedDrivers);
-    setSelectedDriverId(newDriverId);
-    localStorage.setItem('crown_custom_drivers', JSON.stringify(updatedDrivers));
-    window.dispatchEvent(new Event('storage'));
-
-    confetti({
-      particleCount: 120,
-      spread: 80,
-      origin: { y: 0.5 },
-      colors: ['#fbbf24', '#10b981', '#06b6d4'],
-    });
-
-    showToast(`🎉 Driver "${newDriverName}" successfully onboarded! Ready for live dispatch.`);
-    setIsAddDriverOpen(false);
-
-    // Reset Form
-    setNewDriverName('');
-    setNewDriverPhone('+91 ');
-    setNewDriverEmail('');
-    setNewDriverVehicle('Mercedes-Benz S-Class S450');
-    setNewDriverPlate('VIC-VIP-');
-    setNewDriverLicense('VIC-DA-');
-  };
-
-  // Reset Trip State to EN_ROUTE (For Easy Testing)
-  const handleResetTrip = async () => {
-    try {
-      await bookingsApi.resetLiveSync();
-    } catch (e) {}
-    localStorage.setItem('crown_active_trip_status', 'EN_ROUTE');
-    window.dispatchEvent(new Event('storage'));
-    setActiveTrip((prev) => ({ ...prev, status: 'EN_ROUTE' }));
-    setShiftStatus('ON_TRIP');
-    showToast('🔄 Trip status reset to 1. EN ROUTE (Ready to test sequence!)');
-  };
-
-  // Step Status Handler (Syncs with Dispatcher & Real Backend & Persistent Storage)
+  // Step Status Handler (Syncs with Central Server + Admin Dashboard)
   const handleUpdateStatus = async (nextStatus: 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED') => {
     setActiveTrip((prev) => ({ ...prev, status: nextStatus }));
 
-    // Persist to localStorage for immediate real-time cross-device sync
     localStorage.setItem('crown_active_trip_status', nextStatus);
     window.dispatchEvent(new Event('storage'));
 
@@ -319,14 +218,12 @@ export const DriverPortalPage: React.FC = () => {
     }
 
     if (nextStatus === 'EN_ROUTE') {
-      setShiftStatus('ON_TRIP');
-      showToast('🚗 Status: EN ROUTE — Dispatcher & Passenger notified that you are on the way to pickup!');
+      showToast('🚗 Status: EN ROUTE — Dispatcher & Passenger notified!');
     } else if (nextStatus === 'ARRIVED') {
       showToast('📍 Status: ARRIVED AT PICKUP — Passenger notified of your arrival outside Crown Towers!');
     } else if (nextStatus === 'PICKED_UP') {
       showToast('👤 Status: PASSENGER ON BOARD — En route to Melbourne Airport Terminal 2.');
     } else if (nextStatus === 'COMPLETED') {
-      setShiftStatus('ON_DUTY');
       showToast(`🎉 TRIP COMPLETED! +$${activeTrip.driverPayout.toFixed(2)} AUD credited to your earnings.`);
 
       confetti({
@@ -341,9 +238,7 @@ export const DriverPortalPage: React.FC = () => {
 
     try {
       await driverPortalApi.stepLegStatus(activeTrip.id, nextStatus);
-    } catch (e) {
-      console.log('Driver status synced', nextStatus);
-    }
+    } catch (e) {}
   };
 
   // Open Google Maps Directions
@@ -355,10 +250,10 @@ export const DriverPortalPage: React.FC = () => {
   const totalEarningsToday = historyTrips.reduce((acc, t) => acc + t.driverPayout, 0) + (activeTrip.status === 'COMPLETED' ? activeTrip.driverPayout : 0);
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6 pb-12">
+    <div className="w-full max-w-4xl mx-auto space-y-5 pb-12">
       {/* Toast Alert Banner */}
       {toastMessage && (
-        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md bg-[#121A2D] border-2 border-amber-400 text-amber-300 p-4 rounded-2xl shadow-2xl shadow-amber-500/20 text-xs font-bold flex items-center justify-between gap-3 animate-in slide-in-from-top duration-300">
+        <div className="fixed top-4 right-4 sm:right-8 z-50 max-w-md bg-[#121A2D] border-2 border-amber-400 text-amber-300 p-3.5 rounded-2xl shadow-2xl shadow-amber-500/20 text-xs font-bold flex items-center justify-between gap-3 animate-in slide-in-from-top duration-300">
           <div className="flex items-center gap-2">
             <Radio className="w-4 h-4 animate-pulse text-amber-400 shrink-0" />
             <span>{toastMessage}</span>
@@ -367,186 +262,38 @@ export const DriverPortalPage: React.FC = () => {
         </div>
       )}
 
-      {/* 1. Driver Profile & Shift Status Header */}
-      <div className="p-4 sm:p-5 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-lg">
-        <div className="flex items-center gap-3.5">
+      {/* 1. Driver Profile Header (Ultra-Clean, NO admin clutter) */}
+      <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3">
           {/* Driver Avatar */}
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-lg flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
             {currentDriver.name.charAt(0)}
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-black text-slate-100">{currentDriver.name}</h2>
+              <h2 className="text-sm sm:text-base font-black text-slate-100">{currentDriver.name}</h2>
               <span
-                className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
                   activeTrip.status === 'EN_ROUTE' || activeTrip.status === 'PICKED_UP'
                     ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}
               >
-                ● {activeTrip.status === 'COMPLETED' ? 'On Duty (Free)' : 'On Active Trip'}
+                ● {activeTrip.status === 'COMPLETED' ? 'On Duty' : 'Active Trip'}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-0.5">
-              🚘 Reg: <strong className="text-amber-400">{currentDriver.plate}</strong> • {currentDriver.vehicle} • 📱 {currentDriver.phone}
+            <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate max-w-[240px] sm:max-w-none">
+              🚘 Reg: <strong className="text-amber-400">{currentDriver.plate}</strong> • {currentDriver.vehicle}
             </p>
           </div>
         </div>
 
-        {/* Chauffeur Quick Switcher, Add Driver Button, & Reset Button */}
-        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-          {/* Add New Driver Button */}
-          <button
-            onClick={() => setIsAddDriverOpen(true)}
-            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
-            title="Onboard and add a new driver"
-          >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Add Driver</span>
-          </button>
-
-          <button
-            onClick={handleResetTrip}
-            title="Reset trip status to En Route for testing"
-            className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset</span>
-          </button>
-
-          <select
-            value={selectedDriverId}
-            onChange={(e) => setSelectedDriverId(e.target.value)}
-            className="bg-[#121A2D] border border-[#1F2E4D] rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-amber-400 font-semibold"
-          >
-            {driverProfiles.map((d) => (
-              <option key={d.id} value={d.id}>
-                {d.name} ({d.plate})
-              </option>
-            ))}
-          </select>
-        </div>
+        {/* Live Duty Pill */}
+        <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold hidden sm:inline-block">
+          🟢 Connected Live
+        </span>
       </div>
-
-      {/* ========================================================================= */}
-      {/* ONBOARD NEW DRIVER MODAL                                                  */}
-      {/* ========================================================================= */}
-      {isAddDriverOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0D1322] border-2 border-amber-500/50 max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl shadow-amber-500/10">
-            <button
-              onClick={() => setIsAddDriverOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
-            >
-              <X className="w-4 h-4" />
-            </button>
-
-            <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                <UserPlus className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="text-lg font-black text-slate-100">Onboard New Fleet Chauffeur</h3>
-                <p className="text-xs text-slate-400">Add driver credentials for automated WhatsApp dispatch & allocations.</p>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveNewDriver} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Driver Full Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Amit Sharma"
-                    value={newDriverName}
-                    onChange={(e) => setNewDriverName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">WhatsApp / Phone Number *</label>
-                  <input
-                    type="tel"
-                    required
-                    placeholder="+91 9876543210 or +61 400..."
-                    value={newDriverPhone}
-                    onChange={(e) => setNewDriverPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    placeholder="driver@crownchauffeurs.com.au"
-                    value={newDriverEmail}
-                    onChange={(e) => setNewDriverEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Accreditation / License No</label>
-                  <input
-                    type="text"
-                    placeholder="VIC-DA-88219"
-                    value={newDriverLicense}
-                    onChange={(e) => setNewDriverLicense(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Assigned Vehicle</label>
-                  <input
-                    type="text"
-                    placeholder="Mercedes-Benz S-Class S450"
-                    value={newDriverVehicle}
-                    onChange={(e) => setNewDriverVehicle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-slate-300 mb-1">Registration Plate</label>
-                  <input
-                    type="text"
-                    placeholder="VIC-VIP-77"
-                    value={newDriverPlate}
-                    onChange={(e) => setNewDriverPlate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono uppercase"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 border-t border-[#1F2E4D] flex items-center justify-end gap-2.5">
-                <button
-                  type="button"
-                  onClick={() => setIsAddDriverOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/30 transition-all"
-                >
-                  <Check className="w-4 h-4" />
-                  <span>Save & Onboard Driver</span>
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
 
       {/* 2. Top 3 Navigation Tabs (Active & Today | Upcoming | History) */}
       <div className="flex p-1.5 bg-[#0D1322] rounded-2xl border border-[#1F2E4D] gap-1 shadow-inner">
@@ -591,7 +338,7 @@ export const DriverPortalPage: React.FC = () => {
       </div>
 
       {/* ========================================================================= */}
-      {/* TAB 1: ACTIVE & TODAY TRIP MANIFEST (SAHIL TRIPATHI LIVE MANIFEST)        */}
+      {/* TAB 1: ACTIVE & TODAY TRIP MANIFEST                                       */}
       {/* ========================================================================= */}
       {activeTab === 'ACTIVE' && (
         <div className="space-y-4 animate-in fade-in duration-200">
