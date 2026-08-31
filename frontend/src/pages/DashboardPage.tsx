@@ -559,26 +559,26 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           </div>
         </div>
 
-        {/* Card 4: Fleet & System Status */}
+        {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
           className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] hover:border-purple-500/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-purple-300 transition-colors">
-              FLEET & SYSTEM STATUS
+              ACTIVE DRIVERS & AVAILABILITY
             </span>
-            <Car className="w-4 h-4 text-purple-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <Users className="w-4 h-4 text-purple-400 shrink-0 group-hover:scale-110 transition-transform" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-purple-300 truncate">
-            4 <span className="text-xs font-normal text-slate-400 font-sans">Active Chauffeurs</span>
+            4 <span className="text-xs font-normal text-slate-400 font-sans">Active Drivers</span>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-[10px] font-bold text-purple-300 max-w-full truncate">
-              <span className="truncate">🟢 4 Available (Khali)</span>
+              <span className="truncate">🟢 4 Free (Khali) • 3 On Trip</span>
             </div>
             <span className="text-[10px] text-purple-400 font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
-              Roster ➔
+              Driver Status ➔
             </span>
           </div>
         </div>
@@ -985,7 +985,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
       )}
 
-      {/* MODAL 4: FLEET & LIVE CHAUFFEUR ROSTER */}
+      {/* MODAL 4: ACTIVE DRIVERS & LIVE AVAILABILITY STATUS */}
       {activeModal === 'FLEET' && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
           <div className="bg-[#121A2D] border border-purple-500/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
@@ -993,11 +993,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <Car className="w-6 h-6" />
+                  <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">Chauffeurs Roster & Live Availability Radar</h2>
-                  <p className="text-xs text-slate-400">Check who is free (Khali) or on active trip to allot upcoming bookings</p>
+                  <h2 className="text-lg font-black text-slate-100">Active Drivers & Live Availability Status</h2>
+                  <p className="text-xs text-slate-400">Driver Roster & Shift Tracking — Check who is free (Khali) or on active trip to allot upcoming bookings</p>
                 </div>
               </div>
               <button
