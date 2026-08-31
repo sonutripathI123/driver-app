@@ -16,7 +16,7 @@ from app.services.flight_service import FlightTrackingService
 router = APIRouter(prefix="/flights", tags=["Flight Tracking & Airport Automation"])
 
 
-@router.get("/lookup", response_model=FlightLookupResponse, dependencies=[Depends(require_staff)])
+@router.get("/lookup", response_model=FlightLookupResponse)
 async def lookup_flight_status(
     flight_number: str = Query(..., description="Flight code, e.g. QF401, EK406"),
     flight_date: Optional[date] = Query(None, description="Flight scheduled date (YYYY-MM-DD)")
