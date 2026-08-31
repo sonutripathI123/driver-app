@@ -16,7 +16,13 @@ class FlightAwareProvider(BaseFlightProvider):
     BASE_URL = "https://aeroapi.flightaware.com/aeroapi"
 
     def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or getattr(settings, "FLIGHTAWARE_API_KEY", None)
+        self.api_key = (
+            api_key
+            or getattr(settings, "FLIGHTAWARE_API_KEY", None)
+            or getattr(settings, "AEROAPI_KEY", None)
+            or os.getenv("FLIGHTAWARE_API_KEY")
+            or os.getenv("AEROAPI_KEY")
+        )
 
     async def get_flight_status(
         self,
