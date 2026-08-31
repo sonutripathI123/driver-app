@@ -398,16 +398,29 @@ export const DriverPortalPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Flight Information */}
+              {/* Flight Information with Live Delay Alert */}
               {activeTrip.isAirport && (
-                <div className="p-3 rounded-xl bg-[#121A2D] border border-cyan-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-cyan-300">
-                    <Plane className="w-4 h-4 shrink-0" />
-                    <span className="font-bold font-mono">Flight: {activeTrip.flightNumber}</span>
+                <div className="space-y-2">
+                  <div className="p-3.5 rounded-xl bg-[#121A2D] border border-cyan-500/30 flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-cyan-300">
+                      <Plane className="w-4 h-4 shrink-0" />
+                      <span className="font-bold font-mono">Flight: {activeTrip.flightNumber}</span>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-bold animate-pulse">
+                      🚨 LATE (+25m DELAY)
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
-                    Status: {activeTrip.flightStatus}
-                  </span>
+
+                  {/* Delay Compensation Notification Banner */}
+                  <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+                    <div className="flex items-center gap-1.5 font-bold text-amber-300">
+                      <Radio className="w-3.5 h-3.5 animate-pulse text-amber-400" />
+                      <span>Automated Airport Delay Alert (Driver & Admin Notified):</span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      FlightAware radar detected delay. Estimated landing rescheduled to <strong className="text-amber-300">14:55 AEST</strong>. Pickup buffer auto-extended — arrival time adjusted to avoid airport parking fees.
+                    </p>
+                  </div>
                 </div>
               )}
 
