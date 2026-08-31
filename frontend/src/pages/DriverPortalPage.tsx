@@ -19,7 +19,8 @@ import {
   LogOut,
   Calendar,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  RotateCcw
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -44,13 +45,14 @@ interface DriverTripItem {
 
 export const DriverPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ACTIVE' | 'UPCOMING' | 'HISTORY'>('ACTIVE');
-  const [shiftStatus, setShiftStatus] = useState<'ON_DUTY' | 'ON_TRIP' | 'OFF_DUTY'>('ON_DUTY');
+  const [shiftStatus, setShiftStatus] = useState<'ON_DUTY' | 'ON_TRIP' | 'OFF_DUTY'>('ON_TRIP');
   const [selectedDriverId, setSelectedDriverId] = useState<string>('drv-sonu');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Active Trip State (Live synced with Sahil Tripathi booking)
+  // Active Trip State (Defaults to EN_ROUTE as requested by user)
   const [activeTrip, setActiveTrip] = useState<DriverTripItem>(() => {
-    const savedStatus = (localStorage.getItem('crown_active_trip_status') as any) || 'ALLOCATED';
+    const saved = localStorage.getItem('crown_active_trip_status') as any;
+    const initialStatus = saved && saved !== 'COMPLETED' ? saved : 'EN_ROUTE';
     return {
       id: 'leg-sahil',
       bookingNumber: 'CCM-2026-9901',
@@ -67,10 +69,32 @@ export const DriverPortalPage: React.FC = () => {
       flightNumber: 'QF400 (Qantas Airways)',
       flightStatus: 'ON_TIME',
       driverPayout: 170.0,
-      status: savedStatus === 'COMPLETED' ? 'ALLOCATED' : savedStatus,
-      notes: 'VIP Client. Please arrive 10 mins early with cold bottled water and luggage assistance.',
+      status: initialStatus,
+      notes: 'VIP Client. Cold bottled water and luggage assistance required.',
     };
   });
+
+  // Check URL query parameters for force status reset
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const forceStatus = params.get('status') as any;
+    if (forceStatus) {
+      localStorage.setItem('crown_active_trip_status', forceStatus);
+      setActiveTrip((prev) => ({ ...prev, status: forceStatus }));
+    }
+  }, []);
+
+  // Listen to cross-window storage events
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const live = localStorage.getItem('crown_active_trip_status') as any;
+      if (live && live !== activeTrip.status) {
+        setActiveTrip((prev) => ({ ...prev, status: live }));
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [activeTrip.status]);
 
   // Upcoming Trips
   const [upcomingTrips, setUpcomingTrips] = useState<DriverTripItem[]>([
@@ -164,21 +188,30 @@ export const DriverPortalPage: React.FC = () => {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  // Reset Trip State to EN_ROUTE (For Easy Testing)
+  const handleResetTrip = () => {
+    localStorage.setItem('crown_active_trip_status', 'EN_ROUTE');
+    window.dispatchEvent(new Event('storage'));
+    setActiveTrip((prev) => ({ ...prev, status: 'EN_ROUTE' }));
+    setShiftStatus('ON_TRIP');
+    showToast('🔄 Trip status reset to 1. EN ROUTE (Ready to test sequence!)');
+  };
+
   // Step Status Handler (Syncs with Dispatcher & Real Backend & Persistent Storage)
   const handleUpdateStatus = async (nextStatus: 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED') => {
     setActiveTrip((prev) => ({ ...prev, status: nextStatus }));
 
-    // Persist to localStorage for immediate real-time cross-tab & cross-device sync
+    // Persist to localStorage for immediate real-time cross-device sync
     localStorage.setItem('crown_active_trip_status', nextStatus);
     window.dispatchEvent(new Event('storage'));
 
     if (nextStatus === 'EN_ROUTE') {
       setShiftStatus('ON_TRIP');
-      showToast('🚗 Status: EN ROUTE — Dispatcher & Passenger notified that you are on the way!');
+      showToast('🚗 Status: EN ROUTE — Dispatcher & Passenger notified that you are on the way to pickup!');
     } else if (nextStatus === 'ARRIVED') {
-      showToast('📍 Status: ARRIVED AT PICKUP — Passenger notified of your arrival!');
+      showToast('📍 Status: ARRIVED AT PICKUP — Passenger notified of your arrival outside Crown Towers!');
     } else if (nextStatus === 'PICKED_UP') {
-      showToast('👤 Status: PASSENGER ON BOARD — Trip in progress.');
+      showToast('👤 Status: PASSENGER ON BOARD — En route to Melbourne Airport Terminal 2.');
     } else if (nextStatus === 'COMPLETED') {
       setShiftStatus('ON_DUTY');
       showToast(`🎉 TRIP COMPLETED! +$${activeTrip.driverPayout.toFixed(2)} AUD credited to your earnings.`);
@@ -234,14 +267,12 @@ export const DriverPortalPage: React.FC = () => {
               <h2 className="text-base font-black text-slate-100">{currentDriver.name}</h2>
               <span
                 className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                  shiftStatus === 'ON_DUTY'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : shiftStatus === 'ON_TRIP'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                    : 'bg-slate-800 text-slate-400'
+                  activeTrip.status === 'EN_ROUTE' || activeTrip.status === 'PICKED_UP'
+                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}
               >
-                ● {shiftStatus === 'ON_DUTY' ? 'On Duty' : shiftStatus === 'ON_TRIP' ? 'On Active Trip' : 'Off Duty'}
+                ● {activeTrip.status === 'COMPLETED' ? 'On Duty (Free)' : 'On Active Trip'}
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
@@ -250,8 +281,17 @@ export const DriverPortalPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Chauffeur Quick Switcher & Shift Pill */}
+        {/* Chauffeur Quick Switcher & Reset Button */}
         <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          <button
+            onClick={handleResetTrip}
+            title="Reset trip status to En Route for testing"
+            className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset to En Route</span>
+          </button>
+
           <select
             value={selectedDriverId}
             onChange={(e) => setSelectedDriverId(e.target.value)}
@@ -263,17 +303,6 @@ export const DriverPortalPage: React.FC = () => {
               </option>
             ))}
           </select>
-
-          <button
-            onClick={() => setShiftStatus(shiftStatus === 'ON_DUTY' ? 'OFF_DUTY' : 'ON_DUTY')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
-              shiftStatus === 'ON_DUTY'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
-                : 'bg-slate-800 text-slate-400 hover:text-white'
-            }`}
-          >
-            {shiftStatus === 'ON_DUTY' ? '🟢 Online' : '⚪ Offline'}
-          </button>
         </div>
       </div>
 
@@ -334,20 +363,25 @@ export const DriverPortalPage: React.FC = () => {
                 </span>
               </div>
 
+              {/* Dynamic Live Status Badge */}
               <span
-                className={`px-3 py-1 rounded-full text-xs font-black uppercase ${
-                  activeTrip.status === 'COMPLETED'
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                    : activeTrip.status === 'EN_ROUTE'
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30 animate-pulse'
+                className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide flex items-center gap-1.5 ${
+                  activeTrip.status === 'EN_ROUTE'
+                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-pulse'
                     : activeTrip.status === 'ARRIVED'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
+                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 ring-1 ring-purple-400/50'
                     : activeTrip.status === 'PICKED_UP'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-                    : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
+                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse'
+                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
                 }`}
               >
-                ● {activeTrip.status}
+                ● {activeTrip.status === 'EN_ROUTE'
+                  ? 'EN ROUTE (On The Way)'
+                  : activeTrip.status === 'ARRIVED'
+                  ? 'ARRIVED AT PICKUP'
+                  : activeTrip.status === 'PICKED_UP'
+                  ? 'ON BOARD (Driving To Airport)'
+                  : 'COMPLETED ✓'}
               </span>
             </div>
 
@@ -436,55 +470,64 @@ export const DriverPortalPage: React.FC = () => {
               <span>Open in Google Maps / Navigation ➔</span>
             </button>
 
-            {/* Live Trip Action Progression Stepper (Real-time sync with Admin) */}
+            {/* Live Trip Action Progression Stepper (Sequential Live Sync With Admin) */}
             <div className="pt-4 border-t border-[#1F2E4D] space-y-3">
-              <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider block">
-                Trip Action Stepper (1-Tap Live Sync With Admin)
-              </span>
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                  Live Trip Stepper (Step-by-Step Sync with Admin)
+                </span>
+                <span className="text-[10px] text-amber-400 font-mono">
+                  Current: {activeTrip.status}
+                </span>
+              </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                {/* Step 1: En Route */}
                 <button
                   onClick={() => handleUpdateStatus('EN_ROUTE')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'EN_ROUTE'
-                      ? 'bg-blue-500 text-slate-950 shadow-lg shadow-blue-500/30 ring-2 ring-blue-300'
+                      ? 'bg-blue-500 text-slate-950 shadow-lg shadow-blue-500/40 ring-2 ring-blue-300 font-black'
                       : 'bg-[#0D1322] text-slate-300 hover:bg-slate-800 border border-slate-800'
                   }`}
                 >
-                  1. En Route ➔
+                  1. En Route 🚗
                 </button>
 
+                {/* Step 2: Arrived */}
                 <button
                   onClick={() => handleUpdateStatus('ARRIVED')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'ARRIVED'
-                      ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/30 ring-2 ring-purple-300'
-                      : 'bg-[#0D1322] text-slate-300 hover:bg-slate-800 border border-slate-800'
+                      ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-purple-300 font-black'
+                      : 'bg-[#0D1322] text-slate-300 hover:bg-purple-950/40 border border-slate-800'
                   }`}
                 >
-                  2. Arrived ➔
+                  2. Arrived 📍
                 </button>
 
+                {/* Step 3: On Board */}
                 <button
                   onClick={() => handleUpdateStatus('PICKED_UP')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'PICKED_UP'
-                      ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/30 ring-2 ring-cyan-300'
-                      : 'bg-[#0D1322] text-slate-300 hover:bg-slate-800 border border-slate-800'
+                      ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/40 ring-2 ring-cyan-300 font-black'
+                      : 'bg-[#0D1322] text-slate-300 hover:bg-cyan-950/40 border border-slate-800'
                   }`}
                 >
-                  3. On Board ➔
+                  3. On Board 👤
                 </button>
 
+                {/* Step 4: Complete Trip */}
                 <button
                   onClick={() => handleUpdateStatus('COMPLETED')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'COMPLETED'
-                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/30'
+                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/40 font-black'
                       : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
                   }`}
                 >
-                  4. Complete Trip ✓
+                  4. Complete ✓
                 </button>
               </div>
             </div>
