@@ -20,7 +20,10 @@ import {
   Calendar,
   Sparkles,
   AlertCircle,
-  RotateCcw
+  RotateCcw,
+  UserPlus,
+  X,
+  Check
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -43,11 +46,53 @@ interface DriverTripItem {
   notes?: string;
 }
 
+interface ChauffeurProfileItem {
+  id: string;
+  name: string;
+  plate: string;
+  vehicle: string;
+  phone: string;
+  email?: string;
+  license?: string;
+  rating: number;
+}
+
+const DEFAULT_DRIVERS: ChauffeurProfileItem[] = [
+  { id: 'drv-sonu', name: 'Sonu Tripathi (Live Driver)', plate: 'ST-9305-VIC', vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)', phone: '+91 9305365420', email: 'sonu@crownchauffeurs.com.au', license: 'VIC-DA-9305', rating: 5.0 },
+  { id: 'drv-01', name: 'Marcus Vance', plate: 'AURA-01', vehicle: 'Mercedes S-Class S450', phone: '+61 411 998 877', email: 'marcus@crownchauffeurs.com.au', license: 'VIC-DA-0112', rating: 4.98 },
+  { id: 'drv-02', name: 'Daniel Ricciardo', plate: 'DR-03-VIC', vehicle: 'BMW 740i Executive', phone: '+61 433 221 100', email: 'daniel@crownchauffeurs.com.au', license: 'VIC-DA-0344', rating: 4.99 },
+  { id: 'drv-03', name: 'Fernando Alonso', plate: 'FA-14-VIC', vehicle: 'Mercedes S-Class S450', phone: '+61 433 778 899', email: 'fernando@crownchauffeurs.com.au', license: 'VIC-DA-1499', rating: 4.96 },
+  { id: 'drv-04', name: 'Lewis Hamilton', plate: 'LH-44-VIC', vehicle: 'Mercedes V-Class Luxury Van', phone: '+61 499 001 122', email: 'lewis@crownchauffeurs.com.au', license: 'VIC-DA-4401', rating: 4.99 },
+];
+
 export const DriverPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ACTIVE' | 'UPCOMING' | 'HISTORY'>('ACTIVE');
   const [shiftStatus, setShiftStatus] = useState<'ON_DUTY' | 'ON_TRIP' | 'OFF_DUTY'>('ON_TRIP');
   const [selectedDriverId, setSelectedDriverId] = useState<string>('drv-sonu');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Driver Roster State (Loads custom added drivers from localStorage)
+  const [driverProfiles, setDriverProfiles] = useState<ChauffeurProfileItem[]>(() => {
+    const savedCustom = localStorage.getItem('crown_custom_drivers');
+    if (savedCustom) {
+      try {
+        const parsed = JSON.parse(savedCustom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return DEFAULT_DRIVERS;
+  });
+
+  // Onboard New Driver Modal State
+  const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
+  const [newDriverName, setNewDriverName] = useState('');
+  const [newDriverPhone, setNewDriverPhone] = useState('+91 ');
+  const [newDriverEmail, setNewDriverEmail] = useState('');
+  const [newDriverVehicle, setNewDriverVehicle] = useState('Mercedes-Benz S-Class S450');
+  const [newDriverPlate, setNewDriverPlate] = useState('VIC-VIP-');
+  const [newDriverLicense, setNewDriverLicense] = useState('VIC-DA-');
 
   // Active Trip State (Defaults to EN_ROUTE as requested by user)
   const [activeTrip, setActiveTrip] = useState<DriverTripItem>(() => {
@@ -90,6 +135,15 @@ export const DriverPortalPage: React.FC = () => {
       const live = localStorage.getItem('crown_active_trip_status') as any;
       if (live && live !== activeTrip.status) {
         setActiveTrip((prev) => ({ ...prev, status: live }));
+      }
+      const savedCustom = localStorage.getItem('crown_custom_drivers');
+      if (savedCustom) {
+        try {
+          const parsed = JSON.parse(savedCustom);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setDriverProfiles(parsed);
+          }
+        } catch (e) {}
       }
     };
     window.addEventListener('storage', handleStorageChange);
@@ -172,15 +226,6 @@ export const DriverPortalPage: React.FC = () => {
     },
   ]);
 
-  // Available Chauffeur Profiles (Sonu Tripathi is First & Default)
-  const driverProfiles = [
-    { id: 'drv-sonu', name: 'Sonu Tripathi (Live Driver)', plate: 'ST-9305-VIC', vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)', phone: '+91 9305365420', rating: 5.0 },
-    { id: 'drv-01', name: 'Marcus Vance', plate: 'AURA-01', vehicle: 'Mercedes S-Class S450', phone: '+61 411 998 877', rating: 4.98 },
-    { id: 'drv-02', name: 'Daniel Ricciardo', plate: 'DR-03-VIC', vehicle: 'BMW 740i Executive', phone: '+61 433 221 100', rating: 4.99 },
-    { id: 'drv-03', name: 'Fernando Alonso', plate: 'FA-14-VIC', vehicle: 'Mercedes S-Class S450', phone: '+61 433 778 899', rating: 4.96 },
-    { id: 'drv-04', name: 'Lewis Hamilton', plate: 'LH-44-VIC', vehicle: 'Mercedes V-Class Luxury Van', phone: '+61 499 001 122', rating: 4.99 },
-  ];
-
   const currentDriver = driverProfiles.find((d) => d.id === selectedDriverId) || driverProfiles[0];
 
   const showToast = (msg: string) => {
@@ -201,6 +246,51 @@ export const DriverPortalPage: React.FC = () => {
     };
     fetchServerSync();
   }, []);
+
+  // Handle Onboarding New Driver
+  const handleSaveNewDriver = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newDriverName.trim() || !newDriverPhone.trim()) {
+      showToast('⚠️ Please enter driver full name and phone number.');
+      return;
+    }
+
+    const newDriverId = `drv-${Date.now()}`;
+    const newDriverObj: ChauffeurProfileItem = {
+      id: newDriverId,
+      name: newDriverName.trim(),
+      phone: newDriverPhone.trim(),
+      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
+      vehicle: newDriverVehicle.trim() || 'Mercedes-Benz S-Class S450',
+      plate: newDriverPlate.trim() || 'VIC-VIP-99',
+      license: newDriverLicense.trim() || 'VIC-DA-8821',
+      rating: 5.0,
+    };
+
+    const updatedDrivers = [newDriverObj, ...driverProfiles];
+    setDriverProfiles(updatedDrivers);
+    setSelectedDriverId(newDriverId);
+    localStorage.setItem('crown_custom_drivers', JSON.stringify(updatedDrivers));
+    window.dispatchEvent(new Event('storage'));
+
+    confetti({
+      particleCount: 120,
+      spread: 80,
+      origin: { y: 0.5 },
+      colors: ['#fbbf24', '#10b981', '#06b6d4'],
+    });
+
+    showToast(`🎉 Driver "${newDriverName}" successfully onboarded! Ready for live dispatch.`);
+    setIsAddDriverOpen(false);
+
+    // Reset Form
+    setNewDriverName('');
+    setNewDriverPhone('+91 ');
+    setNewDriverEmail('');
+    setNewDriverVehicle('Mercedes-Benz S-Class S450');
+    setNewDriverPlate('VIC-VIP-');
+    setNewDriverLicense('VIC-DA-');
+  };
 
   // Reset Trip State to EN_ROUTE (For Easy Testing)
   const handleResetTrip = async () => {
@@ -299,20 +389,30 @@ export const DriverPortalPage: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-slate-400 font-mono mt-0.5">
-              🚘 Reg: <strong className="text-amber-400">{currentDriver.plate}</strong> • {currentDriver.vehicle}
+              🚘 Reg: <strong className="text-amber-400">{currentDriver.plate}</strong> • {currentDriver.vehicle} • 📱 {currentDriver.phone}
             </p>
           </div>
         </div>
 
-        {/* Chauffeur Quick Switcher & Reset Button */}
-        <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+        {/* Chauffeur Quick Switcher, Add Driver Button, & Reset Button */}
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+          {/* Add New Driver Button */}
+          <button
+            onClick={() => setIsAddDriverOpen(true)}
+            className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+            title="Onboard and add a new driver"
+          >
+            <UserPlus className="w-3.5 h-3.5" />
+            <span>+ Add Driver</span>
+          </button>
+
           <button
             onClick={handleResetTrip}
             title="Reset trip status to En Route for testing"
             className="px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
           >
             <RotateCcw className="w-3.5 h-3.5" />
-            <span>Reset to En Route</span>
+            <span>Reset</span>
           </button>
 
           <select
@@ -328,6 +428,125 @@ export const DriverPortalPage: React.FC = () => {
           </select>
         </div>
       </div>
+
+      {/* ========================================================================= */}
+      {/* ONBOARD NEW DRIVER MODAL                                                  */}
+      {/* ========================================================================= */}
+      {isAddDriverOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#0D1322] border-2 border-amber-500/50 max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl shadow-amber-500/10">
+            <button
+              onClick={() => setIsAddDriverOpen(false)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
+            >
+              <X className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+                <UserPlus className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-slate-100">Onboard New Fleet Chauffeur</h3>
+                <p className="text-xs text-slate-400">Add driver credentials for automated WhatsApp dispatch & allocations.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleSaveNewDriver} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Driver Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Amit Sharma"
+                    value={newDriverName}
+                    onChange={(e) => setNewDriverName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">WhatsApp / Phone Number *</label>
+                  <input
+                    type="tel"
+                    required
+                    placeholder="+91 9876543210 or +61 400..."
+                    value={newDriverPhone}
+                    onChange={(e) => setNewDriverPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Email Address</label>
+                  <input
+                    type="email"
+                    placeholder="driver@crownchauffeurs.com.au"
+                    value={newDriverEmail}
+                    onChange={(e) => setNewDriverEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Accreditation / License No</label>
+                  <input
+                    type="text"
+                    placeholder="VIC-DA-88219"
+                    value={newDriverLicense}
+                    onChange={(e) => setNewDriverLicense(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Assigned Vehicle</label>
+                  <input
+                    type="text"
+                    placeholder="Mercedes-Benz S-Class S450"
+                    value={newDriverVehicle}
+                    onChange={(e) => setNewDriverVehicle(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-slate-300 mb-1">Registration Plate</label>
+                  <input
+                    type="text"
+                    placeholder="VIC-VIP-77"
+                    value={newDriverPlate}
+                    onChange={(e) => setNewDriverPlate(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono uppercase"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-[#1F2E4D] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setIsAddDriverOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/30 transition-all"
+                >
+                  <Check className="w-4 h-4" />
+                  <span>Save & Onboard Driver</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* 2. Top 3 Navigation Tabs (Active & Today | Upcoming | History) */}
       <div className="flex p-1.5 bg-[#0D1322] rounded-2xl border border-[#1F2E4D] gap-1 shadow-inner">

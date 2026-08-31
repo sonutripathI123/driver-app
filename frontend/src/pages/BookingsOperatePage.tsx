@@ -238,11 +238,31 @@ export const BookingsOperatePage: React.FC = () => {
       },
     ];
 
-    const demoDrivers: Driver[] = [
+    let demoDrivers: Driver[] = [
       { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+91 9305365420', email: 'sonu@crownchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64 },
       { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@f1.com', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142 },
       { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@f1.com', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98 },
     ];
+
+    const savedCustom = localStorage.getItem('crown_custom_drivers');
+    if (savedCustom) {
+      try {
+        const parsed = JSON.parse(savedCustom);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const mapped = parsed.map((p: any) => ({
+            id: p.id,
+            full_name: p.name,
+            phone: p.phone,
+            email: p.email || `${p.name.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
+            license_number: p.license || 'VIC-DA-88',
+            status: 'AVAILABLE' as const,
+            rating: p.rating || 5.0,
+            total_trips_completed: 12,
+          }));
+          demoDrivers = mapped;
+        }
+      } catch (e) {}
+    }
 
     const demoVehicles: Vehicle[] = [
       { id: 'v-01', category: 'SEDAN_PREMIUM', make: 'Mercedes-Benz', model: 'S-Class', year: 2024, registration_plate: 'CROWN-01', passenger_capacity: 4, luggage_capacity: 3, is_active: true },
