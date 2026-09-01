@@ -523,22 +523,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 1: Gross Revenue */}
         <div
           onClick={() => setActiveModal('REVENUE')}
-          className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] hover:border-amber-500/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-amber-300 transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
               GROSS REVENUE (INC GST)
             </span>
-            <DollarSign className="w-4 h-4 text-amber-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <DollarSign className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-slate-100 truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
             ${grossRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/25 text-[10px] font-bold text-amber-300 max-w-full truncate">
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
               <span className="truncate">Ex GST: ${netRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
             </div>
-            <span className="text-[10px] text-amber-400 font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Details ➔
             </span>
           </div>
@@ -547,22 +547,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 2: Net Operating Profit */}
         <div
           onClick={() => setActiveModal('PROFIT')}
-          className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] hover:border-emerald-500/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-emerald-300 transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
               NET OPERATING PROFIT
             </span>
-            <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <TrendingUp className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-emerald-400 truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-[#FAF8F5] truncate">
             ${netProfit.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-[10px] font-bold text-emerald-300 max-w-full truncate">
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
               <span className="truncate">{profitMargin.toFixed(1)}% Operating Margin</span>
             </div>
-            <span className="text-[10px] text-emerald-400 font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Margins ➔
             </span>
           </div>
@@ -571,23 +571,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 3: Bookings & Trips Queue */}
         <div
           onClick={() => setActiveModal('BOOKINGS')}
-          className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] hover:border-cyan-500/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-cyan-300 transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
               BOOKINGS & TRIPS QUEUE
             </span>
-            <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <CheckCircle2 className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-cyan-300 truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
             {totalRides} <span className="text-xs font-normal text-slate-400 font-sans">Total Rides</span>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/25 text-[10px] font-bold text-cyan-300 max-w-full truncate">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-ping shrink-0" />
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#DFCAA8] animate-ping shrink-0" />
               <span className="truncate">{completedRides} Completed • 2 Pending</span>
             </div>
-            <span className="text-[10px] text-cyan-400 font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               View All ➔
             </span>
           </div>
@@ -596,22 +596,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
-          className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] hover:border-purple-500/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-purple-300 transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
               ACTIVE DRIVERS & AVAILABILITY
             </span>
-            <Users className="w-4 h-4 text-purple-400 shrink-0 group-hover:scale-110 transition-transform" />
+            <Users className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-purple-300 truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
             4 <span className="text-xs font-normal text-slate-400 font-sans">Active Drivers</span>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-800/80">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/25 text-[10px] font-bold text-purple-300 max-w-full truncate">
-              <span className="truncate">🟢 4 Free (Khali) • 3 On Trip</span>
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
+              <span className="truncate">● 4 Available • 3 On Trip</span>
             </div>
-            <span className="text-[10px] text-purple-400 font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Driver Status ➔
             </span>
           </div>

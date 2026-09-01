@@ -497,32 +497,32 @@ export const ClientsCustomersPage: React.FC = () => {
 
       {/* 4 Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border-amber-500/30 shadow-xl space-y-1">
+        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Registered Clients</span>
-          <span className="text-2xl font-mono font-black gold-gradient-text block">{totalClientsCount} Clients</span>
-          <span className="text-[11px] text-slate-400 block">{corporateCount} Corporate Accounts</span>
+          <span className="text-2xl font-mono font-black text-white block">{totalClientsCount} Clients</span>
+          <span className="text-[11px] text-[#DFCAA8] block">{corporateCount} Corporate Accounts</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-cyan-500/30 shadow-xl space-y-1">
+        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Corporate Net 30 Terms</span>
-          <span className="text-2xl font-mono font-black text-cyan-300 block">{corporateCount} Accounts</span>
-          <span className="text-[11px] text-emerald-400 block">Monthly Post-Paid Billing</span>
+          <span className="text-2xl font-mono font-black text-white block">{corporateCount} Accounts</span>
+          <span className="text-[11px] text-[#DFCAA8] block">Monthly Post-Paid Billing</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-emerald-500/30 shadow-xl space-y-1">
+        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Client Lifetime Spend</span>
-          <span className="text-2xl font-mono font-black text-emerald-400 block">
+          <span className="text-2xl font-mono font-black text-white block">
             ${totalLifetimeSpend.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-[11px] text-slate-400 block">Across 120+ Completed Journeys</span>
+          <span className="text-[11px] text-[#DFCAA8] block">Across 120+ Completed Journeys</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-rose-500/30 shadow-xl space-y-1">
+        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
           <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Outstanding Debt</span>
-          <span className="text-2xl font-mono font-black text-rose-400 block">
+          <span className="text-2xl font-mono font-black text-white block">
             ${totalOutstandingDebt.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-[11px] text-amber-300 block">Ready for FIFO Settlement</span>
+          <span className="text-[11px] text-[#DFCAA8] block">Ready for FIFO Settlement</span>
         </div>
       </div>
 
@@ -535,7 +535,7 @@ export const ClientsCustomersPage: React.FC = () => {
             placeholder="Search by client name, company, email, or mobile..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 placeholder-slate-500 text-xs focus:outline-none focus:border-amber-400 font-medium"
+            className="w-full pl-10 pr-4 py-2 bg-[#070A0F] border border-[#1E2738] rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#DFCAA8] font-medium"
           />
         </div>
 
@@ -547,8 +547,8 @@ export const ClientsCustomersPage: React.FC = () => {
               onClick={() => setFilterType(filter)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                 filterType === filter
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/20'
-                  : 'bg-slate-900 border border-slate-800 text-slate-300 hover:text-white'
+                  ? 'bg-[#DFCAA8] text-[#070A0F] font-black shadow-md shadow-[#DFCAA8]/20'
+                  : 'bg-[#0F141E] border border-[#1E2738] text-slate-300 hover:text-white hover:border-[#DFCAA8]/30'
               }`}
             >
               {filter === 'ALL'

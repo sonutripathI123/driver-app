@@ -57,17 +57,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'INTELLIGENCE & FLEET',
       items: [
         { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard },
-        { id: 'operate', label: 'Live Operate Board', icon: CalendarDays, badge: 'Live', badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-        { id: 'quotes', label: 'Instant 3D Quoting', icon: Compass, badge: '3D UI', badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30' },
+        { id: 'operate', label: 'Live Operate Board', icon: CalendarDays, badge: 'Live', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
+        { id: 'quotes', label: 'Instant 3D Quoting', icon: Compass, badge: '3D UI', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
       ],
     },
     {
       title: 'OPERATIONS & DISPATCH',
       items: [
-        { id: 'driver-portal', label: 'Driver Mobile PWA', icon: Smartphone, badge: 'App', badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
-        { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
-        { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
-        { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
+        { id: 'driver-portal', label: 'Driver Mobile PWA', icon: Smartphone, badge: 'App', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
+        { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
+        { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
+        { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-[#DFCAA8]/15 text-[#DFCAA8] border-[#DFCAA8]/30' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
       ],
     },
@@ -88,18 +88,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const sidebarContent = (
-    <div className="flex flex-col h-full bg-[#0D1322] border-r border-[#1F2E4D] select-none">
+    <div className="flex flex-col h-full bg-[#070A0F] border-r border-[#1E2738] select-none">
       {/* Brand Header */}
-      <div className="p-6 flex items-center justify-between border-b border-[#1F2E4D]">
+      <div className="p-6 flex items-center justify-between border-b border-[#1E2738]">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-slate-950 shadow-lg shadow-amber-500/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FAF8F5] via-[#EAE0D0] to-[#DFCAA8] flex items-center justify-center text-[#070A0F] shadow-lg shadow-[#DFCAA8]/20">
             <Car className="w-6 h-6" />
           </div>
           <div>
-            <h1 className="font-extrabold text-sm tracking-wider text-slate-100 uppercase">
+            <h1 className="font-extrabold text-sm tracking-wider text-white uppercase">
               OPAL CHAUFFEURS
             </h1>
-            <p className="text-[10px] text-amber-400/90 font-mono tracking-widest uppercase">
+            <p className="text-[10px] text-[#DFCAA8] font-mono tracking-widest uppercase">
               OPERATIONS PLATFORM
             </p>
           </div>
@@ -109,7 +109,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {isOpenMobile && (
           <button
             onClick={onCloseMobile}
-            className="lg:hidden p-1.5 rounded-lg bg-[#162036] text-slate-400 hover:text-slate-100 hover:bg-[#1E2C4A] transition-colors"
+            className="lg:hidden p-1.5 rounded-lg bg-[#0F141E] text-slate-400 hover:text-white hover:bg-[#182030] transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
         {sections.map((section) => (
           <div key={section.title} className="space-y-1.5">
-            <h3 className="px-3 text-[10px] font-extrabold tracking-wider text-slate-400 uppercase">
+            <h3 className="px-3 text-[10px] font-extrabold tracking-wider text-slate-500 uppercase">
               {section.title}
             </h3>
             <div className="space-y-1">
@@ -131,16 +131,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <button
                     key={item.id}
                     onClick={() => handleSelect(item.id)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
+                    className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all group ${
                       isActive
-                        ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20 font-bold'
-                        : 'text-slate-300 hover:text-slate-100 hover:bg-[#162036]'
+                        ? 'bg-gradient-to-r from-[#FAF8F5] via-[#EAE0D0] to-[#DFCAA8] text-[#070A0F] shadow-md shadow-[#DFCAA8]/20 font-black'
+                        : 'text-slate-300 hover:text-white hover:bg-[#0F141E]'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <Icon
                         className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                          isActive ? 'text-slate-950' : 'text-amber-400/80 group-hover:text-amber-300'
+                          isActive ? 'text-[#070A0F]' : 'text-[#DFCAA8]/80 group-hover:text-[#DFCAA8]'
                         }`}
                       />
                       <span>{item.label}</span>
@@ -150,8 +150,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       <span
                         className={`px-2 py-0.5 text-[9px] font-bold rounded-full border ${
                           isActive
-                            ? 'bg-slate-950 text-amber-400 border-amber-400/40'
-                            : item.badgeColor || 'bg-slate-800 text-slate-300 border-slate-700'
+                            ? 'bg-[#070A0F] text-[#DFCAA8] border-[#DFCAA8]/40'
+                            : item.badgeColor || 'bg-[#0F141E] text-[#DFCAA8] border-[#DFCAA8]/30'
                         }`}
                       >
                         {item.badge}
@@ -165,15 +165,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
         ))}
       </div>
 
-      {/* User Footer Profile */}
-      <div className="p-4 border-t border-[#1F2E4D] bg-[#0A0E1A]">
-        <div className="flex items-center gap-3 p-2 rounded-xl bg-[#121A2D] border border-[#1F2E4D]">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 font-bold text-xs">
-            {user?.full_name?.charAt(0) || 'A'}
+      {/* User Profile Footer */}
+      <div className="p-4 border-t border-[#1E2738] bg-[#070A0F]">
+        <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#0F141E] border border-[#1E2738]">
+          <div className="w-8 h-8 rounded-lg bg-[#DFCAA8]/15 border border-[#DFCAA8]/30 flex items-center justify-center text-[#DFCAA8] font-black text-xs">
+            ST
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-200 truncate">{user?.full_name || 'Sonu Tripathi (Director)'}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@opalchauffeurs.com.au'}</p>
+            <p className="text-xs font-bold text-white truncate">
+              Sonu Tripathi (Director)
+            </p>
+            <p className="text-[10px] text-slate-400 font-mono truncate">
+              admin@opalchauffeurs.com.au
+            </p>
           </div>
         </div>
       </div>
@@ -182,22 +186,21 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   return (
     <>
-      {/* Desktop Persistent Sidebar */}
-      <aside className="hidden lg:flex w-72 shrink-0 h-screen sticky top-0">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-72 h-screen sticky top-0 shrink-0 z-40">
         {sidebarContent}
       </aside>
 
-      {/* Mobile Slide-Out Drawer with Backdrop Blur */}
+      {/* Mobile Drawer Backdrop */}
       {isOpenMobile && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
-          {/* Touch Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 lg:hidden animate-in fade-in"
+          onClick={onCloseMobile}
+        >
           <div
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
-            onClick={onCloseMobile}
-          />
-
-          {/* Drawer Content */}
-          <div className="relative w-72 max-w-[80vw] h-full z-10 shadow-2xl animate-in slide-in-from-left duration-200">
+            className="w-72 h-full bg-[#070A0F] shadow-2xl animate-in slide-in-from-left duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
             {sidebarContent}
           </div>
         </div>
