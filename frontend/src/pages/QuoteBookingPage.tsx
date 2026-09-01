@@ -22,7 +22,8 @@ import {
   Lock,
   Building2,
   Smartphone,
-  FileText
+  FileText,
+  Mail
 } from 'lucide-react';
 
 export const QuoteBookingPage: React.FC = () => {
@@ -618,22 +619,59 @@ export const QuoteBookingPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Direct WhatsApp Deliver Button */}
-            <a
-              href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '61432000718'}&text=${encodeURIComponent(
-                `🔔 [MASTER BOOKING & TAX INVOICE CONFIRMED] 🚘\n\nReference: #${createdBookingNumber}\nTax Invoice: #${createdInvoiceNumber}\nPassenger: ${passengerName}\nPhone: ${passengerPhone}\n📅 Pickup Date: ${pickupDate}\n⏰ Pickup Time: ${pickupTime} AEST\n📍 Pickup: ${pickupAddress}\n🏁 Dropoff: ${dropoffAddress}${
-                  isAirport && flightNumber ? `\n✈️ Flight: ${flightNumber} (Meet & Greet - 60m Free Buffer)` : ''
-                }\n🚘 Vehicle: ${selectedCategory}\n💰 Total Amount: $${fare.gross.toFixed(2)} AUD\n💳 Payment Status: ${
-                  paymentOption === 'FULL' ? 'PAID IN FULL (AUD ' + fare.gross + ')' : '25% DEPOSIT PAID (AUD ' + fare.deposit + ')'
-                }\n\n✅ Thank you for choosing Opal Chauffeurs Melbourne!`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="w-full py-3.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all"
-            >
-              <MessageSquare className="w-4 h-4" />
-              <span>📱 Open & Deliver Receipt to WhatsApp ➔</span>
-            </a>
+            {/* Phase 1: Direct WhatsApp & Email Voucher Dispatch Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <a
+                href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '61432000718'}&text=${encodeURIComponent(
+                  `🚗 *[OPAL CHAUFFEURS - BOOKING CONFIRMATION & TRIP VOUCHER]* 🧑‍✈️\n\n` +
+                  `📋 *Booking Reference:* #${createdBookingNumber}\n` +
+                  `👤 *Passenger:* ${passengerName} (${passengerPhone})\n` +
+                  `📅 *Pickup Date:* ${pickupDate}\n` +
+                  `⏰ *Pickup Time:* ${pickupTime} AEST\n` +
+                  `📍 *Pickup Location:* ${pickupAddress}\n` +
+                  `🏁 *Dropoff Location:* ${dropoffAddress}${
+                    isAirport && flightNumber ? `\n✈️ *Flight Tracked:* ${flightNumber} (Meet & Greet + 60m Free Waiting)` : ''
+                  }\n` +
+                  `🚘 *Vehicle Reserved:* ${selectedCategory}\n` +
+                  `🧑‍✈️ *Lead Chauffeur:* Sonu Tripathi (+61 432 000 718)\n` +
+                  `💰 *Agreed Fare:* $${fare.gross.toFixed(2)} AUD\n` +
+                  `💳 *Payment Status:* ${paymentOption === 'FULL' ? 'PAID IN FULL' : '25% DEPOSIT RECEIVED'}\n\n` +
+                  `ℹ️ *Chauffeur Note:* Your luxury chauffeur will arrive 10 minutes prior to pickup. For airport transfers, our satellite flight radar tracks your aircraft in real-time.\n\n` +
+                  `📞 24/7 Operations: +61 432 000 718\n` +
+                  `🌐 https://www.opalchauffeurs.com.au\n\n` +
+                  `✅ Thank you for traveling with Opal Chauffeurs Australia!`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/25 transition-all"
+              >
+                <MessageSquare className="w-4 h-4" />
+                <span>📱 WhatsApp Voucher</span>
+              </a>
+
+              <a
+                href={`mailto:${passengerEmail}?subject=${encodeURIComponent(
+                  `[Booking Confirmation] Opal Chauffeurs Journey #${createdBookingNumber} — ${passengerName}`
+                )}&body=${encodeURIComponent(
+                  `Dear ${passengerName},\n\nYour luxury chauffeur reservation with Opal Chauffeurs Australia has been confirmed.\n\n` +
+                  `Booking Reference: #${createdBookingNumber}\n` +
+                  `Pickup Date & Time: ${pickupDate} at ${pickupTime} AEST\n` +
+                  `Pickup Location: ${pickupAddress}\n` +
+                  `Dropoff Location: ${dropoffAddress}\n` +
+                  `Vehicle Reserved: ${selectedCategory}\n` +
+                  `Allocated Chauffeur: Sonu Tripathi (Phone: +61 432 000 718)\n` +
+                  `Agreed Fare: $${fare.gross.toFixed(2)} AUD (${paymentOption === 'FULL' ? 'PAID IN FULL' : '25% DEPOSIT PAID'})\n\n` +
+                  `Note: Your chauffeur will arrive 10 minutes prior. For airport pickups, flight status is monitored via live radar.\n\n` +
+                  `Kind Regards,\nOpal Chauffeurs Australia\nPhone: +61 432 000 718\nWeb: https://www.opalchauffeurs.com.au`
+                )}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-3 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/25 transition-all"
+              >
+                <Mail className="w-4 h-4" />
+                <span>✉️ Email Voucher</span>
+              </a>
+            </div>
 
             <button
               onClick={() => setCreatedBookingNumber(null)}
