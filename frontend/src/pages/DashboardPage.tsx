@@ -484,22 +484,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const completedRides = summary?.completed_trips_count ?? 32;
 
   return (
-    <div className="space-y-6 w-full max-w-full min-w-0 overflow-hidden relative">
+    <div className="space-y-6 w-full max-w-full min-w-0 overflow-hidden relative text-slate-900">
       {/* 1. Hero Command Center Banner */}
-      <div className="relative rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden w-full min-w-0">
-        <div className="absolute top-0 left-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="relative rounded-2xl bg-white border border-slate-200 p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden w-full min-w-0 shadow-sm">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#DFCAA8]/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 max-w-2xl space-y-2 min-w-0">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-            <span className="truncate">Crown Chauffeurs Intelligence Active</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FAF8F5] border border-[#DFCAA8] text-[#7B6035] text-xs font-bold shadow-sm">
+            <Sparkles className="w-3.5 h-3.5 text-[#C2A16B] shrink-0" />
+            <span className="truncate">Opal Chauffeurs Intelligence Active</span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-100 break-words">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-900 break-words">
             Chauffeur Operations & Dispatch Command Center
           </h1>
 
-          <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
+          <p className="text-xs md:text-sm text-slate-600 leading-relaxed font-medium">
             Autonomous corporate chauffeur dispatch and live flight delay monitoring for Melbourne & interstate hubs.
             All allocations gated with driver conflict guards.
           </p>
@@ -509,7 +509,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="relative z-10 w-full md:w-auto shrink-0">
           <button
             onClick={() => onNavigate('operate')}
-            className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/30 hover:scale-[1.02] transition-all"
+            className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl glow-gold-btn text-slate-950 font-black text-xs shadow-md shadow-[#DFCAA8]/30 hover:scale-[1.02] transition-all"
           >
             <Clock className="w-4 h-4 text-slate-950" />
             <span>Review Pending Queue (2)</span>
@@ -523,22 +523,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 1: Gross Revenue */}
         <div
           onClick={() => setActiveModal('REVENUE')}
-          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-white border border-slate-200 hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider truncate group-hover:text-slate-900 transition-colors">
               GROSS REVENUE (INC GST)
             </span>
-            <DollarSign className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
+            <DollarSign className="w-4 h-4 text-[#7B6035] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 truncate">
             ${grossRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#DFCAA8]/40 text-[10px] font-bold text-[#7B6035] max-w-full truncate">
               <span className="truncate">Ex GST: ${netRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
             </div>
-            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#7B6035] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Details ➔
             </span>
           </div>
@@ -547,22 +547,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 2: Net Operating Profit */}
         <div
           onClick={() => setActiveModal('PROFIT')}
-          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-white border border-slate-200 hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider truncate group-hover:text-slate-900 transition-colors">
               NET OPERATING PROFIT
             </span>
-            <TrendingUp className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
+            <TrendingUp className="w-4 h-4 text-[#7B6035] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-[#FAF8F5] truncate">
+          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 truncate">
             ${netProfit.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#DFCAA8]/40 text-[10px] font-bold text-[#7B6035] max-w-full truncate">
               <span className="truncate">{profitMargin.toFixed(1)}% Operating Margin</span>
             </div>
-            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#7B6035] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Margins ➔
             </span>
           </div>
@@ -571,23 +571,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 3: Bookings & Trips Queue */}
         <div
           onClick={() => setActiveModal('BOOKINGS')}
-          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-white border border-slate-200 hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider truncate group-hover:text-slate-900 transition-colors">
               BOOKINGS & TRIPS QUEUE
             </span>
-            <CheckCircle2 className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
+            <CheckCircle2 className="w-4 h-4 text-[#7B6035] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
-            {totalRides} <span className="text-xs font-normal text-slate-400 font-sans">Total Rides</span>
+          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 truncate">
+            {totalRides} <span className="text-xs font-normal text-slate-500 font-sans">Total Rides</span>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#DFCAA8] animate-ping shrink-0" />
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#DFCAA8]/40 text-[10px] font-bold text-[#7B6035] max-w-full truncate">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#C2A16B] animate-ping shrink-0" />
               <span className="truncate">{completedRides} Completed • 2 Pending</span>
             </div>
-            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#7B6035] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               View All ➔
             </span>
           </div>
@@ -596,22 +596,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
-          className="rounded-2xl bg-[#0F141E] border border-[#1E2738] hover:border-[#DFCAA8]/60 p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-white border border-slate-200 hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-sm"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider truncate group-hover:text-[#DFCAA8] transition-colors">
+            <span className="text-[11px] uppercase font-bold text-slate-500 tracking-wider truncate group-hover:text-slate-900 transition-colors">
               ACTIVE DRIVERS & AVAILABILITY
             </span>
-            <Users className="w-4 h-4 text-[#DFCAA8] shrink-0 group-hover:scale-110 transition-transform" />
+            <Users className="w-4 h-4 text-[#7B6035] shrink-0 group-hover:scale-110 transition-transform" />
           </div>
-          <div className="text-xl sm:text-2xl font-black font-mono text-white truncate">
-            4 <span className="text-xs font-normal text-slate-400 font-sans">Active Drivers</span>
+          <div className="text-xl sm:text-2xl font-black font-mono text-slate-900 truncate">
+            4 <span className="text-xs font-normal text-slate-500 font-sans">Active Drivers</span>
           </div>
-          <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#1E2738]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DFCAA8]/10 border border-[#DFCAA8]/25 text-[10px] font-bold text-[#DFCAA8] max-w-full truncate">
+          <div className="flex items-center justify-between gap-2 pt-1 border-t border-slate-100">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FAF8F5] border border-[#DFCAA8]/40 text-[10px] font-bold text-[#7B6035] max-w-full truncate">
               <span className="truncate">● 4 Available • 3 On Trip</span>
             </div>
-            <span className="text-[10px] text-[#DFCAA8] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#7B6035] font-bold group-hover:underline flex items-center gap-0.5 shrink-0">
               Driver Status ➔
             </span>
           </div>
@@ -636,15 +636,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       </div>
 
       {/* 4. Human-in-the-Loop Dispatch Queue */}
-      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-4 sm:p-6 space-y-4 w-full min-w-0 overflow-hidden">
-        <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-4 flex-wrap gap-2">
+      <div className="rounded-2xl bg-white border border-slate-200 p-4 sm:p-6 space-y-4 w-full min-w-0 overflow-hidden shadow-sm">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#162036] border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF8F5] border border-[#DFCAA8] flex items-center justify-center text-[#7B6035] shrink-0">
               <Shield className="w-4 h-4" />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-bold text-slate-100 truncate">Human-in-the-Loop Dispatch & Allocation</h3>
-              <p className="text-[11px] sm:text-xs text-slate-400 truncate">
+              <h3 className="text-sm font-bold text-slate-900 truncate">Human-in-the-Loop Dispatch & Allocation</h3>
+              <p className="text-[11px] sm:text-xs text-slate-500 truncate">
                 AI-drafted chauffeur allocations requiring human review.
               </p>
             </div>
@@ -652,7 +652,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('operate')}
-            className="text-xs font-bold text-amber-400 hover:text-amber-300 flex items-center gap-1 shrink-0 ml-auto"
+            className="text-xs font-bold text-[#7B6035] hover:text-slate-900 flex items-center gap-1 shrink-0 ml-auto"
           >
             <span>View full queue</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -664,33 +664,33 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {pendingBookings.map((b) => (
             <div
               key={b.id}
-              className="p-3.5 sm:p-4 rounded-xl bg-[#0D1322] border border-[#1F2E4D] hover:border-amber-500/40 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden"
+              className="p-3.5 sm:p-4 rounded-xl bg-[#FAF8F5] border border-slate-200 hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden"
             >
               <div className="space-y-1.5 min-w-0 w-full md:flex-1">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">
-                  <span className="font-mono font-bold text-amber-400">{b.booking_number}</span>
-                  <span className="text-slate-500">•</span>
-                  <span className="font-semibold text-slate-200 truncate">{b.passenger_name}</span>
+                  <span className="font-mono font-bold text-[#7B6035]">{b.booking_number}</span>
+                  <span className="text-slate-400">•</span>
+                  <span className="font-bold text-slate-900 truncate">{b.passenger_name}</span>
                   {b.legs[0]?.is_airport_pickup && (
-                    <span className="px-2 py-0.5 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20 text-[10px] font-mono shrink-0">
+                    <span className="px-2 py-0.5 rounded bg-white text-[#7B6035] border border-[#DFCAA8] text-[10px] font-mono shrink-0 font-bold">
                       ✈️ Flight {b.legs[0]?.flight_number} (+{b.legs[0]?.flight_delay_minutes}m)
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-400 break-words line-clamp-2">
+                <p className="text-[11px] text-slate-600 break-words line-clamp-2">
                   {b.legs[0]?.pickup_address} ➔ {b.legs[0]?.dropoff_address}
                 </p>
               </div>
 
-              <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800/60">
+              <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-200">
                 <div className="text-left md:text-right font-mono min-w-0">
-                  <span className="font-bold text-slate-100 text-xs sm:text-sm block">${b.total_fare.toFixed(2)} AUD</span>
-                  <span className="text-[10px] text-emerald-400 font-semibold block">Net: +${(b.total_fare / 1.1 - 160).toFixed(2)}</span>
+                  <span className="font-bold text-slate-900 text-xs sm:text-sm block">${b.total_fare.toFixed(2)} AUD</span>
+                  <span className="text-[10px] text-[#7B6035] font-bold block">Net: +${(b.total_fare / 1.1 - 160).toFixed(2)}</span>
                 </div>
 
                 <button
                   onClick={() => onNavigate('operate')}
-                  className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 font-bold transition-all text-xs shrink-0"
+                  className="px-3.5 py-2 rounded-xl bg-white hover:bg-[#FAF8F5] text-slate-900 border border-[#DFCAA8] font-bold transition-all text-xs shrink-0 shadow-sm"
                 >
                   Allocate Driver &rarr;
                 </button>
@@ -706,17 +706,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 1: REVENUE BREAKDOWN */}
       {activeModal === 'REVENUE' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121A2D] border border-amber-500/40 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-white border border-[#DFCAA8] rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-[#FAF8F5]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#DFCAA8]/30 text-[#7B6035] flex items-center justify-center">
                   <DollarSign className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">Gross Revenue & Tax Breakdown</h2>
-                  <p className="text-xs text-slate-400">ATO 1/11th Australian GST & Settlement Ledger</p>
+                  <h2 className="text-lg font-black text-slate-900">Gross Revenue & Tax Breakdown</h2>
+                  <p className="text-xs text-slate-500">ATO 1/11th Australian GST & Settlement Ledger</p>
                 </div>
               </div>
               <button

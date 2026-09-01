@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { VehicleCategory } from '../../types';
-import { Sparkles, Eye, Users, Briefcase, ShieldCheck, Car, Star, CheckCircle2 } from 'lucide-react';
+import { Sparkles, Eye, Users, Briefcase, Car } from 'lucide-react';
 
 interface LuxuryCarProps {
   category?: VehicleCategory;
@@ -32,7 +32,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   // Sync state if category prop changes externally
-  React.useEffect(() => {
+  useEffect(() => {
     setActiveCategory(category);
   }, [category]);
 
@@ -56,7 +56,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
       regoPlate: 'BYY499',
       pax: 4,
       bags: 2,
-      image: '/images/fleet/mercedes_s_class_gts783.jpg', // Uses Mercedes flagship profile
+      image: '/images/fleet/mercedes_s_class_gts783.jpg',
       tagline: 'Executive Corporate Transfer & Airport Express',
       badge: 'EXECUTIVE CORPORATE',
       features: ['Dual Zone Climate', 'High-Speed Wi-Fi', 'Silent Acoustic Cabin', 'Express Airport Route'],
@@ -110,8 +110,8 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
     const centerX = rect.width / 2;
     const centerY = rect.height / 2;
 
-    const tiltX = ((y - centerY) / centerY) * -10; // Max 10 deg tilt
-    const tiltY = ((x - centerX) / centerX) * 12; // Max 12 deg tilt
+    const tiltX = ((y - centerY) / centerY) * -10;
+    const tiltY = ((x - centerX) / centerX) * 12;
 
     const glareX = (x / rect.width) * 100;
     const glareY = (y / rect.height) * 100;
@@ -156,7 +156,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
       onMouseLeave={handleMouseLeave}
       onTouchMove={handleTouchMove}
       onTouchEnd={() => setTilt({ x: 0, y: 0, glareX: 50, glareY: 50 })}
-      className="relative w-full h-full min-h-[380px] sm:min-h-[430px] rounded-3xl overflow-hidden glass-panel-gold flex flex-col justify-between select-none shadow-2xl border border-amber-500/30"
+      className="relative w-full h-full min-h-[380px] sm:min-h-[430px] rounded-3xl overflow-hidden bg-white flex flex-col justify-between select-none shadow-sm border border-slate-200"
       style={{ perspective: '1000px' }}
     >
       {/* ─────────────────────────────────────────────────────────────
@@ -171,14 +171,14 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
       >
         {/* Ambient Lighting Studio Aura */}
         <div
-          className="absolute inset-0 opacity-40 pointer-events-none transition-opacity duration-500"
+          className="absolute inset-0 opacity-60 pointer-events-none transition-opacity duration-500"
           style={{
-            background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(245, 158, 11, 0.25) 0%, rgba(10, 14, 26, 0.95) 75%)`,
+            background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(223, 202, 168, 0.35) 0%, rgba(248, 250, 252, 0.95) 75%)`,
           }}
         />
 
-        {/* Glowing Gold Showroom Stage Ring */}
-        <div className="absolute bottom-6 sm:bottom-8 w-4/5 h-16 rounded-[100%] border-2 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.35)] pointer-events-none transform -rotate-X-60 animate-pulse" />
+        {/* Glowing Beige Showroom Stage Ring */}
+        <div className="absolute bottom-6 sm:bottom-8 w-4/5 h-16 rounded-[100%] border-2 border-[#C2A16B]/50 shadow-[0_0_25px_rgba(194,161,107,0.25)] pointer-events-none transform -rotate-X-60 animate-pulse" />
 
         {/* Real Luxury High-Definition Car Photo */}
         <div className="relative z-10 w-full h-full max-h-[260px] sm:max-h-[300px] flex items-center justify-center">
@@ -186,7 +186,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
             key={currentVehicle.image}
             src={currentVehicle.image}
             alt={currentVehicle.name}
-            className="w-full h-full object-cover sm:object-contain rounded-2xl drop-shadow-[0_20px_35px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-300"
+            className="w-full h-full object-cover sm:object-contain rounded-2xl drop-shadow-[0_15px_25px_rgba(0,0,0,0.2)] animate-in fade-in zoom-in-95 duration-300"
           />
         </div>
       </div>
@@ -195,42 +195,42 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
           TOP BADGES OVERLAY
       ───────────────────────────────────────────────────────────── */}
       <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-amber-500/40 text-xs text-amber-300 shadow-md">
-          <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md border border-[#DFCAA8] text-xs text-slate-900 shadow-sm">
+          <Sparkles className="w-3.5 h-3.5 text-[#C2A16B] animate-spin" style={{ animationDuration: '6s' }} />
           <span className="font-bold tracking-wide">3D Showroom</span>
-          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">
+          <span className="px-1.5 py-0.2 rounded bg-[#DFCAA8]/30 text-[#7B6035] text-[10px] font-mono font-black">
             {currentVehicle.badge}
           </span>
         </div>
 
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-slate-700 text-xs text-slate-300 shadow-md">
-          <Eye className="w-3.5 h-3.5 text-cyan-400" />
-          <span className="font-mono font-bold text-amber-300">Rego: {currentVehicle.regoPlate}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/95 backdrop-blur-md border border-slate-200 text-xs text-slate-800 shadow-sm">
+          <Eye className="w-3.5 h-3.5 text-[#C2A16B]" />
+          <span className="font-mono font-black text-[#534023]">Rego: {currentVehicle.regoPlate}</span>
         </div>
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
           BOTTOM VEHICLE INFO & SPECS OVERLAY
       ───────────────────────────────────────────────────────────── */}
-      <div className="relative z-20 px-4 pt-2 pb-1 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+      <div className="relative z-20 px-4 pt-2 pb-2 bg-white border-t border-slate-100">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
           <div>
             <div className="flex items-center gap-2">
-              <h4 className="text-sm sm:text-base font-black text-slate-100">{currentVehicle.name}</h4>
-              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[10px] border border-emerald-500/30">
+              <h4 className="text-sm sm:text-base font-black text-slate-900">{currentVehicle.name}</h4>
+              <span className="px-2 py-0.5 rounded-full bg-[#FAF8F5] text-[#7B6035] font-mono font-bold text-[10px] border border-[#DFCAA8]">
                 ACTIVE IN FLEET
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">{currentVehicle.tagline}</p>
+            <p className="text-[11px] text-slate-500 mt-0.5">{currentVehicle.tagline}</p>
           </div>
 
-          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-xs">
-            <span className="flex items-center gap-1 text-slate-200">
-              <Users className="w-3.5 h-3.5 text-cyan-400" /> {currentVehicle.pax} Pax
+          <div className="flex items-center gap-3 bg-[#FAF8F5] border border-slate-200 px-3 py-1.5 rounded-xl font-mono text-xs shadow-sm">
+            <span className="flex items-center gap-1 text-slate-800 font-bold">
+              <Users className="w-3.5 h-3.5 text-[#7B6035]" /> {currentVehicle.pax} Pax
             </span>
-            <span className="text-slate-600">|</span>
-            <span className="flex items-center gap-1 text-slate-200">
-              <Briefcase className="w-3.5 h-3.5 text-amber-400" /> {currentVehicle.bags} Bags
+            <span className="text-slate-300">|</span>
+            <span className="flex items-center gap-1 text-slate-800 font-bold">
+              <Briefcase className="w-3.5 h-3.5 text-[#C2A16B]" /> {currentVehicle.bags} Bags
             </span>
           </div>
         </div>
@@ -240,7 +240,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
           5 CATEGORY SELECTOR TABS
       ───────────────────────────────────────────────────────────── */}
       {showControls && (
-        <div className="relative z-20 bg-slate-950 border-t border-slate-800/90 p-2 flex items-center justify-between gap-1.5 overflow-x-auto">
+        <div className="relative z-20 bg-[#FAF8F5] border-t border-slate-200 p-2 flex items-center justify-between gap-1.5 overflow-x-auto">
           {([
             { id: 'SEDAN_PREMIUM', label: 'S-Class (GTS783)', plate: 'GTS783' },
             { id: 'PEOPLE_MOVER', label: 'V-Class (CGL646)', plate: 'CGL646' },
@@ -254,10 +254,10 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => handleSelectCategory(tab.id as VehicleCategory)}
-                className={`px-3 py-2 text-xs font-bold rounded-xl transition-all flex-1 whitespace-nowrap text-center flex flex-col items-center justify-center shadow-md active:scale-95 ${
+                className={`px-3 py-2 text-xs font-bold rounded-xl transition-all flex-1 whitespace-nowrap text-center flex flex-col items-center justify-center shadow-sm active:scale-95 ${
                   isSelected
-                    ? 'glow-gold-btn text-slate-950 shadow-amber-500/20 scale-100 font-black'
-                    : 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                    ? 'glow-gold-btn text-slate-950 shadow-md shadow-[#DFCAA8]/30 scale-100 font-black'
+                    : 'bg-white border border-slate-200 text-slate-700 hover:text-slate-950 hover:border-[#DFCAA8]'
                 }`}
               >
                 <span>{tab.label}</span>
