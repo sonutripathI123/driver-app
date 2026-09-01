@@ -475,13 +475,13 @@ export const ClientsCustomersPage: React.FC = () => {
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">VIP Clients & Corporate CRM Hub</h1>
+            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Client & Customer Details Directory</h1>
             <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">
-              OPAL VIP CLIENT MANAGEMENT
+              OPAL CLIENT & CUSTOMER DIRECTORY
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Complete client dossiers, booking history, payment records, VIP chauffeur preferences, and corporate credit accounts.
+            Complete customer dossiers, booking history, payment records, vehicle preferences, and corporate credit accounts.
           </p>
         </div>
 
@@ -491,14 +491,14 @@ export const ClientsCustomersPage: React.FC = () => {
           className="px-5 py-2.5 rounded-xl glow-gold-btn text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
         >
           <Plus className="w-4 h-4" />
-          <span>+ Onboard VIP Client / Corporate Account</span>
+          <span>+ Onboard Client / Corporate Account</span>
         </button>
       </div>
 
       {/* 4 Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="glass-panel p-5 rounded-2xl border-amber-500/30 shadow-xl space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Registered VIPs</span>
+          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Registered Clients</span>
           <span className="text-2xl font-mono font-black gold-gradient-text block">{totalClientsCount} Clients</span>
           <span className="text-[11px] text-slate-400 block">{corporateCount} Corporate Accounts</span>
         </div>

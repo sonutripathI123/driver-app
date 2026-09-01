@@ -65,7 +65,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       title: 'OPERATIONS & DISPATCH',
       items: [
         { id: 'driver-portal', label: 'Driver Mobile PWA', icon: Smartphone, badge: 'App', badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30' },
-        { id: 'clients', label: 'VIP Clients & CRM', icon: UserCheck, badge: 'VIP', badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
+        { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-purple-500/20 text-purple-300 border-purple-500/30' },
         { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30' },
         { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-sky-500/20 text-sky-300 border-sky-500/30' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
