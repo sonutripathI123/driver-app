@@ -23,8 +23,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User>(() => {
-    const saved = localStorage.getItem('chauffeur_user');
-    return saved ? JSON.parse(saved) : defaultAdminUser;
+    try {
+      const saved = localStorage.getItem('chauffeur_user');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.email && parsed.email.includes('opalchauffeurs.com.au')) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    localStorage.setItem('chauffeur_user', JSON.stringify(defaultAdminUser));
+    return defaultAdminUser;
   });
 
   const [token, setToken] = useState<string | null>(() => {
@@ -39,11 +48,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const switchRole = (role: UserRole) => {
     const roleNames: Record<UserRole, string> = {
-      ADMIN: 'Alexander Crown (Director)',
+      ADMIN: 'Sonu Tripathi (Director)',
       OPERATIONS_MANAGER: 'Marcus Sterling (Ops Lead)',
       DISPATCHER: 'Olivia Vance (Lead Dispatcher)',
       ACCOUNTANT: 'Gregory Finch (CFO & Tax)',
-      DRIVER: 'Daniel Ricciardo (VIP Chauffeur)',
+      DRIVER: 'Sonu Tripathi (Lead VIP Chauffeur)',
       CUSTOMER: 'Rio Tinto Mining (Corporate VIP)',
     };
 
@@ -51,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       ...user,
       role,
       full_name: roleNames[role],
-      email: `${role.toLowerCase()}@chauffeurplatform.com`,
+      email: `${role.toLowerCase()}@opalchauffeurs.com.au`,
     };
 
     setUser(updated);

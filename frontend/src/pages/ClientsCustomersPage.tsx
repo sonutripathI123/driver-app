@@ -24,7 +24,10 @@ import {
   ChevronRight,
   X,
   Send,
-  UserCheck
+  UserCheck,
+  Printer,
+  Download,
+  Receipt
 } from 'lucide-react';
 
 interface ClientBookingHistory {
@@ -68,6 +71,12 @@ export const ClientsCustomersPage: React.FC = () => {
   const [filterType, setFilterType] = useState<'ALL' | 'CORPORATE' | 'VIP_PRIVATE' | 'UNPAID'>('ALL');
   const [selectedClient, setSelectedClient] = useState<VIPClient | null>(null);
   const [isAddClientModalOpen, setIsAddClientModalOpen] = useState(false);
+
+  // Selected Booking Invoice Preview
+  const [previewBooking, setPreviewBooking] = useState<{
+    client: VIPClient;
+    booking: ClientBookingHistory;
+  } | null>(null);
 
   // New Client Form
   const [newClient, setNewClient] = useState({
@@ -417,6 +426,49 @@ export const ClientsCustomersPage: React.FC = () => {
   const totalLifetimeSpend = clients.reduce((sum, c) => sum + c.total_spent, 0);
   const totalOutstandingDebt = clients.reduce((sum, c) => sum + c.pending_balance, 0);
 
+  // WhatsApp Statement Dispatch
+  const handleGenerateWhatsAppStatement = (client: VIPClient) => {
+    const text =
+      `🧾 *[OPAL CHAUFFEURS AUSTRALIA - TAX INVOICE STATEMENT]* 🚘\n\n` +
+      `🏢 *Client Account:* ${client.company_name || client.name}\n` +
+      `👤 *Attn:* ${client.name}\n` +
+      `💳 *Billing Terms:* ${client.billing_terms}\n` +
+      `💰 *Total Outstanding Balance:* $${client.pending_balance.toFixed(2)} AUD (${client.unpaid_invoices_count} Invoices Pending)\n\n` +
+      `🏦 *Remittance Bank Details (EFT / OSKO):*\n` +
+      `• Bank: Commonwealth Bank of Australia\n` +
+      `• Account Name: Opal Chauffeurs Australia Pty Ltd\n` +
+      `• BSB: 063-000\n` +
+      `• Account: 1092 8841\n` +
+      `• PayID: accounts@opalchauffeurs.com.au\n\n` +
+      `📞 *Accounts Enquiries:* +61 432 000 718\n` +
+      `🌐 *Website:* https://www.opalchauffeurs.com.au\n\n` +
+      `✅ Thank you for traveling with Opal Chauffeurs Australia!`;
+
+    window.open(
+      `https://api.whatsapp.com/send?phone=${client.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(text)}`,
+      '_blank'
+    );
+  };
+
+  // Email Statement Dispatch
+  const handleSendEmailStatement = (client: VIPClient) => {
+    const subject = encodeURIComponent(`[Opal Chauffeurs] Official Tax Invoice Statement — ${client.company_name || client.name}`);
+    const body = encodeURIComponent(
+      `Dear ${client.name},\n\nPlease find the summary of your account with Opal Chauffeurs Australia.\n\n` +
+      `Client Account: ${client.company_name || client.name}\n` +
+      `Total Outstanding Balance: $${client.pending_balance.toFixed(2)} AUD\n` +
+      `Payment Terms: ${client.billing_terms}\n\n` +
+      `Remittance Bank EFT Transfer Details:\n` +
+      `Bank: Commonwealth Bank of Australia\n` +
+      `Account Name: Opal Chauffeurs Australia Pty Ltd\n` +
+      `BSB: 063-000\n` +
+      `Account Number: 1092 8841\n` +
+      `PayID: accounts@opalchauffeurs.com.au\n\n` +
+      `Kind Regards,\nAccounts & Dispatch\nOpal Chauffeurs Australia\nPhone: +61 432 000 718\nWeb: https://www.opalchauffeurs.com.au`
+    );
+    window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, '_blank');
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -511,7 +563,7 @@ export const ClientsCustomersPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Clients Directory Table / Grid */}
+      {/* Clients Directory Table */}
       <div className="glass-panel rounded-2xl overflow-hidden border-slate-800 shadow-2xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -523,7 +575,7 @@ export const ClientsCustomersPage: React.FC = () => {
                 <th className="py-3.5 px-4 font-semibold">Total Rides</th>
                 <th className="py-3.5 px-4 font-semibold">Lifetime Spend</th>
                 <th className="py-3.5 px-4 font-semibold">Outstanding Debt</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                <th className="py-3.5 px-4 font-semibold text-right">Direct Invoice & CRM Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-800/60 font-sans">
@@ -581,26 +633,35 @@ export const ClientsCustomersPage: React.FC = () => {
                     )}
                   </td>
                   <td className="py-4 px-4 text-right">
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1.5">
+                      {/* View Dossier Button */}
                       <button
                         onClick={() => setSelectedClient(client)}
-                        className="px-3 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                        className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        <span>View Dossier & Rides</span>
+                        <span>Dossier & Rides</span>
                       </button>
 
-                      <a
-                        href={`https://api.whatsapp.com/send?phone=${client.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(
-                          `Hello ${client.name},\nThis is Sonu Tripathi from Opal Chauffeurs Australia. Thank you for your continued partnership with us!`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="p-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 transition-all"
-                        title="Open WhatsApp Chat"
+                      {/* Send Invoice Statement via WhatsApp */}
+                      <button
+                        onClick={() => handleGenerateWhatsAppStatement(client)}
+                        className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                        title="Send Tax Invoice Statement via WhatsApp"
                       >
                         <MessageSquare className="w-3.5 h-3.5" />
-                      </a>
+                        <span className="hidden sm:inline">WhatsApp</span>
+                      </button>
+
+                      {/* Send Invoice Statement via Email */}
+                      <button
+                        onClick={() => handleSendEmailStatement(client)}
+                        className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                        title="Send Tax Invoice Statement via Email"
+                      >
+                        <Mail className="w-3.5 h-3.5" />
+                        <span className="hidden sm:inline">Email</span>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -611,7 +672,7 @@ export const ClientsCustomersPage: React.FC = () => {
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL: FULL CLIENT DOSSIER & BOOKING HISTORY
+          MODAL 1: FULL CLIENT DOSSIER & BOOKING HISTORY
       ───────────────────────────────────────────────────────────── */}
       {selectedClient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
@@ -688,39 +749,44 @@ export const ClientsCustomersPage: React.FC = () => {
 
               {/* Bookings & Rides History Table */}
               <div className="space-y-2">
-                <span className="font-bold text-slate-200 text-xs block">
-                  All Booking Records & Payment Manifests ({selectedClient.bookings.length} Journeys)
-                </span>
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-slate-200 text-xs block">
+                    All Booking Records & Tax Invoices ({selectedClient.bookings.length} Journeys)
+                  </span>
+                  <span className="text-[10px] text-amber-400 font-mono">1-Click Invoice Dispatch Available</span>
+                </div>
+
                 <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden font-mono">
                   <table className="w-full text-left text-xs">
                     <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] border-b border-slate-800">
                       <tr>
                         <th className="py-2.5 px-3">Booking Ref</th>
                         <th className="py-2.5 px-3">Date & Time</th>
-                        <th className="py-2.5 px-3">Route (Pickup ➔ Dropoff)</th>
-                        <th className="py-2.5 px-3">Chauffeur & Plate</th>
+                        <th className="py-2.5 px-3">Route</th>
+                        <th className="py-2.5 px-3">Chauffeur</th>
                         <th className="py-2.5 px-3">Fare (AUD)</th>
                         <th className="py-2.5 px-3">Status</th>
+                        <th className="py-2.5 px-3 text-right">Tax Invoice Actions</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/60 text-[11px]">
                       {selectedClient.bookings.map((b) => (
-                        <tr key={b.booking_number} className="hover:bg-slate-900/60">
-                          <td className="py-3 px-3 font-bold text-amber-400">
+                        <tr key={b.booking_number} className="hover:bg-slate-900/60 font-sans">
+                          <td className="py-3 px-3 font-bold text-amber-400 font-mono">
                             {b.booking_number}
                             <span className="block text-[10px] text-slate-500">{b.invoice_number}</span>
                           </td>
-                          <td className="py-3 px-3 text-slate-300">{b.date}</td>
-                          <td className="py-3 px-3 font-sans text-slate-200">
-                            <span className="block font-semibold">📍 {b.pickup}</span>
+                          <td className="py-3 px-3 text-slate-300 font-mono text-[10px]">{b.date}</td>
+                          <td className="py-3 px-3 text-slate-200">
+                            <span className="block font-semibold text-xs">📍 {b.pickup}</span>
                             <span className="block text-slate-400 text-[10px]">🏁 {b.dropoff}</span>
                           </td>
-                          <td className="py-3 px-3 font-sans text-slate-300">
-                            <strong className="text-slate-200 block">{b.chauffeur}</strong>
+                          <td className="py-3 px-3 text-slate-300">
+                            <strong className="text-slate-200 block text-xs">{b.chauffeur}</strong>
                             <span className="text-amber-400 text-[10px] font-mono">{b.plate}</span>
                           </td>
-                          <td className="py-3 px-3 font-bold text-slate-100">${b.fare.toFixed(2)}</td>
-                          <td className="py-3 px-3">
+                          <td className="py-3 px-3 font-bold text-slate-100 font-mono">${b.fare.toFixed(2)}</td>
+                          <td className="py-3 px-3 font-mono">
                             <span
                               className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                 b.payment_status === 'PAID'
@@ -730,6 +796,73 @@ export const ClientsCustomersPage: React.FC = () => {
                             >
                               ● {b.payment_status}
                             </span>
+                          </td>
+                          <td className="py-3 px-3 text-right font-sans">
+                            <div className="flex items-center justify-end gap-1.5">
+                              {/* View / Print Tax Invoice */}
+                              <button
+                                onClick={() => setPreviewBooking({ client: selectedClient, booking: b })}
+                                className="px-2 py-1 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold flex items-center gap-1"
+                                title="View & Print Tax Invoice"
+                              >
+                                <Receipt className="w-3 h-3" />
+                                <span>Invoice</span>
+                              </button>
+
+                              {/* Send Tax Invoice to WhatsApp */}
+                              <a
+                                href={`https://api.whatsapp.com/send?phone=${selectedClient.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(
+                                  `🧾 *[OPAL CHAUFFEURS - TAX INVOICE RECEIPT]* 🚘\n\n` +
+                                  `📋 *Tax Invoice:* #${b.invoice_number}\n` +
+                                  `🔖 *Booking Ref:* #${b.booking_number}\n` +
+                                  `👤 *Client:* ${selectedClient.company_name || selectedClient.name}\n` +
+                                  `📅 *Date:* ${b.date}\n` +
+                                  `📍 *Pickup:* ${b.pickup}\n` +
+                                  `🏁 *Dropoff:* ${b.dropoff}\n` +
+                                  `🚘 *Vehicle & Plate:* ${b.vehicle} (${b.plate})\n` +
+                                  `🧑‍✈️ *Chauffeur:* ${b.chauffeur}\n` +
+                                  `💰 *Total Amount (Inc 10% GST):* $${b.fare.toFixed(2)} AUD\n` +
+                                  `💳 *Payment Status:* ${b.payment_status} (${b.payment_method})\n\n` +
+                                  `🏦 *Bank EFT Remittance:* CBA (BSB: 063-000 • Acc: 1092 8841)\n` +
+                                  `📞 *Phone:* +61 432 000 718\n\n` +
+                                  `✅ Thank you for traveling with Opal Chauffeurs Australia!`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30"
+                                title="Send Ride Invoice to WhatsApp"
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                              </a>
+
+                              {/* Send Tax Invoice via Email */}
+                              <a
+                                href={`mailto:${selectedClient.email}?subject=${encodeURIComponent(
+                                  `[Tax Invoice] Opal Chauffeurs Trip #${b.booking_number} — ${b.invoice_number}`
+                                )}&body=${encodeURIComponent(
+                                  `Dear ${selectedClient.name},\n\nPlease find the Tax Invoice details for your journey with Opal Chauffeurs Australia:\n\n` +
+                                  `Tax Invoice: #${b.invoice_number}\n` +
+                                  `Booking Ref: #${b.booking_number}\n` +
+                                  `Date & Time: ${b.date}\n` +
+                                  `Pickup: ${b.pickup}\n` +
+                                  `Dropoff: ${b.dropoff}\n` +
+                                  `Chauffeur: ${b.chauffeur} (${b.vehicle} - ${b.plate})\n` +
+                                  `Total Fare (Inc 10% GST): $${b.fare.toFixed(2)} AUD\n` +
+                                  `Payment Status: ${b.payment_status}\n\n` +
+                                  `Commonwealth Bank EFT Details:\n` +
+                                  `BSB: 063-000\n` +
+                                  `Account: 1092 8841\n` +
+                                  `PayID: accounts@opalchauffeurs.com.au\n\n` +
+                                  `Thank you for traveling with Opal Chauffeurs Australia.\nPhone: +61 432 000 718\nWeb: https://www.opalchauffeurs.com.au`
+                                )}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 rounded-lg bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30"
+                                title="Send Ride Invoice via Email"
+                              >
+                                <Mail className="w-3 h-3" />
+                              </a>
+                            </div>
                           </td>
                         </tr>
                       ))}
@@ -741,17 +874,13 @@ export const ClientsCustomersPage: React.FC = () => {
 
             {/* Modal Footer Actions */}
             <div className="flex justify-between items-center pt-3 border-t border-slate-800">
-              <a
-                href={`https://api.whatsapp.com/send?phone=${selectedClient.phone.replace(/[^0-9]/g, '')}&text=${encodeURIComponent(
-                  `Hello ${selectedClient.name},\nThis is Sonu Tripathi from Opal Chauffeurs Australia regarding your account (${selectedClient.company_name || selectedClient.name}).`
-                )}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => handleGenerateWhatsAppStatement(selectedClient)}
                 className="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-emerald-500/20"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>📱 Open Direct WhatsApp</span>
-              </a>
+                <span>📱 Dispatch Full Statement to WhatsApp</span>
+              </button>
 
               <button
                 onClick={() => setSelectedClient(null)}
@@ -765,7 +894,189 @@ export const ClientsCustomersPage: React.FC = () => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL: ONBOARD NEW VIP CLIENT / CORPORATE ACCOUNT
+          MODAL 2: PRINTABLE OFFICIAL ATO TAX INVOICE PREVIEW
+      ───────────────────────────────────────────────────────────── */}
+      {previewBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in overflow-y-auto">
+          <div className="bg-slate-900 border border-amber-500/40 max-w-3xl w-full p-8 rounded-3xl space-y-5 text-xs text-slate-200 relative shadow-2xl max-h-[92vh] flex flex-col">
+            <button
+              onClick={() => setPreviewBooking(null)}
+              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-xl bg-slate-800/80 hover:bg-slate-700 transition-all"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="overflow-y-auto space-y-5 pr-1.5 flex-1">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row justify-between items-start border-b border-slate-800 pb-5 gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-2xl font-black gold-gradient-text tracking-wider">TAX INVOICE</h2>
+                    <span
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold font-mono border ${
+                        previewBooking.booking.payment_status === 'PAID'
+                          ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+                          : 'bg-amber-500/20 text-amber-300 border-amber-500/40'
+                      }`}
+                    >
+                      ● {previewBooking.booking.payment_status}
+                    </span>
+                  </div>
+                  <p className="text-sm font-bold text-slate-100">Opal Chauffeurs Australia Pty Ltd</p>
+                  <p className="text-[11px] text-slate-400">Trading as Opal Chauffeurs VIP Transport Network</p>
+                  <p className="text-[11px] font-mono text-amber-400 font-bold">ABN: 45 123 456 789</p>
+                  <p className="text-[11px] text-slate-400">Melbourne VIC • Australia</p>
+                  <p className="text-[11px] text-slate-400">Phone: +61 432 000 718 • accounts@opalchauffeurs.com.au</p>
+                </div>
+
+                <div className="sm:text-right space-y-1 bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/90 font-mono w-full sm:w-auto">
+                  <span className="text-lg font-black text-amber-400 block">{previewBooking.booking.invoice_number}</span>
+                  <span className="text-[11px] text-slate-400 block">Booking Ref: <strong className="text-slate-200">{previewBooking.booking.booking_number}</strong></span>
+                  <span className="text-[11px] text-slate-400 block">Journey Date: <strong className="text-slate-300">{previewBooking.booking.date}</strong></span>
+                </div>
+              </div>
+
+              {/* Billed To & Chauffeur Specs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-cyan-400" /> Billed To (Client Account)
+                  </span>
+                  <div>
+                    <h4 className="text-sm font-bold text-slate-100">
+                      {previewBooking.client.company_name || previewBooking.client.name}
+                    </h4>
+                    <span className="text-[11px] text-slate-300 block">Attn: {previewBooking.client.name}</span>
+                    {previewBooking.client.abn && (
+                      <span className="text-[11px] font-mono text-slate-400 block">Client ABN: {previewBooking.client.abn}</span>
+                    )}
+                    <span className="text-[11px] text-cyan-300 block">{previewBooking.client.email}</span>
+                    <span className="text-[11px] font-mono text-slate-400 block">{previewBooking.client.phone}</span>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2">
+                  <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider flex items-center gap-1.5">
+                    <Car className="w-3.5 h-3.5 text-amber-400" /> Chauffeur & Vehicle Specs
+                  </span>
+                  <div className="space-y-1 text-[11px]">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Assigned Chauffeur:</span>
+                      <strong className="text-slate-200">{previewBooking.booking.chauffeur}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Vehicle Model:</span>
+                      <strong className="text-amber-300">{previewBooking.booking.vehicle}</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Registration Plate:</span>
+                      <strong className="text-cyan-300 font-mono">{previewBooking.booking.plate}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Line Items */}
+              <div className="rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden font-mono">
+                <table className="w-full text-left text-xs">
+                  <thead className="bg-slate-900 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+                    <tr>
+                      <th className="py-2.5 px-4 font-semibold">Service Description & Route</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Ex GST</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">10% GST</th>
+                      <th className="py-2.5 px-4 font-semibold text-right">Total (AUD)</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-[11px]">
+                    <tr>
+                      <td className="py-3 px-4">
+                        <strong className="text-slate-100 block font-sans">Executive VIP Chauffeur Transfer</strong>
+                        <span className="text-slate-400 block text-[10px] font-sans">📍 Pickup: {previewBooking.booking.pickup}</span>
+                        <span className="text-slate-400 block text-[10px] font-sans">🏁 Dropoff: {previewBooking.booking.dropoff}</span>
+                      </td>
+                      <td className="py-3 px-4 text-right text-slate-300">${(previewBooking.booking.fare - previewBooking.booking.fare / 11).toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right text-amber-400">${(previewBooking.booking.fare / 11).toFixed(2)}</td>
+                      <td className="py-3 px-4 text-right font-bold text-slate-100">${previewBooking.booking.fare.toFixed(2)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Remittance & Bank Transfer */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-[11px]">
+                  <span className="text-[10px] text-amber-400 block uppercase font-bold tracking-wider flex items-center gap-1.5 font-sans">
+                    <CreditCard className="w-3.5 h-3.5" /> Remittance & EFT Payment Details
+                  </span>
+                  <div className="space-y-1 font-mono text-slate-300">
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Bank:</span>
+                      <strong className="text-slate-200">Commonwealth Bank of Australia</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Account Name:</span>
+                      <strong className="text-slate-200">Opal Chauffeurs Australia Pty Ltd</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">BSB:</span>
+                      <strong className="text-amber-400 font-bold">063-000</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Account Number:</span>
+                      <strong className="text-amber-400 font-bold">1092 8841</strong>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-slate-400">Reference:</span>
+                      <strong className="text-cyan-300 font-bold">{previewBooking.booking.invoice_number}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-2 font-mono text-right flex flex-col justify-between">
+                  <div className="space-y-1.5">
+                    <div className="flex justify-between text-slate-400 text-xs">
+                      <span>Subtotal (Ex GST):</span>
+                      <span>${(previewBooking.booking.fare - previewBooking.booking.fare / 11).toFixed(2)} AUD</span>
+                    </div>
+                    <div className="flex justify-between text-amber-400 font-bold text-xs">
+                      <span>10% Australian GST (1/11th):</span>
+                      <span>${(previewBooking.booking.fare / 11).toFixed(2)} AUD</span>
+                    </div>
+                  </div>
+                  <div className="flex justify-between text-slate-100 text-base font-black pt-2 border-t border-slate-800">
+                    <span className="uppercase text-xs font-sans">Total (Inc GST):</span>
+                    <span>${previewBooking.booking.fare.toFixed(2)} AUD</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ATO Legal Compliance Note */}
+              <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[10px] text-slate-400 text-center font-sans">
+                Thank you for traveling with Opal Chauffeurs Australia. All amounts are in Australian Dollars (AUD). This document serves as a compliant Tax Invoice under Section 195-1 of the Australian GST Act 1999.
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-3 border-t border-slate-800 shrink-0">
+              <button
+                onClick={() => setPreviewBooking(null)}
+                className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+              >
+                Close
+              </button>
+              <button
+                onClick={() => window.print()}
+                className="px-5 py-2 rounded-xl glow-gold-btn text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Print / Download PDF</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ─────────────────────────────────────────────────────────────
+          MODAL 3: ONBOARD NEW VIP CLIENT / CORPORATE ACCOUNT
       ───────────────────────────────────────────────────────────── */}
       {isAddClientModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
