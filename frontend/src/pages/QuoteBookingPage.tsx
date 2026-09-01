@@ -36,7 +36,7 @@ export const QuoteBookingPage: React.FC = () => {
   const [flightNumber, setFlightNumber] = useState('QF400');
   const [passengerName, setPassengerName] = useState('Alexander Vance');
   const [passengerPhone, setPassengerPhone] = useState('+61 412 345 678');
-  const [passengerEmail, setPassengerEmail] = useState('alexander.vance@crowncorp.com.au');
+  const [passengerEmail, setPassengerEmail] = useState('alexander.vance@opalchauffeurs.com.au');
   const [paymentOption, setPaymentOption] = useState<'FULL' | 'DEPOSIT_25'>('FULL');
 
   // In-Form Real Payment Method State
@@ -530,7 +530,7 @@ export const QuoteBookingPage: React.FC = () => {
                   <span className="font-bold font-sans block text-sm text-emerald-300">Instant OSKO / PayID Transfer Details</span>
                   <div className="flex justify-between border-b border-emerald-500/20 pb-1">
                     <span className="text-slate-400">PayID / Email:</span>
-                    <strong className="text-emerald-300">accounts@crownchauffeurs.com.au</strong>
+                    <strong className="text-emerald-300">accounts@opalchauffeurs.com.au</strong>
                   </div>
                   <div className="flex justify-between border-b border-emerald-500/20 pb-1">
                     <span className="text-slate-400">Bank:</span>
@@ -620,12 +620,12 @@ export const QuoteBookingPage: React.FC = () => {
 
             {/* Direct WhatsApp Deliver Button */}
             <a
-              href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '919305365420'}&text=${encodeURIComponent(
+              href={`https://api.whatsapp.com/send?phone=${passengerPhone.replace(/[^0-9]/g, '') || '61432000718'}&text=${encodeURIComponent(
                 `🔔 [MASTER BOOKING & TAX INVOICE CONFIRMED] 🚘\n\nReference: #${createdBookingNumber}\nTax Invoice: #${createdInvoiceNumber}\nPassenger: ${passengerName}\nPhone: ${passengerPhone}\n📅 Pickup Date: ${pickupDate}\n⏰ Pickup Time: ${pickupTime} AEST\n📍 Pickup: ${pickupAddress}\n🏁 Dropoff: ${dropoffAddress}${
                   isAirport && flightNumber ? `\n✈️ Flight: ${flightNumber} (Meet & Greet - 60m Free Buffer)` : ''
                 }\n🚘 Vehicle: ${selectedCategory}\n💰 Total Amount: $${fare.gross.toFixed(2)} AUD\n💳 Payment Status: ${
                   paymentOption === 'FULL' ? 'PAID IN FULL (AUD ' + fare.gross + ')' : '25% DEPOSIT PAID (AUD ' + fare.deposit + ')'
-                }\n\n✅ Thank you for choosing Crown Chauffeurs Melbourne!`
+                }\n\n✅ Thank you for choosing Opal Chauffeurs Melbourne!`
               )}`}
               target="_blank"
               rel="noopener noreferrer"

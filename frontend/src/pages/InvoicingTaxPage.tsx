@@ -985,11 +985,11 @@ export const InvoicingTaxPage: React.FC = () => {
                       ● {previewInvoice.status}
                     </span>
                   </div>
-                  <p className="text-sm font-bold text-slate-100">Crown Chauffeurs Australia Pty Ltd</p>
-                  <p className="text-[11px] text-slate-400">Trading as Crown Chauffeurs VIP Transport Network</p>
+                  <p className="text-sm font-bold text-slate-100">Opal Chauffeurs Australia Pty Ltd</p>
+                  <p className="text-[11px] text-slate-400">Trading as Opal Chauffeurs VIP Transport Network</p>
                   <p className="text-[11px] font-mono text-amber-400 font-bold">ABN: 45 123 456 789</p>
-                  <p className="text-[11px] text-slate-400">Level 14, 727 Collins Street, Melbourne VIC 3008</p>
-                  <p className="text-[11px] text-slate-400">Phone: +61 412 889 001 • accounts@crownchauffeurs.com.au</p>
+                  <p className="text-[11px] text-slate-400">Melbourne VIC • Australia</p>
+                  <p className="text-[11px] text-slate-400">Phone: +61 432 000 718 • accounts@opalchauffeurs.com.au</p>
                 </div>
 
                 <div className="sm:text-right space-y-1 bg-slate-950/80 p-3.5 rounded-2xl border border-slate-800/90 font-mono w-full sm:w-auto">
@@ -1124,7 +1124,7 @@ export const InvoicingTaxPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">Account Name:</span>
-                      <strong className="text-slate-200">Crown Chauffeurs Australia Pty Ltd</strong>
+                      <strong className="text-slate-200">Opal Chauffeurs Australia Pty Ltd</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">BSB:</span>
@@ -1140,7 +1140,7 @@ export const InvoicingTaxPage: React.FC = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-slate-400">PayID / OSKO:</span>
-                      <strong className="text-slate-200">accounts@crownchauffeurs.com.au</strong>
+                      <strong className="text-slate-200">accounts@opalchauffeurs.com.au</strong>
                     </div>
                   </div>
                 </div>
@@ -1175,7 +1175,7 @@ export const InvoicingTaxPage: React.FC = () => {
 
               {/* ATO Legal Compliance Note */}
               <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800/80 text-[10px] text-slate-400 text-center font-sans">
-                Thank you for traveling with Crown Chauffeurs Australia. All amounts are in Australian Dollars (AUD). This document serves as a compliant Tax Invoice under Section 195-1 of the Australian GST Act 1999.
+                Thank you for traveling with Opal Chauffeurs Australia. All amounts are in Australian Dollars (AUD). This document serves as a compliant Tax Invoice under Section 195-1 of the Australian GST Act 1999.
               </div>
             </div>
 

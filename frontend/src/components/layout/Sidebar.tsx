@@ -93,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div>
             <h1 className="font-extrabold text-sm tracking-wider text-slate-100 uppercase">
-              CROWN CHAUFFEURS
+              OPAL CHAUFFEURS
             </h1>
             <p className="text-[10px] text-amber-400/90 font-mono tracking-widest uppercase">
               OPERATIONS PLATFORM
@@ -168,8 +168,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {user?.full_name?.charAt(0) || 'A'}
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-slate-200 truncate">{user?.full_name || 'Fleet Admin'}</p>
-            <p className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@crownchauffeurs.com.au'}</p>
+            <p className="text-xs font-bold text-slate-200 truncate">{user?.full_name || 'Sonu Tripathi (Director)'}</p>
+            <p className="text-[10px] text-slate-400 truncate">{user?.email || 'admin@opalchauffeurs.com.au'}</p>
           </div>
         </div>
       </div>

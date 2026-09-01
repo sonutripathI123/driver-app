@@ -23,8 +23,8 @@ import {
 
 export const NotificationsHubPage: React.FC = () => {
   const [settings, setSettings] = useState<ManagerNotificationSettings>({
-    manager_phone: '+919305365420',
-    manager_email: 'sonu@crownchauffeurs.com.au',
+    manager_phone: '+61432000718',
+    manager_email: 'sonu@opalchauffeurs.com.au',
     whatsapp_enabled: true,
     sms_enabled: true,
     browser_push_enabled: true,

@@ -92,7 +92,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       totalFare: 460.0,
       paymentStatus: 'PAID_IN_FULL',
       driverName: 'Sonu Tripathi (Live Driver)',
-      driverPhone: '+91 9305365420',
+      driverPhone: '+61 432 000 718',
       vehiclePlate: 'ST-9305-VIC (Mercedes S450)',
       driverPayout: 170.0,
       netProfit: 248.18,

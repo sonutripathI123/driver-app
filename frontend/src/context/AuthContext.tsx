@@ -12,10 +12,10 @@ interface AuthContextType {
 
 const defaultAdminUser: User = {
   id: 'admin-seed-01',
-  email: 'admin@chauffeurplatform.com',
-  full_name: 'Alexander Crown',
+  email: 'admin@opalchauffeurs.com.au',
+  full_name: 'Sonu Tripathi (Director)',
   role: 'ADMIN',
-  phone: '+61 400 999 888',
+  phone: '+61 432 000 718',
   is_active: true,
 };
 

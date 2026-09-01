@@ -68,13 +68,13 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
         </div>
 
         <a
-          href="https://crownchauffeurs.com.au"
+          href="https://www.opalchauffeurs.com.au/"
           target="_blank"
           rel="noreferrer"
-          className="hidden xl:flex items-center gap-1 text-xs text-slate-400 hover:text-amber-400 transition-colors"
+          className="hidden xl:flex items-center gap-1.5 text-xs text-amber-400/90 hover:text-amber-300 transition-colors font-medium"
         >
-          <span>crownchauffeurs.com.au</span>
-          <ExternalLink className="w-3 h-3" />
+          <span>opalchauffeurs.com.au</span>
+          <ExternalLink className="w-3 h-3 text-amber-400" />
         </a>
       </div>
 

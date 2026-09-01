@@ -67,7 +67,7 @@ export const BookingsOperatePage: React.FC = () => {
       id: newDriverId,
       full_name: newDriverName.trim(),
       phone: newDriverPhone.trim(),
-      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
+      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@opalchauffeurs.com.au`,
       license_number: newDriverLicense.trim() || 'VIC-DA-88',
       status: 'AVAILABLE',
       rating: 5.0,
@@ -309,9 +309,9 @@ export const BookingsOperatePage: React.FC = () => {
     ];
 
     let demoDrivers: Driver[] = [
-      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+91 9305365420', email: 'sonu@crownchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64 },
-      { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@f1.com', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142 },
-      { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@f1.com', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98 },
+      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64 },
+      { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142 },
+      { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@opalchauffeurs.com.au', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98 },
     ];
 
     const savedCustom = localStorage.getItem('crown_custom_drivers');
@@ -323,7 +323,7 @@ export const BookingsOperatePage: React.FC = () => {
             id: p.id,
             full_name: p.name,
             phone: p.phone,
-            email: p.email || `${p.name.toLowerCase().replace(/\s+/g, '.')}@crownchauffeurs.com.au`,
+            email: p.email || `${p.name.toLowerCase().replace(/\s+/g, '.')}@opalchauffeurs.com.au`,
             license_number: p.license || 'VIC-DA-88',
             status: 'AVAILABLE' as const,
             rating: p.rating || 5.0,
@@ -335,8 +335,8 @@ export const BookingsOperatePage: React.FC = () => {
     }
 
     const demoVehicles: Vehicle[] = [
-      { id: 'v-01', category: 'SEDAN_PREMIUM', make: 'Mercedes-Benz', model: 'S-Class', year: 2024, registration_plate: 'CROWN-01', passenger_capacity: 4, luggage_capacity: 3, is_active: true },
-      { id: 'v-02', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class', year: 2024, registration_plate: 'VIP-VAN-02', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
+      { id: 'v-01', category: 'SEDAN_PREMIUM', make: 'Mercedes-Benz', model: 'S-Class', year: 2024, registration_plate: 'GTS783', passenger_capacity: 4, luggage_capacity: 3, is_active: true },
+      { id: 'v-02', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class', year: 2024, registration_plate: 'CPS711', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
     ];
 
     setBookings(demoBookings);
@@ -361,10 +361,10 @@ export const BookingsOperatePage: React.FC = () => {
     
     const assignedDriver = drivers.find((d) => d.id === allocationDriverId) || drivers[0];
     const parentBooking = bookings.find((b) => b.id === selectedLeg.bookingId);
-    const cleanPhone = (assignedDriver?.phone || '919305365420').replace(/[^0-9]/g, '');
+    const cleanPhone = (assignedDriver?.phone || '61432000718').replace(/[^0-9]/g, '');
 
     const waText =
-      `🚗 *[CROWN CHAUFFEURS - DRIVER TRIP ALLOCATION]* 🧑‍✈️\n\n` +
+      `🚗 *[OPAL CHAUFFEURS - DRIVER TRIP ALLOCATION]* 🧑‍✈️\n\n` +
       `📋 *Booking Ref:* #${parentBooking?.booking_number || 'CCM-2026-0881'}\n` +
       `👤 *Passenger:* ${parentBooking?.passenger_name || 'VIP Client'} (${parentBooking?.passenger_phone || '+61 411 222 333'})\n` +
       `📅 *Pickup Time:* ${new Date(selectedLeg.leg.pickup_datetime).toLocaleString('en-AU')}\n` +

@@ -54,11 +54,11 @@ interface ChauffeurProfileItem {
 }
 
 const DEFAULT_DRIVERS: ChauffeurProfileItem[] = [
-  { id: 'drv-sonu', name: 'Sonu Tripathi (Live Driver)', plate: 'ST-9305-VIC', vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)', phone: '+91 9305365420', email: 'sonu@crownchauffeurs.com.au', license: 'VIC-DA-9305', rating: 5.0 },
-  { id: 'drv-01', name: 'Marcus Vance', plate: 'AURA-01', vehicle: 'Mercedes S-Class S450', phone: '+61 411 998 877', email: 'marcus@crownchauffeurs.com.au', license: 'VIC-DA-0112', rating: 4.98 },
-  { id: 'drv-02', name: 'Daniel Ricciardo', plate: 'DR-03-VIC', vehicle: 'BMW 740i Executive', phone: '+61 433 221 100', email: 'daniel@crownchauffeurs.com.au', license: 'VIC-DA-0344', rating: 4.99 },
-  { id: 'drv-03', name: 'Fernando Alonso', plate: 'FA-14-VIC', vehicle: 'Mercedes S-Class S450', phone: '+61 433 778 899', email: 'fernando@crownchauffeurs.com.au', license: 'VIC-DA-1499', rating: 4.96 },
-  { id: 'drv-04', name: 'Lewis Hamilton', plate: 'LH-44-VIC', vehicle: 'Mercedes V-Class Luxury Van', phone: '+61 499 001 122', email: 'lewis@crownchauffeurs.com.au', license: 'VIC-DA-4401', rating: 4.99 },
+  { id: 'drv-sonu', name: 'Sonu Tripathi (Live Driver)', plate: 'ST-9305-VIC', vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license: 'VIC-DA-9305', rating: 5.0 },
+  { id: 'drv-01', name: 'Marcus Vance', plate: 'AURA-01', vehicle: 'Mercedes S-Class S450', phone: '+61 411 998 877', email: 'marcus@opalchauffeurs.com.au', license: 'VIC-DA-0112', rating: 4.98 },
+  { id: 'drv-02', name: 'Daniel Ricciardo', plate: 'DR-03-VIC', vehicle: 'BMW 740i Executive', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license: 'VIC-DA-0344', rating: 4.99 },
+  { id: 'drv-03', name: 'Fernando Alonso', plate: 'FA-14-VIC', vehicle: 'Mercedes S-Class S450', phone: '+61 433 778 899', email: 'fernando@opalchauffeurs.com.au', license: 'VIC-DA-1499', rating: 4.96 },
+  { id: 'drv-04', name: 'Lewis Hamilton', plate: 'LH-44-VIC', vehicle: 'Mercedes V-Class Luxury Van', phone: '+61 499 001 122', email: 'lewis@opalchauffeurs.com.au', license: 'VIC-DA-4401', rating: 4.99 },
 ];
 
 export const DriverPortalPage: React.FC = () => {
