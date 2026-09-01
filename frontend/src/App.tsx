@@ -11,6 +11,7 @@ import { NotificationsHubPage } from './pages/NotificationsHubPage';
 import { InvoicingTaxPage } from './pages/InvoicingTaxPage';
 import { AnalyticsProfitPage } from './pages/AnalyticsProfitPage';
 import { PartnersFleetPage } from './pages/PartnersFleetPage';
+import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
 import { bookingsApi } from './services/api';
 import { triggerNativeNotification, playNotificationChime } from './utils/notificationSound';
 
@@ -60,6 +61,8 @@ export const App: React.FC = () => {
         return <QuoteBookingPage />;
       case 'driver-portal':
         return <DriverPortalPage />;
+      case 'clients':
+        return <ClientsCustomersPage />;
       case 'notifications':
         return <NotificationsHubPage />;
       case 'flights':
