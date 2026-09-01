@@ -68,11 +68,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
 
       {/* Right: Engine Badge, Locked Master Admin Badge, Notifications */}
       <div className="flex items-center gap-2 md:gap-3">
-        {/* Engine Status Badge */}
+        {/* Opal Cloud Engine Status Badge */}
         <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#121A2D] border border-amber-500/40 text-amber-300 text-xs font-bold shadow-sm shadow-amber-500/10">
           <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '8s' }} />
-          <span>FastAPI 2.0</span>
-          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[10px]">ACTIVE</span>
+          <span>Opal Cloud Engine</span>
+          <span className="px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono font-bold">LIVE</span>
         </div>
 
         {/* Permanent Master Admin Locked Indicator */}
