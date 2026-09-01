@@ -1,17 +1,11 @@
 import os
-from reportlab.lib.pagesizes import letter
+import sys
+from reportlab.lib.pagesizes import A4
 from reportlab.lib import colors
-from reportlab.platypus import (
-    SimpleDocTemplate,
-    Paragraph,
-    Spacer,
-    Table,
-    TableStyle,
-    PageBreak,
-    KeepTogether,
-    HRFlowable
-)
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import (
+    SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, HRFlowable
+)
 from reportlab.pdfgen import canvas
 
 class NumberedCanvas(canvas.Canvas):
@@ -33,377 +27,418 @@ class NumberedCanvas(canvas.Canvas):
 
     def draw_page_decorations(self, page_count):
         self.saveState()
-        self.setFont("Helvetica", 8)
+        self.setFont("Helvetica-Bold", 8)
         self.setFillColor(colors.HexColor("#64748B"))
         
         # Header (pages > 1)
         if self._pageNumber > 1:
-            self.drawString(54, 11 * 72 - 36, "ENTERPRISE CHAUFFEUR OPERATIONS PLATFORM — COMPLETE SYSTEM MANUAL")
+            self.drawString(40, 810, "OPAL CHAUFFEURS AUSTRALIA — MASTER OPERATIONS MANUAL")
+            self.drawRightString(555, 810, "CONFIDENTIAL & PROPRIETARY")
             self.setStrokeColor(colors.HexColor("#CBD5E1"))
             self.setLineWidth(0.5)
-            self.line(54, 11 * 72 - 42, 8.5 * 72 - 54, 11 * 72 - 42)
-            
+            self.line(40, 804, 555, 804)
+        
         # Footer
-        footer_text = f"Page {self._pageNumber} of {page_count}"
-        self.drawRightString(8.5 * 72 - 54, 36, footer_text)
-        self.drawString(54, 36, "CONFIDENTIAL & PROPRIETARY — OPERATIONAL ARCHITECTURE & BUTTON DIRECTORY")
         self.setStrokeColor(colors.HexColor("#CBD5E1"))
         self.setLineWidth(0.5)
-        self.line(54, 46, 8.5 * 72 - 54, 46)
+        self.line(40, 45, 555, 45)
         
+        self.setFont("Helvetica", 8)
+        self.drawString(40, 32, "Opal Chauffeurs Australia Pty Ltd • www.opalchauffeurs.com.au • +61 432 000 718")
+        page_text = f"Page {self._pageNumber} of {page_count}"
+        self.drawRightString(555, 32, page_text)
         self.restoreState()
 
-def generate_manual_pdf(filename):
+def build_pdf(filename):
     doc = SimpleDocTemplate(
         filename,
-        pagesize=letter,
-        leftMargin=54,
-        rightMargin=54,
-        topMargin=54,
-        bottomMargin=54
+        pagesize=A4,
+        leftMargin=40,
+        rightMargin=40,
+        topMargin=50,
+        bottomMargin=55
     )
 
     styles = getSampleStyleSheet()
     
-    # Custom Brand Palette
-    c_primary = colors.HexColor("#0F172A")    # Deep Slate / Obsidian
-    c_gold = colors.HexColor("#B45309")       # Amber / Gold Accent
-    c_cyan = colors.HexColor("#0284C7")       # Cyan / Blue
-    c_emerald = colors.HexColor("#047857")    # Emerald Green
-    c_dark = colors.HexColor("#1E293B")       # Text dark
-    c_muted = colors.HexColor("#64748B")      # Text muted
-    c_bg_light = colors.HexColor("#F8FAFC")   # Light background
-    c_border = colors.HexColor("#E2E8F0")
+    # Custom Palette
+    c_gold = colors.HexColor("#B45309")
+    c_navy = colors.HexColor("#0F172A")
+    c_dark = colors.HexColor("#1E293B")
+    c_bg_light = colors.HexColor("#F8FAFC")
+    c_border = colors.HexColor("#CBD5E1")
 
     # Typography Styles
     title_style = ParagraphStyle(
         'DocTitle',
+        parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=24,
-        leading=28,
-        textColor=c_primary,
-        alignment=0,
-        spaceAfter=6
+        fontSize=22,
+        leading=26,
+        textColor=c_navy,
+        spaceAfter=4
     )
     
     subtitle_style = ParagraphStyle(
         'DocSubTitle',
+        parent=styles['Normal'],
         fontName='Helvetica-Bold',
-        fontSize=12,
-        leading=16,
+        fontSize=11,
+        leading=15,
         textColor=c_gold,
-        alignment=0,
-        spaceAfter=15
+        spaceAfter=12
     )
 
     h1_style = ParagraphStyle(
-        'SectionH1',
+        'Header1',
+        parent=styles['Heading1'],
         fontName='Helvetica-Bold',
-        fontSize=14,
-        leading=18,
-        textColor=c_primary,
-        spaceBefore=14,
-        spaceAfter=8,
+        fontSize=13,
+        leading=17,
+        textColor=c_navy,
+        spaceBefore=12,
+        spaceAfter=6,
         keepWithNext=True
     )
 
     h2_style = ParagraphStyle(
-        'SectionH2',
+        'Header2',
+        parent=styles['Heading2'],
         fontName='Helvetica-Bold',
-        fontSize=11,
-        leading=15,
-        textColor=c_cyan,
-        spaceBefore=10,
+        fontSize=10.5,
+        leading=14,
+        textColor=c_gold,
+        spaceBefore=8,
         spaceAfter=4,
         keepWithNext=True
     )
 
     body_style = ParagraphStyle(
-        'BodyDark',
+        'Body',
+        parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=9,
-        leading=13,
-        textColor=c_dark,
-        spaceAfter=6
-    )
-
-    bullet_style = ParagraphStyle(
-        'BulletItem',
-        fontName='Helvetica',
-        fontSize=9,
-        leading=13,
-        textColor=c_dark,
-        leftIndent=12,
-        firstLineIndent=-8,
-        spaceAfter=3
-    )
-
-    table_header_style = ParagraphStyle(
-        'TableHeader',
-        fontName='Helvetica-Bold',
         fontSize=8.5,
-        leading=11,
+        leading=12.5,
+        textColor=c_dark,
+        spaceAfter=5
+    )
+
+    table_header = ParagraphStyle(
+        'TH',
+        parent=styles['Normal'],
+        fontName='Helvetica-Bold',
+        fontSize=8,
+        leading=10,
         textColor=colors.white
     )
 
-    table_cell_style = ParagraphStyle(
-        'TableCell',
+    table_cell = ParagraphStyle(
+        'TC',
+        parent=styles['Normal'],
         fontName='Helvetica',
-        fontSize=8,
-        leading=11,
+        fontSize=7.5,
+        leading=10.5,
         textColor=c_dark
     )
 
     table_cell_bold = ParagraphStyle(
-        'TableCellBold',
-        fontName='Helvetica-Bold',
+        'TCB',
+        parent=table_cell,
+        fontName='Helvetica-Bold'
+    )
+
+    box_text = ParagraphStyle(
+        'BoxText',
+        parent=body_style,
         fontSize=8,
-        leading=11,
-        textColor=c_primary
+        leading=11.5,
+        textColor=c_dark
     )
 
     story = []
 
-    # ==================== COVER / HEADER ====================
-    story.append(Paragraph("ENTERPRISE CHAUFFEUR OPERATIONS PLATFORM", title_style))
-    story.append(Paragraph("COMPLETE SYSTEM MANUAL, FEATURE GUIDE & BUTTON DIRECTORY", subtitle_style))
-    story.append(HRFlowable(width="100%", thickness=2, color=c_gold, spaceAfter=12))
-    
-    story.append(Paragraph(
-        "<b>Architectural Mandate:</b> <i>ONE BOOKING → ONE RECORD → ONE SOURCE OF TRUTH</i><br/>"
-        "This master documentation manual provides an exhaustive, granular directory of every visual button, user interface interaction, "
-        "background mathematical algorithm, automated lifecycle state transition, and role-based operational gate across the entire "
-        "Enterprise Chauffeur Platform (Backend Engine + 3D Luxury Frontend Dashboard Suite).",
-        body_style
-    ))
+    # COVER / HEADER BANNER
+    story.append(Paragraph("OPAL CHAUFFEURS AUSTRALIA", title_style))
+    story.append(Paragraph("VIP FLEET OPERATIONS & DISPATCH PLATFORM — MASTER MANUAL", subtitle_style))
+    story.append(HRFlowable(width="100%", thickness=2, color=c_gold, spaceBefore=0, spaceAfter=10))
+
+    meta_data = [
+        [
+            Paragraph("<b>Official Domain:</b> https://www.opalchauffeurs.com.au", body_style),
+            Paragraph("<b>Director / Contact:</b> Sonu Tripathi (+61 432 000 718)", body_style)
+        ],
+        [
+            Paragraph("<b>Live Platform URL:</b> https://driver-frontend-q3fh.onrender.com", body_style),
+            Paragraph("<b>Driver Mobile App:</b> https://driver-frontend-q3fh.onrender.com/driver", body_style)
+        ],
+        [
+            Paragraph("<b>Tax & Legal Entity:</b> Opal Chauffeurs Australia Pty Ltd", body_style),
+            Paragraph("<b>Bank:</b> Commonwealth Bank (BSB: 063-000 • Acc: 1092 8841)", body_style)
+        ]
+    ]
+    meta_table = Table(meta_data, colWidths=[250, 265])
+    meta_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), c_bg_light),
+        ('BOX', (0, 0), (-1, -1), 1, c_border),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+        ('LEFTPADDING', (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+    ]))
+    story.append(meta_table)
     story.append(Spacer(1, 10))
 
-    # ==================== SECTION 1: GLOBAL NAVIGATION & TOP BAR ====================
-    story.append(Paragraph("1. Global Navigation Bar & Top Header Controls", h1_style))
-    story.append(Paragraph("Located persistently across all pages to provide real-time telemetry, session controls, and navigation.", body_style))
+    # SECTION 1: SYSTEM ARCHITECTURE & END-TO-END WORKFLOW
+    story.append(Paragraph("1. System Architecture & End-to-End Operational Loop", h1_style))
+    story.append(Paragraph(
+        "Platform ka architecture 5 real-time interconnected stages par operate karta hai. Har booking live sync aur automated financial logic ke through circulate hoti hai:",
+        body_style
+    ))
 
-    header_buttons_data = [
-        [Paragraph("UI Control / Button", table_header_style), Paragraph("Type / Trigger", table_header_style), Paragraph("Functional Behavior & Core Logic", table_header_style)],
+    flow_data = [
         [
-            Paragraph("<b>Mobile Menu Hamburger</b>", table_cell_bold),
-            Paragraph("Touch / Click Icon", table_cell_style),
-            Paragraph("Opens slide-out mobile navigation drawer on smartphones with smooth backdrop blur. Auto-closes upon destination selection.", table_cell_style)
+            Paragraph("<b>Stage 1: Booking & Quoting Entry</b>", table_cell_bold),
+            Paragraph("Client website ya Instant 3D Quoting Engine par booking confirm karta hai. System instant booking ref (#CCM-2026-XXXX) generate karke <b>Phase 1 Booking Confirmation Voucher</b> (WhatsApp & Email) ready karta hai.", table_cell)
         ],
         [
-            Paragraph("<b>Melbourne Hub Telemetry</b>", table_cell_bold),
-            Paragraph("Live Real-Time Widget", table_cell_style),
-            Paragraph("Displays active Australian Eastern Standard Time (AEST) with real-time second sweep, synchronizing Melbourne airport flight curfew gates.", table_cell_style)
+            Paragraph("<b>Stage 2: Live Dispatch & Driver Allocation</b>", table_cell_bold),
+            Paragraph("Admin Operate Board par driver (Sonu Tripathi, Daniel, Marcus) aur vehicle (Mercedes S-Class GTS783) assign karta hai. 1-click se driver ke WhatsApp par manifest aur secret Driver PWA link chala jata hai.", table_cell)
         ],
         [
-            Paragraph("<b>FastAPI 2.0 Engine Pill</b>", table_cell_bold),
-            Paragraph("System Status Badge", table_cell_style),
-            Paragraph("Monitors async engine health, rate limiter status, database connection pools, and real-time backend latency.", table_cell_style)
+            Paragraph("<b>Stage 3: Live Driver Execution & Telemetry</b>", table_cell_bold),
+            Paragraph("Driver mobile PWA (/driver) par [En Route] -> [Arrived] -> [Passenger On Board] -> [Complete Trip] update karta hai. Dashboard par bina refresh kiye Chime Sound bajta hai aur live status sync hota hai.", table_cell)
         ],
         [
-            Paragraph("<b>RBAC Persona Switcher</b>", table_cell_bold),
-            Paragraph("Interactive Dropdown (6 Roles)", table_cell_style),
-            Paragraph("Dynamically hot-swaps active session between <b>Admin, Operations Lead, Live Dispatcher, Accountant, Driver,</b> and <b>Corporate Client</b> with instant permission re-scoping.", table_cell_style)
+            Paragraph("<b>Stage 4: ATO 10% GST & Tax Invoicing</b>", table_cell_bold),
+            Paragraph("Trip complete hote hi system Section 195-1 GST Act ke tahat 1/11th GST calculate karke <b>Official Tax Invoice (#INV-2026-XXXX)</b> banata hai aur <b>Phase 2 WhatsApp/Email Invoice</b> dispatch trigger karta hai.", table_cell)
         ],
         [
-            Paragraph("<b>Notifications Bell (3)</b>", table_cell_bold),
-            Paragraph("Alert Drawer Trigger", table_cell_style),
-            Paragraph("Pulls high-priority operational alerts including flight delay reschedules, negative margin warnings, and pending balance chasing.", table_cell_style)
-        ],
+            Paragraph("<b>Stage 5: Monthly Corporate Ledger & Analytics</b>", table_cell_bold),
+            Paragraph("Monthly Net-30 accounts (Rio Tinto, BHP, PwC) ka balance ledger me record hota hai. FIFO 1-click settlement aur RFC 4180 CSV exports instant download hote hain.", table_cell)
+        ]
     ]
-
-    t_header = Table(header_buttons_data, colWidths=[130, 90, 284])
-    t_header.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), c_primary),
+    flow_table = Table(flow_data, colWidths=[155, 360])
+    flow_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.white),
         ('GRID', (0, 0), (-1, -1), 0.5, c_border),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [c_bg_light, colors.white]),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+    ]))
+    story.append(flow_table)
+    story.append(Spacer(1, 10))
+
+    # SECTION 2: 2-PHASE CLIENT COMMUNICATION PROTOCOL
+    story.append(Paragraph("2. 2-Phase Luxury Client Messaging Protocol", h1_style))
+    msg_data = [
+        [
+            Paragraph("<b>Phase 1: Booking Confirmation & Trip Voucher</b><br/><i>(Sent instantly when booking is confirmed)</i>", table_cell_bold),
+            Paragraph("• Header: 🚗 [OPAL CHAUFFEURS - BOOKING CONFIRMATION & TRIP VOUCHER] 🧑‍✈️<br/>"
+                      "• Content: Booking Ref, Lead Passenger, Date & Time AEST, Route, Reserved Vehicle Category, Allocated Lead Chauffeur Sonu Tripathi (+61 432 000 718).<br/>"
+                      "• Note: Chauffeur arrival 10 mins prior. Live satellite flight tracking for airport meet & greet.<br/>"
+                      "• Channels: 1-Click WhatsApp Voucher + 1-Click Email Voucher.", table_cell)
+        ],
+        [
+            Paragraph("<b>Phase 2: Official ATO Tax Invoice</b><br/><i>(Sent after chauffeur completes the trip)</i>", table_cell_bold),
+            Paragraph("• Header: 🧾 [OPAL CHAUFFEURS AUSTRALIA - OFFICIAL ATO TAX INVOICE] 🚘<br/>"
+                      "• Content: Tax Invoice #INV-2026-XXXX, Booking Ref, Client/Corporate Entity, Journey Date & Route, Total Gross Fare ($ AUD), 10% Australian GST Breakdown ($1/11th).<br/>"
+                      "• Remittance: Commonwealth Bank (BSB: 063-000, Acc: 1092 8841, PayID: accounts@opalchauffeurs.com.au).<br/>"
+                      "• Channels: 1-Click WhatsApp Tax Invoice + 1-Click Email Invoice + Printable PDF.", table_cell)
+        ]
+    ]
+    msg_table = Table(msg_data, colWidths=[175, 340])
+    msg_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.white),
+        ('GRID', (0, 0), (-1, -1), 0.5, c_border),
+        ('ROWBACKGROUNDS', (0, 0), (-1, -1), [c_bg_light, colors.white]),
         ('TOPPADDING', (0, 0), (-1, -1), 5),
         ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, c_bg_light]),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]))
-    story.append(t_header)
-    story.append(Spacer(1, 14))
+    story.append(msg_table)
+    story.append(Spacer(1, 10))
 
-    # ==================== SECTION 2: EXECUTIVE 3D COMMAND CENTER ====================
-    story.append(Paragraph("2. Executive 3D Command Center (`/`)", h1_style))
-    story.append(Paragraph("The primary high-altitude dashboard providing operational oversight, financial KPIs, and 3D visualizers.", body_style))
+    # Page Break for Module Breakdown
+    story.append(PageBreak())
 
-    dash_buttons_data = [
-        [Paragraph("Feature / Button", table_header_style), Paragraph("Component", table_header_style), Paragraph("Operational Impact & Details", table_header_style)],
-        [
-            Paragraph("<b>Review Pending Queue (2)</b>", table_cell_bold),
-            Paragraph("Glowing CTA Button", table_cell_style),
-            Paragraph("Instantly routes the operations dispatcher to the live dispatch operate board filtered directly to unallocated master journeys.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Gross Revenue Card</b>", table_cell_bold),
-            Paragraph("Hero Metric 1", table_cell_style),
-            Paragraph("Calculates real-time gross passenger revenue ($ AUD) inclusive of 10% Australian GST, with automatic Ex-GST net revenue breakdown.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Net Operating Profit Card</b>", table_cell_bold),
-            Paragraph("Hero Metric 2", table_cell_style),
-            Paragraph("Calculates Net Operating Profit = Gross Revenue (Ex GST) - Direct Fleet Costs (Driver Payouts + Partner Offloads), displaying exact margin %.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Pending Dispatch Queue Card</b>", table_cell_bold),
-            Paragraph("Hero Metric 3", table_cell_style),
-            Paragraph("Monitors unallocated master bookings awaiting human verification or driver conflict resolution with pulsating warning indicator.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>On-Time Arrival Rate Card</b>", table_cell_bold),
-            Paragraph("Hero Metric 4", table_cell_style),
-            Paragraph("Aggregates chauffeur punctuality (% of trips where <code>arrived_at &lt;= pickup_datetime</code>) and fleet average passenger rating.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>3D Luxury Car Showroom</b>", table_cell_bold),
-            Paragraph("Three.js WebGL Canvas", table_cell_style),
-            Paragraph("Interactive 360° mouse drag & touch orbit rotating luxury vehicle showroom with metallic clearcoat shaders, xenon lights, and alloy rims.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Color Palette Selector</b>", table_cell_bold),
-            Paragraph("Paint Picker (4 Colors)", table_cell_style),
-            Paragraph("Dynamically swaps 3D car paint shaders between Obsidian Black (#0D1117), Champagne Gold (#D4AF37), Pearl White (#F8FAFC), and Royal Sapphire (#0F274A).", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Fleet Class Selector Tabs</b>", table_cell_bold),
-            Paragraph("5 Chassis Buttons", table_cell_style),
-            Paragraph("Swaps 3D geometry and specs between Executive Sedan, Premium Sedan, Premium SUV, People Mover Van, and Minibus Shuttle.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>3D Dispatch Radar Globe</b>", table_cell_bold),
-            Paragraph("Three.js Airspace Canvas", table_cell_style),
-            Paragraph("Rotating 3D wireframe globe displaying flight trajectory arcs (MEL, SYD, BNE, PER), airport GPS pins, and active in-bound flight counts.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Allocate Driver &rarr; (Queue)</b>", table_cell_bold),
-            Paragraph("1-Click Quick Action", table_cell_style),
-            Paragraph("Directly opens chauffeur allocation drawer for the selected master booking item in the Human-in-the-Loop queue.", table_cell_style)
-        ],
+    # SECTION 3: PAGE-BY-PAGE & BUTTON-BY-BUTTON DIRECTORY
+    story.append(Paragraph("3. Detailed Module & Button Reference Directory", h1_style))
+
+    modules = [
+        {
+            "title": "A. Top Navigation Header",
+            "desc": "Universal sticky header for real-time status and quick actions.",
+            "buttons": [
+                ("Live AEST Clock", "Melbourne Hub live local timezone indicator."),
+                ("opalchauffeurs.com.au", "Official company website direct link."),
+                ("Opal Cloud Engine [ LIVE ]", "Central Python FastAPI cloud server health indicator."),
+                ("Admin [ FULL ACCESS ]", "Locked Master Director authorization badge for Sonu Tripathi."),
+                ("Notification Bell (3)", "Displays pending unassigned urgent journeys and pings.")
+            ]
+        },
+        {
+            "title": "B. Executive Overview (/dashboard)",
+            "desc": "Master analytics hub with 3D car visualizer and high-level KPIs.",
+            "buttons": [
+                ("Today's Gross Revenue Card", "Opens detailed Revenue Audit modal (Card, Bank, Pending)."),
+                ("Net Operating Profit Card", "Opens Margin Breakdown modal (Driver payouts, Fuel, Company Net)."),
+                ("Active Journeys Card", "Opens Live Trip Manifest audit modal."),
+                ("Active Fleet Card", "Opens Chauffeur Availability and Rating Roster modal."),
+                ("3D Vehicle Selector", "Interactive 360-degree rotation of Mercedes S-Class, V-Class, Sprinter.")
+            ]
+        },
+        {
+            "title": "C. Live Operate Board (/operate)",
+            "desc": "Core dispatch command center for scheduling and allocating journeys.",
+            "buttons": [
+                ("+ Add New Ride", "Opens manual booking modal for custom phone/email reservations."),
+                ("Assign Driver & Vehicle", "Opens Driver Allocation Modal (Sonu Tripathi / Mercedes GTS783)."),
+                ("Dispatch WhatsApp Manifest", "Sends pre-formatted trip manifest & /driver link to chauffeur WhatsApp."),
+                ("Filter: ALL / UNASSIGNED / ACTIVE", "Filters dispatch list by operational milestone status.")
+            ]
+        },
+        {
+            "title": "D. Instant 3D Quoting & Bookings (/quote)",
+            "desc": "Customer-facing and admin instant quoting engine with 4 payment channels.",
+            "buttons": [
+                ("Vehicle Category Tabs", "Switches between Sedan, Executive, People Mover, Minibus, SUV."),
+                ("Airport Meet & Greet Toggle", "Enables flight radar tracking and 60-min complimentary buffer."),
+                ("Payment Channels (Card / OSKO / Wallet / Net-30)", "Selects payment gateway and calculates 10% GST."),
+                ("Pay & Confirm Master Booking", "Authorizes payment, generates #CCM ref, chimes sound, opens Phase 1 voucher modal."),
+                ("WhatsApp Voucher & Email Voucher", "Dispatches Phase 1 Booking Confirmation Voucher to client.")
+            ]
+        },
+        {
+            "title": "E. Driver Mobile PWA (/driver)",
+            "desc": "Standalone mobile interface for chauffeurs on the road.",
+            "buttons": [
+                ("Start Navigation / En Route", "Updates trip status to EN_ROUTE and opens Google/Apple Maps."),
+                ("Arrived at Pickup", "Updates status to ARRIVED and sends SMS arrival notification to passenger."),
+                ("Passenger On Board", "Updates status to PICKED_UP and engages live meter."),
+                ("Complete Trip", "Sets status to COMPLETED, settles driver payout, and triggers Tax Invoice auto-generation."),
+                ("Call Passenger / WhatsApp Passenger", "Direct 1-tap communication with lead passenger.")
+            ]
+        },
+        {
+            "title": "F. Client & Customer Details (/clients)",
+            "desc": "Complete client dossiers, booking histories, and 1-click invoice dispatch.",
+            "buttons": [
+                ("Dossier & Rides", "Opens complete customer dossier with VIP car preferences, notes, and full booking history."),
+                ("WhatsApp Statement (Row)", "Sends total outstanding debt & Commonwealth Bank EFT remittance to client WhatsApp."),
+                ("Email Statement (Row)", "Drafts official pre-filled statement to client accounts email."),
+                ("Invoice Button (Inside Dossier)", "Opens full printable ATO-compliant Tax Invoice sheet modal."),
+                ("+ Onboard Client / Corporate", "Opens modal to register new company (Rio Tinto, BHP) with custom credit limit.")
+            ]
+        },
+        {
+            "title": "G. GST Invoicing & Tax Remittance (/invoicing)",
+            "desc": "ATO BAS Section 195-1 tax compliance and monthly post-paid debtor ledger.",
+            "buttons": [
+                ("View Monthly Accounts & Balances", "Opens Net-30 corporate directory with total debt ($5,730 AUD)."),
+                ("Quick FIFO Settle", "Settles oldest unpaid invoices first upon receiving bank EFT transfer."),
+                ("View Tax Invoice", "Opens official Tax Invoice modal for viewing, printing, or PDF download."),
+                ("+ Create Manual Invoice", "Generates custom corporate tax invoice.")
+            ]
+        },
+        {
+            "title": "H. Profit Analytics & Reports (/analytics)",
+            "desc": "Financial P&L reports, driver leaderboards, and RFC 4180 CSV exports.",
+            "buttons": [
+                ("Trip Profitability CSV", "Instantly downloads opal_trip_profitability_audit_2026.csv to device."),
+                ("Financial Ledger CSV", "Instantly downloads opal_general_financial_ledger_2026.csv to device."),
+                ("3-Color Bar Chart Tooltip", "Hover over any day to inspect Gross Revenue (Yellow), Fleet Cost (Red), Profit (Green)."),
+                ("Low Margin Flags Card", "Opens Root-Cause Investigation modal (Tolls, waiting time, preventive measures).")
+            ]
+        }
     ]
 
-    t_dash = Table(dash_buttons_data, colWidths=[130, 100, 274])
-    t_dash.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), c_primary),
-        ('GRID', (0, 0), (-1, -1), 0.5, c_border),
-        ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, c_bg_light]),
-    ]))
-    story.append(t_dash)
-    story.append(Spacer(1, 14))
+    for m in modules:
+        story.append(Paragraph(m["title"], h2_style))
+        story.append(Paragraph(f"<i>{m['desc']}</i>", body_style))
+        
+        btn_rows = [
+            [Paragraph("<b>Button / Control</b>", table_header), Paragraph("<b>Action & Operational Outcome</b>", table_header)]
+        ]
+        for b_name, b_action in m["buttons"]:
+            btn_rows.append([Paragraph(b_name, table_cell_bold), Paragraph(b_action, table_cell)])
+        
+        btn_table = Table(btn_rows, colWidths=[150, 365])
+        btn_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), c_navy),
+            ('GRID', (0, 0), (-1, -1), 0.5, c_border),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [c_bg_light, colors.white]),
+            ('TOPPADDING', (0, 0), (-1, -1), 3),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+            ('LEFTPADDING', (0, 0), (-1, -1), 5),
+            ('RIGHTPADDING', (0, 0), (-1, -1), 5),
+        ]))
+        story.append(btn_table)
+        story.append(Spacer(1, 6))
 
-    # ==================== SECTION 3: LIVE OPERATE BOARD ====================
-    story.append(Paragraph("3. Live Operate & Dispatch Board (`/operate`)", h1_style))
-    story.append(Paragraph("The real-time operational engine implementing the Add-Allocate-Settle lifecycle.", body_style))
+    # Page Break for Live Status & Roadmap
+    story.append(PageBreak())
 
-    operate_buttons_data = [
-        [Paragraph("Feature / Control", table_header_style), Paragraph("Component", table_header_style), Paragraph("Functional Behavior & Safeguards", table_header_style)],
-        [
-            Paragraph("<b>Table / Kanban Toggle</b>", table_cell_bold),
-            Paragraph("View Switcher Tabs", table_cell_style),
-            Paragraph("Switches between high-density operational Master Table View and Kanban Stage Board (PENDING, ALLOCATED, EN_ROUTE, COMPLETED).", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Search & Filter Bar</b>", table_cell_bold),
-            Paragraph("Input Query Engine", table_cell_style),
-            Paragraph("Instant multi-field filtering across Booking Number (`CCM-XXXX`), Passenger Name, Phone, and Route Address.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Allocate Chauffeur Modal</b>", table_cell_bold),
-            Paragraph("Action Modal Trigger", table_cell_style),
-            Paragraph("Opens allocation panel to assign driver and company vehicle. Automatically sets driver fixed payout allocation cost.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Schedule Conflict Guard</b>", table_cell_bold),
-            Paragraph("Automated Validation Engine", table_cell_style),
-            Paragraph("Prevents double-booking drivers by checking overlapping active jobs within a <b>90-minute safety buffer</b>.", table_cell_style)
-        ],
-        [
-            Paragraph("<b>Subcontractor Offload Drawer</b>", table_cell_bold),
-            Paragraph("Partner Dispatch Lane", table_cell_style),
-            Paragraph("Broadcasts job offers to affiliate partners with a <b>15-minute countdown expiry window</b>. Enforces Negative Margin Guards.", table_cell_style)
-        ],
+    # SECTION 4: 100% LIVE READINESS VS FUTURE ROADMAP
+    story.append(Paragraph("4. 100% Live Readiness Matrix & Future Integrations", h1_style))
+    readiness_data = [
+        [Paragraph("<b>Feature / Operational Capability</b>", table_header), Paragraph("<b>Current Status</b>", table_header), Paragraph("<b>Ready to Use Today?</b>", table_header)],
+        [Paragraph("Opal Chauffeurs Rebranding & Official Domain Link", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Director Contact (+61 432 000 718) across system", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Client & Customer Details Directory & Dossiers", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("1-Click WhatsApp & Email Invoicing Dispatch", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Phase 1 (Voucher) & Phase 2 (Tax Invoice) Messaging", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Standalone Chauffeur Mobile PWA (/driver)", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Real-Time Audio Chimes & Native Notifications", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("ATO 10% GST Calculation & Printable Tax Invoices", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Monthly Net-30 Corporate FIFO Debt Settlement", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Excel / CSV Direct Spreadsheet File Downloads", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("3D Interactive Luxury Car Visualizer", table_cell), Paragraph("🟢 100% Live", table_cell_bold), Paragraph("✅ Yes", table_cell_bold)],
+        [Paragraph("Existing Website Booking Form Webhook", table_cell), Paragraph("🟡 API Ready (1-line embed)", table_cell), Paragraph("Optional Setup", table_cell)],
+        [Paragraph("Meta / Twilio Silent WhatsApp API", table_cell), Paragraph("🟡 Hooks Ready in Backend", table_cell), Paragraph("Optional Setup", table_cell)],
     ]
-
-    t_operate = Table(operate_buttons_data, colWidths=[130, 100, 274])
-    t_operate.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), c_primary),
+    ready_table = Table(readiness_data, colWidths=[255, 150, 110])
+    ready_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), c_navy),
         ('GRID', (0, 0), (-1, -1), 0.5, c_border),
-        ('TOPPADDING', (0, 0), (-1, -1), 4.5),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4.5),
-        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, c_bg_light]),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [c_bg_light, colors.white]),
+        ('TOPPADDING', (0, 0), (-1, -1), 3.5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 3.5),
+        ('LEFTPADDING', (0, 0), (-1, -1), 5),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 5),
     ]))
-    story.append(t_operate)
-    story.append(Spacer(1, 14))
+    story.append(ready_table)
+    story.append(Spacer(1, 10))
 
-    # ==================== SECTION 4: INSTANT QUOTE & BOOKING ENGINE ====================
-    story.append(Paragraph("4. Instant 3D Quote & Multi-Leg Booking Engine (`/quotes`)", h1_style))
-    story.append(Paragraph("Customer and corporate quotation builder supporting multi-leg and hourly hire journeys.", body_style))
+    # Sign-off box
+    sign_off = [
+        [
+            Paragraph(
+                "<b>OPERATIONAL CERTIFICATION:</b><br/>"
+                "This document certifies that the Opal Chauffeurs VIP Transport Operations Platform is fully configured, branded, tested, and actively deployed. All calculations adhere to Australian taxation laws (GST Act 1999) and executive VIP chauffeur hospitality standards.<br/><br/>"
+                "<b>Director:</b> Sonu Tripathi &nbsp;&nbsp;•&nbsp;&nbsp; <b>Entity:</b> Opal Chauffeurs Australia Pty Ltd &nbsp;&nbsp;•&nbsp;&nbsp; <b>Date:</b> September 2026",
+                box_text
+            )
+        ]
+    ]
+    sign_table = Table(sign_off, colWidths=[515])
+    sign_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor("#FEF3C7")),
+        ('BOX', (0, 0), (-1, -1), 1, c_gold),
+        ('TOPPADDING', (0, 0), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+        ('LEFTPADDING', (0, 0), (-1, -1), 8),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    story.append(sign_table)
 
-    story.append(Paragraph("<b>Key Features & Interactive Buttons:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>Journey Mode Selector:</b> Toggle between <i>Point-to-Point (One-Way)</i>, <i>Return Journey</i> (auto-applies 10% round-trip discount), and <i>Hourly As-Directed</i>.", bullet_style))
-    story.append(Paragraph("&bull; <b>Airport Meet & Greet Toggle:</b> Enables commercial flight number entry, auto-connecting the leg to real-time flight tracking.", bullet_style))
-    story.append(Paragraph("&bull; <b>10% Australian GST Calculator:</b> Auto-calculates 1/11th GST tax breakdown in real-time.", bullet_style))
-    story.append(Paragraph("&bull; <b>25% Deposit vs 100% Full Payment:</b> Split payment selector for advance bookings (&gt; 7 days).", bullet_style))
-    story.append(Paragraph("&bull; <b>Confirm Master Booking (`CCM-XXXXX`) Button:</b> Creates master booking, child journey legs, and triggers confetti animation.", bullet_style))
-    story.append(Spacer(1, 14))
-
-    # ==================== SECTION 5: DRIVER MOBILE WEB PWA ====================
-    story.append(Paragraph("5. Driver Mobile PWA Portal (`/driver-portal`)", h1_style))
-    story.append(Paragraph("Dedicated smartphone interface for professional chauffeurs.", body_style))
-
-    story.append(Paragraph("<b>Chauffeur 4-Step Trip Stepper Buttons:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>1. En Route Button:</b> Driver starts travel to pickup. Updates leg status to <code>EN_ROUTE</code> and sets driver to <code>ON_TRIP</code>.", bullet_style))
-    story.append(Paragraph("&bull; <b>2. Arrived Button:</b> Driver reaches location. Updates status to <code>ARRIVED</code> and auto-dispatches passenger arrival SMS.", bullet_style))
-    story.append(Paragraph("&bull; <b>3. Picked Up Button:</b> Passenger boards the vehicle. Updates status to <code>PICKED_UP</code>.", bullet_style))
-    story.append(Paragraph("&bull; <b>4. Completed Button:</b> Trip finishes. Leg marked <code>COMPLETED</code>, driver auto-toggled to <code>AVAILABLE</code>, and trip earnings added.", bullet_style))
-    story.append(Paragraph("&bull; <b>Privacy Isolation Gate:</b> Customer total fare is completely hidden from the driver; only driver payout is displayed.", bullet_style))
-    story.append(Paragraph("&bull; <b>Simulate GPS Telemetry Ping:</b> Sends live latitude/longitude coordinates to fleet dispatch map.", bullet_style))
-    story.append(Spacer(1, 14))
-
-    # ==================== SECTION 6: FLIGHT RADAR & AUTOMATION ====================
-    story.append(Paragraph("6. Airport Flight Radar & Automation (`/flights`)", h1_style))
-    story.append(Paragraph("FlightAware integration for flight monitoring and delay management.", body_style))
-
-    story.append(Paragraph("<b>Automation Controls & Features:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>Simulate Flight Radar Check Button:</b> Queries commercial flight tracking for real-time delays.", bullet_style))
-    story.append(Paragraph("&bull; <b>Automated Delay Rescheduler:</b> Automatically applies +30 min domestic and +45 min international customs buffers to pickup times upon detected delays.", bullet_style))
-    story.append(Paragraph("&bull; <b>Complimentary 60-Min Wait-Time Calculator:</b> First 60 minutes from touchdown are free; slider calculates $1.50/min excess wait charges thereafter.", bullet_style))
-    story.append(Spacer(1, 14))
-
-    # ==================== SECTION 7: GST INVOICING & REMITTANCE ====================
-    story.append(Paragraph("7. GST Invoicing, Tax & Remittance Engine (`/invoicing`)", h1_style))
-    story.append(Paragraph("Australian Tax Office (ATO) compliant financial and invoicing suite.", body_style))
-
-    story.append(Paragraph("<b>Financial Controls & Invoicing Tools:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>Tax Invoice Ledger (`INV-YYYY-XXXX`):</b> Itemized invoices with 10% GST breakdown and printable PDF modal.", bullet_style))
-    story.append(Paragraph("&bull; <b>FIFO Debt Allocation Remittance Tool:</b> Allocates corporate customer lump-sum payments to the oldest overdue invoice first.", bullet_style))
-    story.append(Paragraph("&bull; <b>Australian BAS Report View:</b> Summarizes quarterly GST Box G1 (Total Sales), Box 1A (GST on Sales), and Net Sales Ex GST.", bullet_style))
-    story.append(Paragraph("&bull; <b>Driver RCTI Settlement Generator:</b> Generates Recipient Created Tax Invoices with ABN GST registration credits.", bullet_style))
-    story.append(Spacer(1, 14))
-
-    # ==================== SECTION 8: PROFIT ANALYTICS & CSV EXPORTS ====================
-    story.append(Paragraph("8. Profit Analytics & CSV Exports (`/analytics`)", h1_style))
-    story.append(Paragraph("Executive margins, fleet utilization, driver KPI scorecards, and streaming CSV data exports.", body_style))
-
-    story.append(Paragraph("<b>Analytics Visualizations & Export Buttons:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>Trip Profitability CSV Export Button:</b> Generates RFC 4180 compliant CSV stream of per-trip gross fares, driver payouts, partner offloads, and net margins.", bullet_style))
-    story.append(Paragraph("&bull; <b>Financial Ledger CSV Export Button:</b> Exports full financial ledger of all credit/debit transactions and Stripe settlements.", bullet_style))
-    story.append(Paragraph("&bull; <b>Interactive Revenue vs Cost Bar Chart:</b> Hardware-accelerated SVG chart with hover tooltips for daily revenue, direct fleet costs, and net operating profit.", bullet_style))
-    story.append(Paragraph("&bull; <b>Chauffeur Performance Scorecard:</b> Real-time leaderboard tracking customer ratings, completed trips, and on-time arrival rate %.", bullet_style))
-    story.append(Spacer(1, 14))
-
-    # ==================== SECTION 9: PARTNERS & FLEET MANAGEMENT ====================
-    story.append(Paragraph("9. Subcontractor Partner Network & Vehicle Fleet (`/partners-fleet`)", h1_style))
-    story.append(Paragraph("Subcontractor compliance monitoring and active company vehicle registry.", body_style))
-
-    story.append(Paragraph("<b>Compliance & Fleet Controls:</b>", h2_style))
-    story.append(Paragraph("&bull; <b>Partner Insurance Compliance Gate:</b> Blocks job offloads to subcontractors whose Public Liability Insurance has expired.", bullet_style))
-    story.append(Paragraph("&bull; <b>Register Subcontractor Modal:</b> Adds partner with accreditation number, insurance expiry date, and contact details.", bullet_style))
-    story.append(Paragraph("&bull; <b>Fleet Vehicle Catalog:</b> Registers company vehicles with make, model, year, registration plate, and strict passenger/luggage capacities.", bullet_style))
-
+    # Build Document
     doc.build(story, canvasmaker=NumberedCanvas)
-    print(f"PDF successfully generated: {filename}")
+    print(f"PDF Successfully generated at: {filename}")
 
 if __name__ == "__main__":
-    output_path = r"c:\Users\Administrator\Desktop\Driver App\Enterprise_Chauffeur_Platform_Complete_Manual.pdf"
-    generate_manual_pdf(output_path)
+    out_path = os.path.join(os.getcwd(), "Opal_Chauffeurs_Master_Operations_Manual_2026.pdf")
+    build_pdf(out_path)

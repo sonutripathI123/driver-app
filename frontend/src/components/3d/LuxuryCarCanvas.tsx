@@ -1,7 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
-import * as THREE from 'three';
+import React, { useState, useRef } from 'react';
 import { VehicleCategory } from '../../types';
-import { Sparkles, Eye, Users, Briefcase } from 'lucide-react';
+import { Sparkles, Eye, Users, Briefcase, ShieldCheck, Car, Star, CheckCircle2 } from 'lucide-react';
 
 interface LuxuryCarProps {
   category?: VehicleCategory;
@@ -9,352 +8,262 @@ interface LuxuryCarProps {
   showControls?: boolean;
 }
 
+interface VehicleFleetDetail {
+  category: VehicleCategory;
+  name: string;
+  modelFullName: string;
+  regoPlate: string;
+  pax: number;
+  bags: number;
+  image: string;
+  tagline: string;
+  badge: string;
+  features: string[];
+}
+
 export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
-  category = 'SEDAN_EXECUTIVE',
+  category = 'SEDAN_PREMIUM',
   onCategoryChange,
   showControls = true,
 }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const [selectedColor, setSelectedColor] = useState<string>('#0d1117'); // Obsidian Black default
   const [activeCategory, setActiveCategory] = useState<VehicleCategory>(category);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [tilt, setTilt] = useState({ x: 0, y: 0, glareX: 50, glareY: 50 });
+  const [isHovered, setIsHovered] = useState(false);
 
-  const sceneRef = useRef<THREE.Scene | null>(null);
-  const carGroupRef = useRef<THREE.Group | null>(null);
-  const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
+  // Sync state if category prop changes externally
+  React.useEffect(() => {
+    setActiveCategory(category);
+  }, [category]);
 
-  // Mouse / Touch Drag State
-  const isDragging = useRef(false);
-  const previousMousePosition = useRef({ x: 0, y: 0 });
+  const fleetData: Record<VehicleCategory, VehicleFleetDetail> = {
+    SEDAN_PREMIUM: {
+      category: 'SEDAN_PREMIUM',
+      name: 'Mercedes-Benz S-Class LWB',
+      modelFullName: 'Mercedes S-Class S450 Long Wheelbase',
+      regoPlate: 'GTS783',
+      pax: 4,
+      bags: 3,
+      image: '/images/fleet/mercedes_s_class_gts783.jpg',
+      tagline: 'Flagship VIP First-Class Chauffeur Transport',
+      badge: 'FIRST CLASS VIP',
+      features: ['Reclining Nappa Leather', 'Burmester 3D Sound', 'Complimentary Fiji Water', 'Active Air Suspension'],
+    },
+    SEDAN_EXECUTIVE: {
+      category: 'SEDAN_EXECUTIVE',
+      name: 'Mercedes-Benz E-Class Executive',
+      modelFullName: 'Mercedes-Benz E-Class AMG Line',
+      regoPlate: 'BYY499',
+      pax: 4,
+      bags: 2,
+      image: '/images/fleet/mercedes_s_class_gts783.jpg', // Uses Mercedes flagship profile
+      tagline: 'Executive Corporate Transfer & Airport Express',
+      badge: 'EXECUTIVE CORPORATE',
+      features: ['Dual Zone Climate', 'High-Speed Wi-Fi', 'Silent Acoustic Cabin', 'Express Airport Route'],
+    },
+    PEOPLE_MOVER: {
+      category: 'PEOPLE_MOVER',
+      name: 'Mercedes-Benz Mini Van (V-Class)',
+      modelFullName: 'Mercedes-Benz V-Class VIP People Mover',
+      regoPlate: 'CGL646',
+      pax: 7,
+      bags: 7,
+      image: '/images/fleet/mercedes_vclass_cgl646.jpg',
+      tagline: 'VIP Delegations, Family & Group Luxury Transfer',
+      badge: '7-SEATER LUXURY',
+      features: ['Conference Seating Mode', 'Electric Sliding Doors', 'Extra Large Luggage Bay', 'Rear AC Controls'],
+    },
+    MINIBUS: {
+      category: 'MINIBUS',
+      name: 'Mercedes-Benz Sprinter Shuttle',
+      modelFullName: 'Mercedes Sprinter Executive Luxury Shuttle',
+      regoPlate: 'BS14OK',
+      pax: 11,
+      bags: 12,
+      image: '/images/fleet/mercedes_sprinter_bs14ok.jpg',
+      tagline: 'Executive Group Transport & Winery Charters',
+      badge: '11-SEATER SHUTTLE',
+      features: ['Standing Headroom', 'High-Capacity Luggage Pod', 'Tour Microphone & PA', 'Reclining Armrest Seats'],
+    },
+    SUV_PREMIUM: {
+      category: 'SUV_PREMIUM',
+      name: 'Audi Q7 Black Edition',
+      modelFullName: 'Audi Q7 50 TDI Quattro Black Edition',
+      regoPlate: 'AMJ506',
+      pax: 4,
+      bags: 4,
+      image: '/images/fleet/audi_q7_amj506.jpg',
+      tagline: 'Luxury Quattro All-Weather VIP Escort',
+      badge: 'LUXURY QUATTRO SUV',
+      features: ['Quattro All-Wheel Drive', 'Panoramic Sunroof', 'Air Suspension Comfort', 'Extended Boot Space'],
+    },
+  };
 
-  useEffect(() => {
+  const currentVehicle = fleetData[activeCategory] || fleetData.SEDAN_PREMIUM;
+
+  // Interactive 3D Mouse Parallax Tilt Handler
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
 
-    const width = containerRef.current.clientWidth;
-    const height = containerRef.current.clientHeight;
+    const tiltX = ((y - centerY) / centerY) * -10; // Max 10 deg tilt
+    const tiltY = ((x - centerX) / centerX) * 12; // Max 12 deg tilt
 
-    const scene = new THREE.Scene();
-    sceneRef.current = scene;
+    const glareX = (x / rect.width) * 100;
+    const glareY = (y / rect.height) * 100;
 
-    const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 100);
-    camera.position.set(0, 2.2, 5.5);
-    camera.lookAt(0, 0.4, 0);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    rendererRef.current = renderer;
-    containerRef.current.appendChild(renderer.domElement);
-
-    // Ambient & Studio Key Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 1.2);
-    scene.add(ambientLight);
-
-    const keyLight = new THREE.DirectionalLight(0xfff4e0, 2.5);
-    keyLight.position.set(5, 8, 5);
-    keyLight.castShadow = true;
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0x06b6d4, 3.0);
-    rimLight.position.set(-6, 4, -4);
-    scene.add(rimLight);
-
-    const goldFill = new THREE.PointLight(0xd4af37, 2.0, 15);
-    goldFill.position.set(0, 3, 3);
-    scene.add(goldFill);
-
-    // Reflective Mirrored Showroom Floor
-    const floorGeo = new THREE.PlaneGeometry(30, 30);
-    const floorMat = new THREE.MeshStandardMaterial({
-      color: 0x090c15,
-      metalness: 0.85,
-      roughness: 0.2,
-    });
-    const floor = new THREE.Mesh(floorGeo, floorMat);
-    floor.rotation.x = -Math.PI / 2;
-    floor.position.y = 0;
-    floor.receiveShadow = true;
-    scene.add(floor);
-
-    // Glowing Circular Showroom Turntable Ring
-    const ringGeo = new THREE.RingGeometry(2.3, 2.35, 64);
-    const ringMat = new THREE.MeshBasicMaterial({ color: 0xd4af37, side: THREE.DoubleSide });
-    const ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.rotation.x = -Math.PI / 2;
-    ring.position.y = 0.01;
-    scene.add(ring);
-
-    // Build 3D Car Model Group
-    const carGroup = new THREE.Group();
-    carGroupRef.current = carGroup;
-    scene.add(carGroup);
-
-    rebuildCarMesh(carGroup, activeCategory, selectedColor);
-
-    // Animation Loop
-    let animationFrameId: number;
-    const animate = () => {
-      animationFrameId = requestAnimationFrame(animate);
-      if (!isDragging.current && carGroupRef.current) {
-        carGroupRef.current.rotation.y += 0.003; // Gentle auto-spin
-      }
-      renderer.render(scene, camera);
-    };
-    animate();
-
-    // Mouse / Touch Interaction Listeners
-    const handleMouseDown = (e: MouseEvent) => {
-      isDragging.current = true;
-      previousMousePosition.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging.current || !carGroupRef.current) return;
-      const deltaX = e.clientX - previousMousePosition.current.x;
-      carGroupRef.current.rotation.y += deltaX * 0.008;
-      previousMousePosition.current = { x: e.clientX, y: e.clientY };
-    };
-
-    const handleMouseUp = () => {
-      isDragging.current = false;
-    };
-
-    // Touch Support for Smartphones
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length === 1) {
-        isDragging.current = true;
-        previousMousePosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-      }
-    };
-
-    const handleTouchMove = (e: TouchEvent) => {
-      if (!isDragging.current || !carGroupRef.current || e.touches.length !== 1) return;
-      const deltaX = e.touches[0].clientX - previousMousePosition.current.x;
-      carGroupRef.current.rotation.y += deltaX * 0.01;
-      previousMousePosition.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    };
-
-    const handleTouchEnd = () => {
-      isDragging.current = false;
-    };
-
-    const dom = containerRef.current;
-    dom.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
-    dom.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchend', handleTouchEnd);
-
-    // Resize Handler
-    const handleResize = () => {
-      if (!containerRef.current || !rendererRef.current) return;
-      const newW = containerRef.current.clientWidth;
-      const newH = containerRef.current.clientHeight;
-      camera.aspect = newW / newH;
-      camera.updateProjectionMatrix();
-      rendererRef.current.setSize(newW, newH);
-    };
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      dom.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
-      dom.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleTouchEnd);
-      window.removeEventListener('resize', handleResize);
-      if (containerRef.current && renderer.domElement) {
-        containerRef.current.removeChild(renderer.domElement);
-      }
-      renderer.dispose();
-    };
-  }, []);
-
-  // Update Body Color or Model on change
-  useEffect(() => {
-    if (carGroupRef.current) {
-      rebuildCarMesh(carGroupRef.current, activeCategory, selectedColor);
-    }
-  }, [selectedColor, activeCategory]);
-
-  const rebuildCarMesh = (group: THREE.Group, cat: VehicleCategory, colorHex: string) => {
-    while (group.children.length > 0) {
-      group.remove(group.children[0]);
-    }
-
-    const isVan = cat === 'PEOPLE_MOVER' || cat === 'MINIBUS';
-    const isSUV = cat === 'SUV_PREMIUM';
-
-    const bodyLength = isVan ? 3.6 : isSUV ? 3.3 : 3.2;
-    const bodyHeight = isVan ? 1.1 : isSUV ? 0.9 : 0.65;
-
-    // Metallic Car Paint Material
-    const bodyMaterial = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color(colorHex),
-      metalness: 0.9,
-      roughness: 0.15,
-      clearcoat: 1.0,
-      clearcoatRoughness: 0.1,
-      reflectivity: 0.9,
-    });
-
-    // Lower Chassis
-    const chassisGeo = new THREE.BoxGeometry(1.6, 0.45, bodyLength);
-    const chassis = new THREE.Mesh(chassisGeo, bodyMaterial);
-    chassis.position.set(0, 0.45, 0);
-    chassis.castShadow = true;
-    chassis.receiveShadow = true;
-    group.add(chassis);
-
-    // Upper Cabin
-    const cabinGeo = isVan
-      ? new THREE.BoxGeometry(1.55, bodyHeight, bodyLength * 0.9)
-      : new THREE.BoxGeometry(1.4, bodyHeight, bodyLength * 0.58);
-    const cabin = new THREE.Mesh(cabinGeo, bodyMaterial);
-    cabin.position.set(0, 0.5 + bodyHeight * 0.45, isVan ? 0 : -0.2);
-    group.add(cabin);
-
-    // Tinted Glass Material
-    const glassMat = new THREE.MeshPhysicalMaterial({
-      color: 0x05070d,
-      transmission: 0.7,
-      opacity: 1,
-      transparent: true,
-      roughness: 0.05,
-      metalness: 0.1,
-    });
-
-    // Windshield
-    const windshieldGeo = new THREE.PlaneGeometry(1.4, 0.75);
-    const windshield = new THREE.Mesh(windshieldGeo, glassMat);
-    windshield.position.set(0, 0.85, isVan ? 1.6 : 0.85);
-    windshield.rotation.x = -Math.PI / 4;
-    group.add(windshield);
-
-    // Headlights
-    const lightMat = new THREE.MeshBasicMaterial({ color: 0x88e7ff });
-    const headlightL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.14, 0.1), lightMat);
-    headlightL.position.set(0.6, 0.52, bodyLength / 2 + 0.01);
-    const headlightR = headlightL.clone();
-    headlightR.position.x = -0.6;
-    group.add(headlightL);
-    group.add(headlightR);
-
-    // Taillights
-    const tailMat = new THREE.MeshBasicMaterial({ color: 0xff0044 });
-    const taillight = new THREE.Mesh(new THREE.BoxGeometry(1.5, 0.12, 0.1), tailMat);
-    taillight.position.set(0, 0.55, -bodyLength / 2 - 0.01);
-    group.add(taillight);
-
-    // Alloy Wheels
-    const wheelGeo = new THREE.CylinderGeometry(0.35, 0.35, 0.22, 20);
-    wheelGeo.rotateZ(Math.PI / 2);
-    const tireMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8 });
-    const rimMat = new THREE.MeshStandardMaterial({ color: 0xd4af37, metalness: 0.95, roughness: 0.2 });
-
-    const wheelPositions = [
-      [-0.88, 0.35, bodyLength * 0.3],
-      [0.88, 0.35, bodyLength * 0.3],
-      [-0.88, 0.35, -bodyLength * 0.3],
-      [0.88, 0.35, -bodyLength * 0.3],
-    ];
-
-    wheelPositions.forEach(([x, y, z]) => {
-      const wheel = new THREE.Mesh(wheelGeo, tireMat);
-      wheel.position.set(x, y, z);
-      wheel.castShadow = true;
-
-      const rim = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.24, 0.24, 8), rimMat);
-      rim.rotation.z = Math.PI / 2;
-      wheel.add(rim);
-
-      group.add(wheel);
-    });
+    setTilt({ x: tiltX, y: tiltY, glareX, glareY });
   };
 
-  const categoryConfigs: Record<VehicleCategory, { name: string; pax: number; bags: number; desc: string }> = {
-    SEDAN_EXECUTIVE: { name: 'Executive Sedan', pax: 4, bags: 2, desc: 'Mercedes S-Class / BMW 7 Series' },
-    SEDAN_PREMIUM: { name: 'Premium Sedan', pax: 4, bags: 2, desc: 'Audi A6 / Lexus ES Luxury' },
-    SUV_PREMIUM: { name: 'Premium SUV', pax: 4, bags: 4, desc: 'Audi Q7 / Lexus RX Premium' },
-    PEOPLE_MOVER: { name: 'Executive Van', pax: 7, bags: 7, desc: 'Mercedes-Benz V-Class VIP Van' },
-    MINIBUS: { name: 'Executive Minibus', pax: 11, bags: 12, desc: 'Mercedes Sprinter Shuttle' },
+  const handleMouseEnter = () => setIsHovered(true);
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+    setTilt({ x: 0, y: 0, glareX: 50, glareY: 50 });
   };
 
-  const colors = [
-    { name: 'Obsidian Black', hex: '#0d1117' },
-    { name: 'Champagne Gold', hex: '#d4af37' },
-    { name: 'Pearl White', hex: '#f8fafc' },
-    { name: 'Royal Sapphire', hex: '#0f274a' },
-  ];
+  // Touch support for smartphones
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current || e.touches.length === 0) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const touch = e.touches[0];
+    const x = touch.clientX - rect.left;
+    const y = touch.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const tiltX = ((y - centerY) / centerY) * -8;
+    const tiltY = ((x - centerX) / centerX) * 10;
+    setTilt({ x: tiltX, y: tiltY, glareX: (x / rect.width) * 100, glareY: (y / rect.height) * 100 });
+  };
+
+  const handleSelectCategory = (cat: VehicleCategory) => {
+    setActiveCategory(cat);
+    if (onCategoryChange) {
+      onCategoryChange(cat);
+    }
+  };
 
   return (
-    <div className="relative w-full max-w-full h-full min-h-[380px] sm:min-h-[420px] rounded-2xl overflow-hidden glass-panel-gold flex flex-col">
-      {/* 3D Canvas Container */}
-      <div ref={containerRef} className="w-full h-full min-h-[280px] flex-1 cursor-grab active:cursor-grabbing" />
+    <div
+      ref={containerRef}
+      onMouseMove={handleMouseMove}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={() => setTilt({ x: 0, y: 0, glareX: 50, glareY: 50 })}
+      className="relative w-full h-full min-h-[380px] sm:min-h-[430px] rounded-3xl overflow-hidden glass-panel-gold flex flex-col justify-between select-none shadow-2xl border border-amber-500/30"
+      style={{ perspective: '1000px' }}
+    >
+      {/* ─────────────────────────────────────────────────────────────
+          3D INTERACTIVE TILT SHOWROOM CANVAS
+      ───────────────────────────────────────────────────────────── */}
+      <div
+        className="relative w-full flex-1 flex items-center justify-center overflow-hidden p-2 sm:p-4 transition-transform duration-200 ease-out"
+        style={{
+          transform: `rotateX(${tilt.x}deg) rotateY(${tilt.y}deg) scale(${isHovered ? 1.02 : 1})`,
+          transformStyle: 'preserve-3d',
+        }}
+      >
+        {/* Ambient Lighting Studio Aura */}
+        <div
+          className="absolute inset-0 opacity-40 pointer-events-none transition-opacity duration-500"
+          style={{
+            background: `radial-gradient(circle at ${tilt.glareX}% ${tilt.glareY}%, rgba(245, 158, 11, 0.25) 0%, rgba(10, 14, 26, 0.95) 75%)`,
+          }}
+        />
 
-      {/* Holographic Top Badges */}
-      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-10">
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur border border-amber-500/30 text-[11px] text-amber-300 pointer-events-auto">
-          <Sparkles className="w-3 h-3 animate-spin" />
-          <span className="font-semibold tracking-wide">3D Showroom</span>
-        </div>
+        {/* Glowing Gold Showroom Stage Ring */}
+        <div className="absolute bottom-6 sm:bottom-8 w-4/5 h-16 rounded-[100%] border-2 border-amber-500/40 shadow-[0_0_30px_rgba(245,158,11,0.35)] pointer-events-none transform -rotate-X-60 animate-pulse" />
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur border border-slate-700 text-[11px] text-slate-400 pointer-events-auto">
-          <Eye className="w-3 h-3" />
-          <span>360° Touch</span>
+        {/* Real Luxury High-Definition Car Photo */}
+        <div className="relative z-10 w-full h-full max-h-[260px] sm:max-h-[300px] flex items-center justify-center">
+          <img
+            key={currentVehicle.image}
+            src={currentVehicle.image}
+            alt={currentVehicle.name}
+            className="w-full h-full object-cover sm:object-contain rounded-2xl drop-shadow-[0_20px_35px_rgba(0,0,0,0.95)] animate-in fade-in zoom-in-95 duration-300"
+          />
         </div>
       </div>
 
-      {/* Category Info & Color Selector Overlay */}
-      <div className="absolute bottom-14 sm:bottom-16 left-3 right-3 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pointer-events-none z-10">
-        <div className="bg-slate-900/90 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl border border-slate-800 pointer-events-auto max-w-[260px] sm:max-w-none">
-          <h4 className="text-xs sm:text-sm font-bold text-slate-100">{categoryConfigs[activeCategory].name}</h4>
-          <p className="text-[10px] sm:text-xs text-amber-400/90 truncate">{categoryConfigs[activeCategory].desc}</p>
-          <div className="flex items-center gap-2.5 mt-0.5 text-[10px] sm:text-[11px] text-slate-400">
-            <span className="flex items-center gap-1"><Users className="w-3 h-3 text-cyan-400" /> {categoryConfigs[activeCategory].pax} Pax</span>
-            <span className="flex items-center gap-1"><Briefcase className="w-3 h-3 text-amber-400" /> {categoryConfigs[activeCategory].bags} Bags</span>
+      {/* ─────────────────────────────────────────────────────────────
+          TOP BADGES OVERLAY
+      ───────────────────────────────────────────────────────────── */}
+      <div className="absolute top-3 left-3 right-3 flex items-center justify-between pointer-events-none z-20">
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-amber-500/40 text-xs text-amber-300 shadow-md">
+          <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+          <span className="font-bold tracking-wide">3D Showroom</span>
+          <span className="px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono font-bold">
+            {currentVehicle.badge}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-950/85 backdrop-blur-md border border-slate-700 text-xs text-slate-300 shadow-md">
+          <Eye className="w-3.5 h-3.5 text-cyan-400" />
+          <span className="font-mono font-bold text-amber-300">Rego: {currentVehicle.regoPlate}</span>
+        </div>
+      </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          BOTTOM VEHICLE INFO & SPECS OVERLAY
+      ───────────────────────────────────────────────────────────── */}
+      <div className="relative z-20 px-4 pt-2 pb-1 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h4 className="text-sm sm:text-base font-black text-slate-100">{currentVehicle.name}</h4>
+              <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold text-[10px] border border-emerald-500/30">
+                ACTIVE IN FLEET
+              </span>
+            </div>
+            <p className="text-[11px] text-slate-400 mt-0.5">{currentVehicle.tagline}</p>
+          </div>
+
+          <div className="flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl font-mono text-xs">
+            <span className="flex items-center gap-1 text-slate-200">
+              <Users className="w-3.5 h-3.5 text-cyan-400" /> {currentVehicle.pax} Pax
+            </span>
+            <span className="text-slate-600">|</span>
+            <span className="flex items-center gap-1 text-slate-200">
+              <Briefcase className="w-3.5 h-3.5 text-amber-400" /> {currentVehicle.bags} Bags
+            </span>
           </div>
         </div>
-
-        {/* Color Palette Selector */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 backdrop-blur-md p-1.5 rounded-xl border border-slate-800 pointer-events-auto">
-          {colors.map((c) => (
-            <button
-              key={c.name}
-              title={c.name}
-              onClick={() => setSelectedColor(c.hex)}
-              className={`w-5 h-5 rounded-full border transition-all ${
-                selectedColor === c.hex ? 'scale-125 border-amber-400 shadow-md shadow-amber-500/50' : 'border-slate-700 opacity-70 hover:opacity-100'
-              }`}
-              style={{ backgroundColor: c.hex }}
-            />
-          ))}
-        </div>
       </div>
 
-      {/* Category Tabs if controls active */}
+      {/* ─────────────────────────────────────────────────────────────
+          5 CATEGORY SELECTOR TABS
+      ───────────────────────────────────────────────────────────── */}
       {showControls && (
-        <div className="bg-slate-950/90 border-t border-slate-800/80 p-1.5 flex items-center justify-between gap-1 overflow-x-auto z-10">
-          {(Object.keys(categoryConfigs) as VehicleCategory[]).map((catKey) => (
-            <button
-              key={catKey}
-              onClick={() => {
-                setActiveCategory(catKey);
-                if (onCategoryChange) onCategoryChange(catKey);
-              }}
-              className={`px-2.5 py-1 text-[11px] font-semibold rounded-lg transition-all flex-1 whitespace-nowrap text-center ${
-                activeCategory === catKey
-                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/30'
-                  : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              {categoryConfigs[catKey].name.split(' ')[0]}
-            </button>
-          ))}
+        <div className="relative z-20 bg-slate-950 border-t border-slate-800/90 p-2 flex items-center justify-between gap-1.5 overflow-x-auto">
+          {([
+            { id: 'SEDAN_PREMIUM', label: 'S-Class (GTS783)', plate: 'GTS783' },
+            { id: 'PEOPLE_MOVER', label: 'V-Class (CGL646)', plate: 'CGL646' },
+            { id: 'MINIBUS', label: 'Sprinter (BS14OK)', plate: 'BS14OK' },
+            { id: 'SUV_PREMIUM', label: 'Audi Q7 (AMJ506)', plate: 'AMJ506' },
+            { id: 'SEDAN_EXECUTIVE', label: 'E-Class (BYY499)', plate: 'BYY499' },
+          ] as const).map((tab) => {
+            const isSelected = activeCategory === tab.id;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => handleSelectCategory(tab.id as VehicleCategory)}
+                className={`px-3 py-2 text-xs font-bold rounded-xl transition-all flex-1 whitespace-nowrap text-center flex flex-col items-center justify-center shadow-md active:scale-95 ${
+                  isSelected
+                    ? 'glow-gold-btn text-slate-950 shadow-amber-500/20 scale-100 font-black'
+                    : 'bg-slate-900/90 border border-slate-800 text-slate-300 hover:text-white hover:border-slate-700'
+                }`}
+              >
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>
