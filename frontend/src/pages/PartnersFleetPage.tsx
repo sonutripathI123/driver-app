@@ -56,13 +56,65 @@ interface VehicleBookingHistory {
   status: 'COMPLETED' | 'CONFIRMED' | 'ADVANCE_SCHEDULED';
 }
 
-const PRESET_VEHICLE_IMAGES = [
-  { name: 'Mercedes S-Class Sedan', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
-  { name: 'Audi Q7 Premium SUV', url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80' },
-  { name: 'Mercedes V-Class VIP Van', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
-  { name: 'BMW 7 Series Luxury', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-  { name: 'Genesis G90 Executive', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
-];
+interface ColorPreset {
+  name: string;
+  colorHex: string;
+  url: string;
+}
+
+const MODEL_COLOR_DATABASE: Record<string, ColorPreset[]> = {
+  SPRINTER: [
+    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Arctic Diamond White', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Tenorite Grey Metallic', colorHex: '#475569', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Iridium Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
+  ],
+  V_CLASS: [
+    { name: 'Obsidian Jet Black (VIP Tint)', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Arctic White Luxury', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Brilliant Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Selenite Grey Van', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+  ],
+  S_CLASS: [
+    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Polar White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Selenite Anthracite Grey', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Nautical Navy Blue', colorHex: '#1e3a8a', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
+    { name: 'High-Tech Silver', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
+  ],
+  E_CLASS: [
+    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Polar White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Graphite Grey Metallic', colorHex: '#475569', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Iridium Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
+  ],
+  AUDI_Q7: [
+    { name: 'Mythos Jet Black (Black Edition)', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Glacier White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Daytona Grey Pearl', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Navarra Deep Blue', colorHex: '#1e3a8a', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Floret Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+  ],
+  DEFAULT: [
+    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Diamond White', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Anthracite Grey', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
+    { name: 'Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
+  ],
+};
+
+const getModelColorPresets = (vehicle: ExtendedVehicle | null): ColorPreset[] => {
+  if (!vehicle) return MODEL_COLOR_DATABASE.DEFAULT;
+  const name = `${vehicle.make} ${vehicle.model} ${vehicle.category}`.toUpperCase();
+  if (name.includes('SPRINTER')) return MODEL_COLOR_DATABASE.SPRINTER;
+  if (name.includes('V-CLASS') || name.includes('VALENTE') || name.includes('VAN')) return MODEL_COLOR_DATABASE.V_CLASS;
+  if (name.includes('S-CLASS') || name.includes('S450') || name.includes('S580') || name.includes('FIRST_CLASS')) return MODEL_COLOR_DATABASE.S_CLASS;
+  if (name.includes('E-CLASS') || name.includes('E300') || name.includes('SEDAN')) return MODEL_COLOR_DATABASE.E_CLASS;
+  if (name.includes('Q7') || name.includes('AUDI') || name.includes('SUV')) return MODEL_COLOR_DATABASE.AUDI_Q7;
+  return MODEL_COLOR_DATABASE.DEFAULT;
+};
+
+const PRESET_VEHICLE_IMAGES = MODEL_COLOR_DATABASE.DEFAULT;
 
 export const PartnersFleetPage: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -1004,19 +1056,20 @@ export const PartnersFleetPage: React.FC = () => {
 
               {/* Photo Presets & URL */}
               <div>
-                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Select Preset Photo or Enter Image URL</label>
-                <div className="grid grid-cols-5 gap-2 mb-2">
-                  {PRESET_VEHICLE_IMAGES.map((img, idx) => (
+                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Select Color Finish or Enter Image URL</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {getModelColorPresets(newVehicle as any).map((color, idx) => (
                     <div
                       key={idx}
-                      onClick={() => setNewVehicle({ ...newVehicle, image_url: img.url })}
-                      className={`relative h-14 rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                        newVehicle.image_url === img.url
-                          ? 'border-amber-400 ring-2 ring-amber-400/50 scale-105'
-                          : 'border-slate-800 opacity-60 hover:opacity-100'
+                      onClick={() => setNewVehicle({ ...newVehicle, image_url: color.url })}
+                      className={`p-1.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
+                        newVehicle.image_url === color.url
+                          ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50'
+                          : 'border-slate-800 bg-slate-950/70 hover:border-slate-700'
                       }`}
                     >
-                      <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
+                      <div className="w-4 h-4 rounded-full border border-slate-600 shrink-0" style={{ backgroundColor: color.colorHex }} />
+                      <span className="text-[10px] text-slate-300 font-bold truncate">{color.name}</span>
                     </div>
                   ))}
                 </div>
@@ -1076,37 +1129,72 @@ export const PartnersFleetPage: React.FC = () => {
             </div>
 
             {/* Current Preview */}
-            <div className="w-full h-44 rounded-xl overflow-hidden bg-slate-950 border border-slate-800">
+            <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
               <img
-                src={customImageUrlInput || PRESET_VEHICLE_IMAGES[0].url}
+                src={customImageUrlInput || getModelColorPresets(editingVehicleImage)[0].url}
                 alt="Preview"
                 className="w-full h-full object-cover"
               />
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+                <div>
+                  <span className="text-white font-black text-xs drop-shadow-md block">
+                    {editingVehicleImage.make} {editingVehicleImage.model}
+                  </span>
+                  <span className="text-[10px] text-amber-300 font-mono font-bold">
+                    Rego: {editingVehicleImage.registration_plate}
+                  </span>
+                </div>
+                <span className="px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-700 text-cyan-300 text-[10px] font-bold">
+                  {getModelColorPresets(editingVehicleImage).find(c => c.url === customImageUrlInput)?.name || 'Custom Color'}
+                </span>
+              </div>
             </div>
 
-            {/* Preset Options */}
-            <div className="space-y-2">
-              <label className="text-[10px] text-slate-400 uppercase font-bold block">Choose from High-Res Presets</label>
-              <div className="grid grid-cols-5 gap-2">
-                {PRESET_VEHICLE_IMAGES.map((img, idx) => (
-                  <div
-                    key={idx}
-                    onClick={() => setCustomImageUrlInput(img.url)}
-                    className={`h-12 rounded-lg overflow-hidden border cursor-pointer transition-all ${
-                      customImageUrlInput === img.url
-                        ? 'border-amber-400 ring-2 ring-amber-400/50 scale-105'
-                        : 'border-slate-800 opacity-60 hover:opacity-100'
-                    }`}
-                  >
-                    <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-                  </div>
-                ))}
+            {/* Model-Specific Color Swatches */}
+            <div className="space-y-2.5">
+              <div className="flex items-center justify-between">
+                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                  Available Color Finishes for {editingVehicleImage.model}:
+                </label>
+                <span className="text-[10px] text-amber-400 font-mono font-semibold">Same Model • Color Switcher</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2.5">
+                {getModelColorPresets(editingVehicleImage).map((color, idx) => {
+                  const isSelected = customImageUrlInput === color.url;
+                  return (
+                    <div
+                      key={idx}
+                      onClick={() => setCustomImageUrlInput(color.url)}
+                      className={`p-2 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50 shadow-md shadow-amber-500/10'
+                          : 'border-slate-800 bg-slate-950/70 hover:border-slate-700 hover:bg-slate-900'
+                      }`}
+                    >
+                      {/* Color Circle Swatch */}
+                      <div
+                        className="w-5 h-5 rounded-full border border-slate-600 shrink-0 shadow-sm"
+                        style={{ backgroundColor: color.colorHex }}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <span className={`text-[11px] font-bold block truncate ${isSelected ? 'text-amber-300' : 'text-slate-200'}`}>
+                          {color.name}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
             {/* Custom URL Input */}
             <div>
-              <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Or Enter Custom Image URL</label>
+              <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Or Enter Custom Vehicle Photo URL</label>
               <input
                 type="url"
                 placeholder="https://images.unsplash.com/..."
