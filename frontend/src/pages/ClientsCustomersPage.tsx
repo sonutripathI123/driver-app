@@ -472,15 +472,15 @@ export const ClientsCustomersPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
+      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Client & Customer Details Directory</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Client & Customer Details Directory</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono">
               OPAL CLIENT & CUSTOMER DIRECTORY
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-700 font-semibold mt-1">
             Complete customer dossiers, booking history, payment records, vehicle preferences, and corporate credit accounts.
           </p>
         </div>
@@ -488,54 +488,54 @@ export const ClientsCustomersPage: React.FC = () => {
         {/* Action Button */}
         <button
           onClick={() => setIsAddClientModalOpen(true)}
-          className="px-5 py-2.5 rounded-xl glow-gold-btn text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+          className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs flex items-center gap-2 shadow-md hover:scale-[1.02] transition-all"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-4 h-4 text-[#DFCAA8]" />
           <span>+ Onboard Client / Corporate Account</span>
         </button>
       </div>
 
       {/* 4 Overview Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Registered Clients</span>
-          <span className="text-2xl font-mono font-black text-white block">{totalClientsCount} Clients</span>
-          <span className="text-[11px] text-[#DFCAA8] block">{corporateCount} Corporate Accounts</span>
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-lg space-y-1">
+          <span className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Total Registered Clients</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] block">{totalClientsCount} Clients</span>
+          <span className="text-[11px] text-slate-700 font-bold block">{corporateCount} Corporate Accounts</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Corporate Net 30 Terms</span>
-          <span className="text-2xl font-mono font-black text-white block">{corporateCount} Accounts</span>
-          <span className="text-[11px] text-[#DFCAA8] block">Monthly Post-Paid Billing</span>
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-lg space-y-1">
+          <span className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Corporate Net 30 Terms</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] block">{corporateCount} Accounts</span>
+          <span className="text-[11px] text-slate-700 font-bold block">Monthly Post-Paid Billing</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Client Lifetime Spend</span>
-          <span className="text-2xl font-mono font-black text-white block">
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-lg space-y-1">
+          <span className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Total Client Lifetime Spend</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] block">
             ${totalLifetimeSpend.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-[11px] text-[#DFCAA8] block">Across 120+ Completed Journeys</span>
+          <span className="text-[11px] text-slate-700 font-bold block">Across 120+ Completed Journeys</span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-[#DFCAA8]/25 shadow-xl space-y-1">
-          <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">Total Outstanding Debt</span>
-          <span className="text-2xl font-mono font-black text-white block">
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-lg space-y-1">
+          <span className="text-[11px] font-black text-slate-600 uppercase tracking-wider block">Total Outstanding Debt</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] block">
             ${totalOutstandingDebt.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-[11px] text-[#DFCAA8] block">Ready for FIFO Settlement</span>
+          <span className="text-[11px] text-slate-700 font-bold block">Ready for FIFO Settlement</span>
         </div>
       </div>
 
       {/* Search & Filter Bar */}
-      <div className="glass-panel p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xl">
+      <div className="glass-panel p-4 rounded-2xl flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-lg">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by client name, company, email, or mobile..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-[#070A0F] border border-[#1E2738] rounded-xl text-white placeholder-slate-500 text-xs focus:outline-none focus:border-[#DFCAA8] font-medium"
+            className="w-full pl-10 pr-4 py-2 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] placeholder-slate-400 text-xs focus:outline-none focus:border-[#0A0E1A] font-bold"
           />
         </div>
 
@@ -545,10 +545,10 @@ export const ClientsCustomersPage: React.FC = () => {
             <button
               key={filter}
               onClick={() => setFilterType(filter)}
-              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-black whitespace-nowrap transition-all ${
                 filterType === filter
-                  ? 'bg-[#DFCAA8] text-[#070A0F] font-black shadow-md shadow-[#DFCAA8]/20'
-                  : 'bg-[#0F141E] border border-[#1E2738] text-slate-300 hover:text-white hover:border-[#DFCAA8]/30'
+                  ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md'
+                  : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FAF6F0]'
               }`}
             >
               {filter === 'ALL'
@@ -564,10 +564,10 @@ export const ClientsCustomersPage: React.FC = () => {
       </div>
 
       {/* Clients Directory Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden border-slate-800 shadow-2xl">
+      <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/90 text-slate-400 uppercase font-mono tracking-wider border-b border-slate-800">
+            <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
               <tr>
                 <th className="py-3.5 px-4 font-semibold">Client / Corporate Entity</th>
                 <th className="py-3.5 px-4 font-semibold">Contact & Phone</th>
@@ -578,58 +578,54 @@ export const ClientsCustomersPage: React.FC = () => {
                 <th className="py-3.5 px-4 font-semibold text-right">Direct Invoice & CRM Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-sans">
+            <tbody className="divide-y divide-[#E6D8C3] font-sans">
               {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-slate-800/30 transition-colors">
+                <tr key={client.id} className="bg-[#FFFFFF] hover:bg-[#FAF6F0] transition-colors">
                   <td className="py-4 px-4">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold text-xs font-mono shrink-0">
+                      <div className="w-8 h-8 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] font-bold text-xs font-mono shrink-0">
                         {client.company_name ? <Building2 className="w-4 h-4" /> : <Users className="w-4 h-4" />}
                       </div>
                       <div>
-                        <strong className="text-slate-100 block text-xs">
+                        <strong className="text-[#0A0E1A] block text-xs font-black">
                           {client.company_name || client.name}
                         </strong>
                         {client.company_name && (
-                          <span className="text-[11px] text-slate-400 block">{client.name}</span>
+                          <span className="text-[11px] text-slate-700 font-semibold block">{client.name}</span>
                         )}
                         {client.abn && (
-                          <span className="text-[10px] font-mono text-slate-500 block">ABN: {client.abn}</span>
+                          <span className="text-[10px] font-mono text-slate-500 block font-medium">ABN: {client.abn}</span>
                         )}
                       </div>
                     </div>
                   </td>
                   <td className="py-4 px-4 font-mono text-[11px]">
-                    <span className="text-slate-200 block font-bold">{client.phone}</span>
-                    <span className="text-slate-400 block text-[10px]">{client.email}</span>
+                    <span className="text-[#0A0E1A] block font-black">{client.phone}</span>
+                    <span className="text-slate-600 block text-[10px] font-medium">{client.email}</span>
                   </td>
                   <td className="py-4 px-4">
                     <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold border font-mono ${
-                        client.client_type === 'CORPORATE'
-                          ? 'bg-purple-500/15 text-purple-300 border-purple-500/30'
-                          : 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30'
-                      }`}
+                      className="px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]"
                     >
                       {client.client_type === 'CORPORATE' ? '🏢 CORPORATE (Net 30)' : '💎 PRIVATE VIP'}
                     </span>
                   </td>
-                  <td className="py-4 px-4 font-mono text-slate-300">
+                  <td className="py-4 px-4 font-mono text-[#0A0E1A] font-black">
                     <strong>{client.bookings.length}</strong> Bookings
                   </td>
-                  <td className="py-4 px-4 font-mono font-bold text-emerald-400">
+                  <td className="py-4 px-4 font-mono font-black text-[#0A0E1A]">
                     ${client.total_spent.toFixed(2)} AUD
                   </td>
-                  <td className="py-4 px-4 font-mono font-bold">
+                  <td className="py-4 px-4 font-mono font-black">
                     {client.pending_balance > 0 ? (
-                      <span className="text-rose-400">
+                      <span className="text-[#0A0E1A]">
                         ${client.pending_balance.toFixed(2)} AUD{' '}
-                        <span className="block text-[10px] text-rose-300 font-normal">
+                        <span className="block text-[10px] text-slate-700 font-bold">
                           ({client.unpaid_invoices_count} Unpaid)
                         </span>
                       </span>
                     ) : (
-                      <span className="text-emerald-400">● Settle ($0.00)</span>
+                      <span className="text-slate-700 font-bold">● Settle ($0.00)</span>
                     )}
                   </td>
                   <td className="py-4 px-4 text-right">
@@ -637,29 +633,29 @@ export const ClientsCustomersPage: React.FC = () => {
                       {/* View Dossier Button */}
                       <button
                         onClick={() => setSelectedClient(client)}
-                        className="px-2.5 py-1.5 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/40 text-xs font-bold transition-all flex items-center gap-1 shadow-sm"
+                        className="px-2.5 py-1.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] text-xs font-black transition-all flex items-center gap-1 shadow-sm"
                       >
-                        <FileText className="w-3.5 h-3.5" />
+                        <FileText className="w-3.5 h-3.5 text-[#DFCAA8]" />
                         <span>Dossier & Rides</span>
                       </button>
 
                       {/* Send Invoice Statement via WhatsApp */}
                       <button
                         onClick={() => handleGenerateWhatsAppStatement(client)}
-                        className="px-2.5 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-400 border border-emerald-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm"
                         title="Send Tax Invoice Statement via WhatsApp"
                       >
-                        <MessageSquare className="w-3.5 h-3.5" />
+                        <MessageSquare className="w-3.5 h-3.5 text-[#0A0E1A]" />
                         <span className="hidden sm:inline">WhatsApp</span>
                       </button>
 
                       {/* Send Invoice Statement via Email */}
                       <button
                         onClick={() => handleSendEmailStatement(client)}
-                        className="px-2.5 py-1.5 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all flex items-center gap-1"
+                        className="px-2.5 py-1.5 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm"
                         title="Send Tax Invoice Statement via Email"
                       >
-                        <Mail className="w-3.5 h-3.5" />
+                        <Mail className="w-3.5 h-3.5 text-[#0A0E1A]" />
                         <span className="hidden sm:inline">Email</span>
                       </button>
                     </div>

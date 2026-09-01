@@ -4,16 +4,17 @@
 
 @layer base {
   :root {
-    --bg-light: #F8FAFC;
-    --card-light: #FFFFFF;
-    --card-border: #E2E8F0;
-    --color-beige: #C2A16B;
-    --color-dark: #0F172A;
+    --bg-main: #06090F;
+    --card-beige: #FAF6F0;
+    --card-white: #FFFFFF;
+    --border-beige: #E6D8C3;
+    --text-black: #0A0E1A;
+    --text-muted: #4B5563;
   }
 
   html, body {
-    background-color: #F8FAFC;
-    color: #0F172A;
+    background-color: #06090F;
+    color: #0A0E1A;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
@@ -33,65 +34,70 @@
     height: 6px;
   }
   ::-webkit-scrollbar-track {
-    background: #F8FAFC;
+    background: #06090F;
   }
   ::-webkit-scrollbar-thumb {
-    background: #CBD5E1;
+    background: #2A364F;
     border-radius: 9999px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #C2A16B;
+    background: #DFCAA8;
   }
 }
 
-/* Glassmorphism Luxury White, Beige & Black Styling */
+/* Luxury Beige Cards on Black Canvas with Black Text */
 .glass-panel {
-  background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  background: #FAF6F0;
+  color: #0A0E1A;
+  border: 1px solid #E6D8C3;
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
 }
 
 .glass-panel-gold, .glass-panel-beige {
-  background: #FFFFFF;
-  border: 1px solid rgba(223, 202, 168, 0.6);
-  box-shadow: 0 8px 30px -4px rgba(194, 161, 107, 0.15);
+  background: #FAF6F0;
+  color: #0A0E1A;
+  border: 1px solid #DFCAA8;
+  box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel-cyan {
   background: #FFFFFF;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+  color: #0A0E1A;
+  border: 1px solid #E6D8C3;
+  box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
 }
 
 .gold-gradient-text, .beige-gradient-text {
-  background: linear-gradient(135deg, #534023 0%, #7B6035 40%, #A4824C 70%, #C2A16B 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0A0E1A;
+  font-weight: 900;
 }
 
 .cyan-gradient-text, .emerald-gradient-text {
-  background: linear-gradient(135deg, #0F172A 0%, #334155 50%, #475569 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #0A0E1A;
+  font-weight: 900;
 }
 
+/* Buttons */
 .glow-gold-btn, .glow-beige-btn {
-  background: linear-gradient(135deg, #EAE0D0 0%, #DFCAA8 50%, #C2A16B 100%);
-  color: #0F172A !important;
+  background: linear-gradient(135deg, #0A0E1A 0%, #1A2233 100%);
+  color: #FAF6F0 !important;
+  border: 1px solid #DFCAA8;
   font-weight: 800;
-  box-shadow: 0 4px 15px -2px rgba(194, 161, 107, 0.35);
+  box-shadow: 0 4px 15px -2px rgba(223, 202, 168, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .glow-gold-btn:hover, .glow-beige-btn:hover {
-  background: linear-gradient(135deg, #FAF8F5 0%, #EAE0D0 40%, #DFCAA8 100%);
-  box-shadow: 0 6px 20px 0px rgba(194, 161, 107, 0.45);
+  background: linear-gradient(135deg, #1A2233 0%, #0A0E1A 100%);
+  border-color: #FAF6F0;
+  box-shadow: 0 6px 20px 0px rgba(223, 202, 168, 0.4);
   transform: translateY(-2px);
 }
 
 .glow-cyan-btn {
-  background: linear-gradient(135deg, #EAE0D0 0%, #DFCAA8 100%);
-  color: #0F172A !important;
+  background: linear-gradient(135deg, #0A0E1A 0%, #1E293B 100%);
+  color: #FAF6F0 !important;
+  border: 1px solid #DFCAA8;
   font-weight: 800;
-  box-shadow: 0 4px 15px -2px rgba(194, 161, 107, 0.35);
+  box-shadow: 0 4px 15px -2px rgba(223, 202, 168, 0.25);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
