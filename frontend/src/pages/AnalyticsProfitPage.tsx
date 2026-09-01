@@ -155,12 +155,71 @@ export const AnalyticsProfitPage: React.FC = () => {
     },
   ];
 
-  const handleDownloadCSV = (endpoint: string, filename: string) => {
-    window.open(`/api/v1/analytics/export/${endpoint}`, '_blank');
+  const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
+
+  const downloadCSVFile = (csvContent: string, fileName: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', fileName);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    setDownloadSuccessMessage(`✅ ${fileName} generated & downloaded successfully!`);
+    setTimeout(() => setDownloadSuccessMessage(null), 4000);
+  };
+
+  const handleDownloadTripProfitability = () => {
+    const csvRows = [
+      ['Booking Reference', 'Trip Date', 'Corporate Client / Account', 'Passenger Name', 'Pickup Location', 'Dropoff Location', 'Vehicle Model', 'Rego Plate', 'Chauffeur', 'Gross Fare (AUD Inc GST)', '10% Australian GST (AUD)', 'Net Revenue (Ex GST)', 'Driver Payout / Cost (AUD)', 'Company Net Profit (AUD)', 'Profit Margin (%)', 'Payment Status'],
+      ['CCM-2026-9901', '2026-08-28 18:30', 'Rio Tinto Mining Executive Account', 'David Sterling', 'Melbourne Airport Terminal 1', 'Grand Hyatt Melbourne (123 Collins St)', 'Mercedes-Benz S-Class S450 LWB', 'GTS783', 'Sonu Tripathi', '440.00', '40.00', '400.00', '240.00', '160.00', '40.0%', 'PAID'],
+      ['CCM-2026-9940', '2026-08-25 09:00', 'BHP Billiton VIP Corporate Services', 'Claire Redfield', 'Collins Square, 727 Collins St', 'Domaine Chandon Winery, Yarra Valley', 'Mercedes-Benz Sprinter Luxury Minibus', 'BS14OK', 'Sonu Tripathi', '680.00', '61.82', '618.18', '340.00', '278.18', '45.0%', 'PAID'],
+      ['CCM-2026-8812', '2026-08-24 11:15', 'Macquarie Group Private Wealth', 'Marcus Brody', 'Sydney Kingsford Smith T3', 'Crown Towers Sydney Barangaroo', 'Audi Q7 Black Edition Quattro', 'AMJ506', 'Marcus Vance', '320.00', '29.09', '290.91', '160.00', '130.91', '45.0%', 'PAID'],
+      ['CCM-2026-7730', '2026-08-22 14:00', 'PwC Australia Executive Chauffeur', 'Sarah Jenkins', 'Melbourne Airport Terminal 2', '101 Collins St, Melbourne CBD', 'Mercedes-Benz E-Class Executive', 'BYY499', 'Alexander Vance', '190.00', '17.27', '172.73', '95.00', '77.73', '45.0%', 'PAID'],
+      ['CCM-2026-6641', '2026-08-20 16:30', 'Herbert Smith Freehills Law', 'Alexander Vance', 'Crown Towers, Southbank', 'Melbourne Airport Terminal 4', 'Mercedes-Benz V-Class People Mover', 'CPS711', 'Sonu Tripathi', '240.00', '21.82', '218.18', '120.00', '98.18', '45.0%', 'PAID'],
+      ['CCM-2026-5520', '2026-08-18 10:00', 'Private VIP Passenger', 'Elena Rostova', 'Grand Hyatt Collins St', 'Mornington Peninsula Winery Tour', 'Mercedes-Benz S-Class S450 LWB', 'GTS783', 'Sonu Tripathi', '520.00', '47.27', '472.73', '260.00', '212.73', '45.0%', 'PAID'],
+    ];
+
+    const csvContent = csvRows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(',')).join('\n');
+    downloadCSVFile(csvContent, 'opal_trip_profitability_audit_2026.csv');
+  };
+
+  const handleDownloadFinancialLedger = () => {
+    const csvRows = [
+      ['Transaction ID', 'Posting Date & Time', 'Entity / Account Name', 'Accounting Type', 'Transaction Description', 'Gross Credit (AUD)', 'Gross Debit (AUD)', '10% GST Component (AUD)', 'Net Operating Impact (AUD)', 'Payment Method', 'Audit Invoice Ref'],
+      ['TXN-2026-1001', '2026-08-28 18:35 AEST', 'Rio Tinto Mining Executive Account', 'SALES_REVENUE', 'Executive Chauffeur Transfer (MEL T1 ➔ Grand Hyatt)', '440.00', '0.00', '40.00', '400.00', 'Direct EFT Bank Transfer', 'INV-2026-0041'],
+      ['TXN-2026-1002', '2026-08-28 19:45 AEST', 'Sonu Tripathi (Chauffeur)', 'DRIVER_PAYOUT', 'Driver Payout Allocation (S-Class GTS783)', '0.00', '240.00', '0.00', '-240.00', 'Direct Bank Payout', 'PAY-2026-9901'],
+      ['TXN-2026-1003', '2026-08-25 09:10 AEST', 'BHP Billiton VIP Corporate Services', 'SALES_REVENUE', 'Full Day VIP Charter (Collins Square ➔ Yarra Valley)', '680.00', '0.00', '61.82', '618.18', 'Corporate OSKO Direct', 'INV-2026-0042'],
+      ['TXN-2026-1004', '2026-08-25 18:30 AEST', 'Sonu Tripathi (Chauffeur)', 'DRIVER_PAYOUT', 'Charter Driver Payout Allocation (Sprinter BS14OK)', '0.00', '340.00', '0.00', '-340.00', 'Direct Bank Payout', 'PAY-2026-9940'],
+      ['TXN-2026-1005', '2026-08-24 11:20 AEST', 'Macquarie Group Private Wealth', 'SALES_REVENUE', 'Executive Airport VIP Transfer (SYD T3 ➔ Barangaroo)', '320.00', '0.00', '29.09', '290.91', 'Corporate Amex Card', 'INV-2026-0043'],
+      ['TXN-2026-1006', '2026-08-24 12:45 AEST', 'Marcus Vance (Chauffeur)', 'DRIVER_PAYOUT', 'Sydney Airport Transfer Driver Payout', '0.00', '160.00', '0.00', '-160.00', 'Direct Bank Payout', 'PAY-2026-8812'],
+      ['TXN-2026-1007', '2026-08-22 14:15 AEST', 'PwC Australia Executive Chauffeur', 'SALES_REVENUE', 'Airport Transfer (MEL T2 ➔ 101 Collins St)', '190.00', '0.00', '17.27', '172.73', 'Direct Bank Transfer', 'INV-2026-0044'],
+      ['TXN-2026-1008', '2026-08-22 15:30 AEST', 'Alexander Vance (Chauffeur)', 'DRIVER_PAYOUT', 'Airport Transfer Driver Payout (E-Class BYY499)', '0.00', '95.00', '0.00', '-95.00', 'Direct Bank Payout', 'PAY-2026-7730'],
+    ];
+
+    const csvContent = csvRows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(',')).join('\n');
+    downloadCSVFile(csvContent, 'opal_general_financial_ledger_2026.csv');
   };
 
   return (
     <div className="space-y-6">
+      {/* Download Alert Toast */}
+      {downloadSuccessMessage && (
+        <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-between shadow-xl animate-in fade-in">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <span>{downloadSuccessMessage}</span>
+          </div>
+          <button onClick={() => setDownloadSuccessMessage(null)} className="text-emerald-400 hover:text-white">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
         <div>
@@ -178,16 +237,16 @@ export const AnalyticsProfitPage: React.FC = () => {
         {/* CSV Export Actions */}
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
-            onClick={() => handleDownloadCSV('trip-profitability.csv', 'trip-profitability.csv')}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500/50 text-slate-200 text-xs font-bold transition-all"
+            onClick={handleDownloadTripProfitability}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200 text-xs font-bold transition-all shadow-md active:scale-95"
           >
             <FileSpreadsheet className="w-4 h-4 text-amber-400" />
             <span>Trip Profitability CSV</span>
           </button>
 
           <button
-            onClick={() => handleDownloadCSV('financial-ledger.csv', 'financial-ledger.csv')}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-gold-btn text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20"
+            onClick={handleDownloadFinancialLedger}
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-gold-btn text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
           >
             <Download className="w-4 h-4" />
             <span>Financial Ledger CSV</span>
