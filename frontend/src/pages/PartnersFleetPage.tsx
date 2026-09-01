@@ -24,11 +24,15 @@ import {
   Edit3,
   Sparkles,
   Check,
-  X
+  X,
+  Palette
 } from 'lucide-react';
 
 interface ExtendedVehicle extends Vehicle {
   image_url?: string;
+  color_name?: string;
+  color_hex?: string;
+  color_filter?: string;
 }
 
 interface PartnerBooking {
@@ -56,65 +60,48 @@ interface VehicleBookingHistory {
   status: 'COMPLETED' | 'CONFIRMED' | 'ADVANCE_SCHEDULED';
 }
 
-interface ColorPreset {
+interface ColorShader {
   name: string;
   colorHex: string;
-  url: string;
+  filter: string;
 }
 
-const MODEL_COLOR_DATABASE: Record<string, ColorPreset[]> = {
-  SPRINTER: [
-    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Arctic Diamond White', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Tenorite Grey Metallic', colorHex: '#475569', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Iridium Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-  ],
-  V_CLASS: [
-    { name: 'Obsidian Jet Black (VIP Tint)', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Arctic White Luxury', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Brilliant Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Selenite Grey Van', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-  ],
-  S_CLASS: [
-    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Polar White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Selenite Anthracite Grey', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Nautical Navy Blue', colorHex: '#1e3a8a', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
-    { name: 'High-Tech Silver', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-  ],
-  E_CLASS: [
-    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Polar White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Graphite Grey Metallic', colorHex: '#475569', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Iridium Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-  ],
-  AUDI_Q7: [
-    { name: 'Mythos Jet Black (Black Edition)', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Glacier White Metallic', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Daytona Grey Pearl', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Navarra Deep Blue', colorHex: '#1e3a8a', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Floret Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-  ],
-  DEFAULT: [
-    { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Diamond White', colorHex: '#f8fafc', url: 'https://images.unsplash.com/photo-1617814076367-b759c7d7e738?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Anthracite Grey', colorHex: '#334155', url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80' },
-    { name: 'Silver Metallic', colorHex: '#cbd5e1', url: 'https://images.unsplash.com/photo-1555215695-3004980ad54e?auto=format&fit=crop&w=800&q=80' },
-  ],
+// Model-Specific Authentic Base Photos
+const MODEL_AUTHENTIC_BASE_PHOTOS = {
+  // Mercedes-Benz S-Class Long-Wheelbase Luxury Sedan
+  S_CLASS: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1000&q=80',
+  // Mercedes-Benz E-Class Executive Sedan
+  E_CLASS: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1000&q=80',
+  // Mercedes-Benz V-Class / Valente VIP Van
+  V_CLASS: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80',
+  // Mercedes-Benz Sprinter Executive Minibus
+  SPRINTER: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80',
+  // Audi Q7 Quattro SUV
+  AUDI_Q7: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1000&q=80',
+  // Default Luxury Sedan
+  DEFAULT: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1000&q=80',
 };
 
-const getModelColorPresets = (vehicle: ExtendedVehicle | null): ColorPreset[] => {
-  if (!vehicle) return MODEL_COLOR_DATABASE.DEFAULT;
+// Real-Time Automotive Color Shaders (Applied to the SAME car body!)
+const COLOR_SHADERS: ColorShader[] = [
+  { name: 'Obsidian Jet Black', colorHex: '#0a0a0a', filter: 'brightness(0.82) contrast(1.3) grayscale(0.25)' },
+  { name: 'Polar Diamond White', colorHex: '#f8fafc', filter: 'brightness(1.4) contrast(1.1) grayscale(0.45)' },
+  { name: 'Selenite Anthracite Grey', colorHex: '#334155', filter: 'brightness(0.95) contrast(1.25) grayscale(0.95)' },
+  { name: 'Iridium Silver Metallic', colorHex: '#cbd5e1', filter: 'brightness(1.2) contrast(1.15) grayscale(0.7)' },
+  { name: 'Nautical Navy Blue', colorHex: '#1e3a8a', filter: 'brightness(0.9) contrast(1.2) hue-rotate(185deg) saturate(1.4)' },
+  { name: 'Emerald Forest Green', colorHex: '#064e3b', filter: 'brightness(0.88) contrast(1.2) hue-rotate(85deg) saturate(1.3)' },
+];
+
+const getModelBasePhoto = (vehicle: ExtendedVehicle | { make: string; model: string; category: string } | null): string => {
+  if (!vehicle) return MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT;
   const name = `${vehicle.make} ${vehicle.model} ${vehicle.category}`.toUpperCase();
-  if (name.includes('SPRINTER')) return MODEL_COLOR_DATABASE.SPRINTER;
-  if (name.includes('V-CLASS') || name.includes('VALENTE') || name.includes('VAN')) return MODEL_COLOR_DATABASE.V_CLASS;
-  if (name.includes('S-CLASS') || name.includes('S450') || name.includes('S580') || name.includes('FIRST_CLASS')) return MODEL_COLOR_DATABASE.S_CLASS;
-  if (name.includes('E-CLASS') || name.includes('E300') || name.includes('SEDAN')) return MODEL_COLOR_DATABASE.E_CLASS;
-  if (name.includes('Q7') || name.includes('AUDI') || name.includes('SUV')) return MODEL_COLOR_DATABASE.AUDI_Q7;
-  return MODEL_COLOR_DATABASE.DEFAULT;
+  if (name.includes('SPRINTER')) return MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER;
+  if (name.includes('V-CLASS') || name.includes('VALENTE') || name.includes('VAN')) return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS;
+  if (name.includes('S-CLASS') || name.includes('S450') || name.includes('S580') || name.includes('FIRST_CLASS')) return MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS;
+  if (name.includes('E-CLASS') || name.includes('E300') || name.includes('SEDAN')) return MODEL_AUTHENTIC_BASE_PHOTOS.E_CLASS;
+  if (name.includes('Q7') || name.includes('AUDI') || name.includes('SUV')) return MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7;
+  return MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT;
 };
-
-const PRESET_VEHICLE_IMAGES = MODEL_COLOR_DATABASE.DEFAULT;
 
 export const PartnersFleetPage: React.FC = () => {
   const [partners, setPartners] = useState<Partner[]>([]);
@@ -128,8 +115,13 @@ export const PartnersFleetPage: React.FC = () => {
   const [selectedPartnerForBookings, setSelectedPartnerForBookings] = useState<Partner | null>(null);
   const [selectedVehicleForBookings, setSelectedVehicleForBookings] = useState<ExtendedVehicle | null>(null);
   const [vehicleVehicleBookingsTab, setVehicleBookingsTab] = useState<'advance' | 'completed'>('advance');
+
+  // Vehicle Image & Color Customizer Modal State
   const [editingVehicleImage, setEditingVehicleImage] = useState<ExtendedVehicle | null>(null);
   const [customImageUrlInput, setCustomImageUrlInput] = useState('');
+  const [selectedColorName, setSelectedColorName] = useState('Obsidian Jet Black');
+  const [selectedColorHex, setSelectedColorHex] = useState('#0a0a0a');
+  const [selectedColorFilter, setSelectedColorFilter] = useState('');
 
   // Form states - New Partner
   const [newPartner, setNewPartner] = useState({
@@ -154,7 +146,10 @@ export const PartnersFleetPage: React.FC = () => {
     registration_plate: '',
     passenger_capacity: 4,
     luggage_capacity: 3,
-    image_url: PRESET_VEHICLE_IMAGES[0].url,
+    image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+    color_name: 'Obsidian Jet Black',
+    color_hex: '#0a0a0a',
+    color_filter: COLOR_SHADERS[0].filter,
   });
 
   // Load Initial and LocalStorage Data
@@ -196,6 +191,7 @@ export const PartnersFleetPage: React.FC = () => {
       },
     ];
 
+    // User's Full 10 Fleet Cars with Authentic Base Photos & Default Black Finish
     let initialVehicles: ExtendedVehicle[] = [
       {
         id: 'v-01',
@@ -207,7 +203,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 4,
         luggage_capacity: 3,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-02',
@@ -219,7 +218,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 4,
         luggage_capacity: 3,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.E_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-03',
@@ -231,7 +233,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 7,
         luggage_capacity: 6,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-04',
@@ -243,7 +248,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 11,
         luggage_capacity: 10,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-05',
@@ -255,7 +263,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 4,
         luggage_capacity: 4,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7,
+        color_name: 'Mythos Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-06',
@@ -267,7 +278,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 7,
         luggage_capacity: 7,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-07',
@@ -279,7 +293,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 7,
         luggage_capacity: 7,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-08',
@@ -291,7 +308,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 12,
         luggage_capacity: 12,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1570125909232-eb263c188f7e?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-09',
@@ -303,7 +323,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 4,
         luggage_capacity: 4,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7,
+        color_name: 'Mythos Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-10',
@@ -315,7 +338,10 @@ export const PartnersFleetPage: React.FC = () => {
         passenger_capacity: 7,
         luggage_capacity: 7,
         is_active: true,
-        image_url: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=800&q=80',
+        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
+        color_name: 'Obsidian Jet Black',
+        color_hex: '#0a0a0a',
+        color_filter: COLOR_SHADERS[0].filter,
       },
     ];
 
@@ -333,14 +359,23 @@ export const PartnersFleetPage: React.FC = () => {
         initialVehicles = [...initialVehicles, ...parsedV];
       }
 
-      // Check saved custom image overrides
-      const savedImages = localStorage.getItem('crown_vehicle_images');
+      // Check saved custom image overrides & color shaders
+      const savedImages = localStorage.getItem('crown_vehicle_images_v2');
       if (savedImages) {
         const imgMap = JSON.parse(savedImages);
-        initialVehicles = initialVehicles.map(v => ({
-          ...v,
-          image_url: imgMap[v.id] || v.image_url || PRESET_VEHICLE_IMAGES[0].url
-        }));
+        initialVehicles = initialVehicles.map(v => {
+          const custom = imgMap[v.id];
+          if (custom) {
+            return {
+              ...v,
+              image_url: custom.url || v.image_url || getModelBasePhoto(v),
+              color_name: custom.color_name || v.color_name,
+              color_hex: custom.color_hex || v.color_hex,
+              color_filter: custom.color_filter !== undefined ? custom.color_filter : v.color_filter,
+            };
+          }
+          return v;
+        });
       }
     } catch (e) {
       console.error(e);
@@ -374,7 +409,6 @@ export const PartnersFleetPage: React.FC = () => {
     const updated = [...partners, created];
     setPartners(updated);
 
-    // Save custom partners to localStorage
     try {
       const existingCustom = JSON.parse(localStorage.getItem('crown_custom_partners') || '[]');
       localStorage.setItem('crown_custom_partners', JSON.stringify([...existingCustom, created]));
@@ -400,6 +434,7 @@ export const PartnersFleetPage: React.FC = () => {
     e.preventDefault();
     if (!newVehicle.model || !newVehicle.registration_plate) return;
 
+    const basePhoto = getModelBasePhoto(newVehicle);
     const created: ExtendedVehicle = {
       id: `v-${Date.now()}`,
       category: newVehicle.category as any,
@@ -410,7 +445,10 @@ export const PartnersFleetPage: React.FC = () => {
       passenger_capacity: Number(newVehicle.passenger_capacity) || 4,
       luggage_capacity: Number(newVehicle.luggage_capacity) || 3,
       is_active: true,
-      image_url: newVehicle.image_url || PRESET_VEHICLE_IMAGES[0].url,
+      image_url: newVehicle.image_url || basePhoto,
+      color_name: newVehicle.color_name || 'Obsidian Jet Black',
+      color_hex: newVehicle.color_hex || '#0a0a0a',
+      color_filter: newVehicle.color_filter || COLOR_SHADERS[0].filter,
     };
 
     const updated = [...vehicles, created];
@@ -430,26 +468,69 @@ export const PartnersFleetPage: React.FC = () => {
       registration_plate: '',
       passenger_capacity: 4,
       luggage_capacity: 3,
-      image_url: PRESET_VEHICLE_IMAGES[0].url,
+      image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+      color_name: 'Obsidian Jet Black',
+      color_hex: '#0a0a0a',
+      color_filter: COLOR_SHADERS[0].filter,
     });
   };
 
-  // Change Image Handler
+  // Open Image & Color Editor Modal for Vehicle
+  const handleOpenImageEditor = (vehicle: ExtendedVehicle) => {
+    setEditingVehicleImage(vehicle);
+    setCustomImageUrlInput(vehicle.image_url || getModelBasePhoto(vehicle));
+    setSelectedColorName(vehicle.color_name || 'Obsidian Jet Black');
+    setSelectedColorHex(vehicle.color_hex || '#0a0a0a');
+    setSelectedColorFilter(vehicle.color_filter || COLOR_SHADERS[0].filter);
+  };
+
+  // Save Vehicle Image & Color Shader
   const handleSaveVehicleImage = () => {
-    if (!editingVehicleImage || !customImageUrlInput) return;
+    if (!editingVehicleImage) return;
     const vId = editingVehicleImage.id;
 
-    const updated = vehicles.map(v => v.id === vId ? { ...v, image_url: customImageUrlInput } : v);
+    const updated = vehicles.map(v =>
+      v.id === vId
+        ? {
+            ...v,
+            image_url: customImageUrlInput,
+            color_name: selectedColorName,
+            color_hex: selectedColorHex,
+            color_filter: selectedColorFilter,
+          }
+        : v
+    );
     setVehicles(updated);
 
     try {
-      const existingImgMap = JSON.parse(localStorage.getItem('crown_vehicle_images') || '{}');
-      existingImgMap[vId] = customImageUrlInput;
-      localStorage.setItem('crown_vehicle_images', JSON.stringify(existingImgMap));
+      const existingImgMap = JSON.parse(localStorage.getItem('crown_vehicle_images_v2') || '{}');
+      existingImgMap[vId] = {
+        url: customImageUrlInput,
+        color_name: selectedColorName,
+        color_hex: selectedColorHex,
+        color_filter: selectedColorFilter,
+      };
+      localStorage.setItem('crown_vehicle_images_v2', JSON.stringify(existingImgMap));
     } catch (err) {}
 
     setEditingVehicleImage(null);
-    setCustomImageUrlInput('');
+  };
+
+  // Direct Device Local Photo Uploader (Gallery / Desktop)
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64Url = event.target?.result as string;
+      if (base64Url) {
+        setCustomImageUrlInput(base64Url);
+        setSelectedColorFilter('');
+        setSelectedColorName('Original Photo');
+        setSelectedColorHex('#38bdf8');
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Mock Bookings for Partner Modal
@@ -576,7 +657,7 @@ export const PartnersFleetPage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-slate-400 mt-1">
-            Subcontractor registry with automated insurance verification, vehicle fleet catalog, manual image management & booking history.
+            Subcontractor registry with automated insurance verification, luxury vehicle fleet catalog & same-model color customizer.
           </p>
         </div>
 
@@ -698,44 +779,53 @@ export const PartnersFleetPage: React.FC = () => {
         </div>
       ) : (
         /* ─────────────────────────────────────────────────────────────
-            TAB 2: VEHICLE FLEET CATALOG & IMAGES
+            TAB 2: VEHICLE FLEET CATALOG & SAME-MODEL COLOR FINISHES
         ───────────────────────────────────────────────────────────── */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           {vehicles.map((v) => {
             const vBookings = getVehicleBookings(v);
             const totalTrips = vBookings.advance.length + vBookings.completed.length;
+            const basePhoto = v.image_url || getModelBasePhoto(v);
 
             return (
               <div key={v.id} className="glass-panel p-5 rounded-2xl border-slate-800 space-y-3.5 text-xs shadow-xl hover:border-slate-700 transition-all flex flex-col justify-between">
                 <div>
-                  {/* Vehicle Image Banner with Edit Button */}
+                  {/* Vehicle Image Banner with Dynamic Color Filter */}
                   <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group">
                     <img
-                      src={v.image_url || PRESET_VEHICLE_IMAGES[0].url}
+                      src={basePhoto}
                       alt={`${v.make} ${v.model}`}
-                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                      style={{ filter: v.color_filter || 'none' }}
+                      className="w-full h-full object-cover object-center group-hover:scale-105 transition-all duration-300"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/15 to-transparent pointer-events-none" />
                     
                     <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-500/30">
                       {v.category}
                     </span>
 
+                    {/* Change Color Finish / Photo Button */}
                     <button
-                      onClick={() => {
-                        setEditingVehicleImage(v);
-                        setCustomImageUrlInput(v.image_url || '');
-                      }}
-                      className="absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-slate-950/80 hover:bg-amber-500 text-slate-300 hover:text-slate-950 border border-slate-700 backdrop-blur-md transition-all shadow-md"
-                      title="Change / Upload Vehicle Image"
+                      onClick={() => handleOpenImageEditor(v)}
+                      className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg bg-slate-950/85 hover:bg-amber-500 text-slate-300 hover:text-slate-950 border border-slate-700 backdrop-blur-md transition-all shadow-md flex items-center gap-1 text-[10px] font-bold"
+                      title="Change Color Finish / Upload Photo"
                     >
-                      <Edit3 className="w-3.5 h-3.5" />
+                      <Palette className="w-3 h-3 text-amber-400" />
+                      <span>Color</span>
                     </button>
 
-                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between">
-                      <span className="text-white font-black text-sm tracking-wide drop-shadow-md">
-                        {v.make} {v.model}
-                      </span>
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between pointer-events-none">
+                      <div>
+                        <span className="text-white font-black text-sm tracking-wide drop-shadow-md block">
+                          {v.make} {v.model}
+                        </span>
+                        {v.color_name && (
+                          <span className="text-[10px] text-amber-300 font-semibold drop-shadow flex items-center gap-1">
+                            <span className="w-2 h-2 rounded-full border border-slate-700 inline-block" style={{ backgroundColor: v.color_hex || '#0a0a0a' }} />
+                            {v.color_name}
+                          </span>
+                        )}
+                      </div>
                       <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold font-mono">
                         {v.year}
                       </span>
@@ -952,7 +1042,7 @@ export const PartnersFleetPage: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="text-base font-black text-slate-100">Add Luxury Fleet Vehicle</h3>
-                  <p className="text-[11px] text-slate-400">Register new car with custom photo & seating specs</p>
+                  <p className="text-[11px] text-slate-400">Register new car with custom color finish & seating specs</p>
                 </div>
               </div>
               <button
@@ -985,7 +1075,7 @@ export const PartnersFleetPage: React.FC = () => {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. S-Class S580 or Q8"
+                    placeholder="e.g. S-Class S580 or V-Class"
                     value={newVehicle.model}
                     onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
                     className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-400"
@@ -1004,6 +1094,7 @@ export const PartnersFleetPage: React.FC = () => {
                     <option value="SEDAN_EXECUTIVE">Sedan Executive</option>
                     <option value="SUV_PREMIUM">SUV Premium</option>
                     <option value="PEOPLE_MOVER">People Mover Van</option>
+                    <option value="MINIBUS">Minibus</option>
                     <option value="FIRST_CLASS">First Class</option>
                   </select>
                 </div>
@@ -1054,16 +1145,21 @@ export const PartnersFleetPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Photo Presets & URL */}
+              {/* Color Shader Selector */}
               <div>
-                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Select Color Finish or Enter Image URL</label>
-                <div className="grid grid-cols-4 gap-2 mb-2">
-                  {getModelColorPresets(newVehicle as any).map((color, idx) => (
+                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">Select Vehicle Color Finish</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {COLOR_SHADERS.map((color, idx) => (
                     <div
                       key={idx}
-                      onClick={() => setNewVehicle({ ...newVehicle, image_url: color.url })}
-                      className={`p-1.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
-                        newVehicle.image_url === color.url
+                      onClick={() => setNewVehicle({
+                        ...newVehicle,
+                        color_name: color.name,
+                        color_hex: color.colorHex,
+                        color_filter: color.filter,
+                      })}
+                      className={`p-2 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
+                        newVehicle.color_name === color.name
                           ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50'
                           : 'border-slate-800 bg-slate-950/70 hover:border-slate-700'
                       }`}
@@ -1073,13 +1169,6 @@ export const PartnersFleetPage: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <input
-                  type="url"
-                  placeholder="Or paste custom image URL (https://...)"
-                  value={newVehicle.image_url}
-                  onChange={(e) => setNewVehicle({ ...newVehicle, image_url: e.target.value })}
-                  className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-300 text-[11px] font-mono focus:outline-none focus:border-cyan-400"
-                />
               </div>
 
               <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
@@ -1103,18 +1192,20 @@ export const PartnersFleetPage: React.FC = () => {
       )}
 
       {/* ─────────────────────────────────────────────────────────────
-          MODAL 3: CHANGE / UPLOAD VEHICLE IMAGE
+          MODAL 3: VEHICLE COLOR SHADER & CUSTOM PHOTO UPLOADER
       ───────────────────────────────────────────────────────────── */}
       {editingVehicleImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-md shadow-2xl space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-lg shadow-2xl space-y-4">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
               <div className="flex items-center gap-2">
                 <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                  <ImageIcon className="w-5 h-5" />
+                  <Palette className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">Update Vehicle Image</h3>
+                  <h3 className="text-base font-black text-slate-100">
+                    Change Vehicle Color Finish
+                  </h3>
                   <p className="text-[11px] text-slate-400">
                     {editingVehicleImage.make} {editingVehicleImage.model} ({editingVehicleImage.registration_plate})
                   </p>
@@ -1128,52 +1219,57 @@ export const PartnersFleetPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Current Preview */}
-            <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+            {/* Guaranteed Same-Car Live Preview with Real-Time Color Shader */}
+            <div className="relative w-full h-52 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
               <img
-                src={customImageUrlInput || getModelColorPresets(editingVehicleImage)[0].url}
+                src={customImageUrlInput || getModelBasePhoto(editingVehicleImage)}
                 alt="Preview"
-                className="w-full h-full object-cover"
+                style={{ filter: selectedColorFilter || 'none' }}
+                className="w-full h-full object-cover object-center transition-all duration-300"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/20 to-transparent" />
-              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
+              <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/15 to-transparent pointer-events-none" />
+              <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                 <div>
-                  <span className="text-white font-black text-xs drop-shadow-md block">
+                  <span className="text-white font-black text-sm drop-shadow-md block">
                     {editingVehicleImage.make} {editingVehicleImage.model}
                   </span>
                   <span className="text-[10px] text-amber-300 font-mono font-bold">
                     Rego: {editingVehicleImage.registration_plate}
                   </span>
                 </div>
-                <span className="px-2.5 py-0.5 rounded-full bg-slate-900/90 border border-slate-700 text-cyan-300 text-[10px] font-bold">
-                  {getModelColorPresets(editingVehicleImage).find(c => c.url === customImageUrlInput)?.name || 'Custom Color'}
+                <span className="px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-md">
+                  <span className="w-2.5 h-2.5 rounded-full border border-slate-600" style={{ backgroundColor: selectedColorHex }} />
+                  {selectedColorName}
                 </span>
               </div>
             </div>
 
-            {/* Model-Specific Color Swatches */}
-            <div className="space-y-2.5">
+            {/* Same-Model Color Swatches (Car Never Changes Model!) */}
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
-                  Available Color Finishes for {editingVehicleImage.model}:
+                  Select Color Finish for {editingVehicleImage.model}:
                 </label>
-                <span className="text-[10px] text-amber-400 font-mono font-semibold">Same Model • Color Switcher</span>
+                <span className="text-[10px] text-emerald-400 font-mono font-bold">✓ 100% Same Model Silhouette</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-2.5">
-                {getModelColorPresets(editingVehicleImage).map((color, idx) => {
-                  const isSelected = customImageUrlInput === color.url;
+              <div className="grid grid-cols-2 gap-2">
+                {COLOR_SHADERS.map((color, idx) => {
+                  const isSelected = selectedColorName === color.name;
                   return (
                     <div
                       key={idx}
-                      onClick={() => setCustomImageUrlInput(color.url)}
-                      className={`p-2 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-all ${
+                      onClick={() => {
+                        setSelectedColorName(color.name);
+                        setSelectedColorHex(color.colorHex);
+                        setSelectedColorFilter(color.filter);
+                      }}
+                      className={`p-2.5 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-all ${
                         isSelected
                           ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50 shadow-md shadow-amber-500/10'
                           : 'border-slate-800 bg-slate-950/70 hover:border-slate-700 hover:bg-slate-900'
                       }`}
                     >
-                      {/* Color Circle Swatch */}
                       <div
                         className="w-5 h-5 rounded-full border border-slate-600 shrink-0 shadow-sm"
                         style={{ backgroundColor: color.colorHex }}
@@ -1192,16 +1288,21 @@ export const PartnersFleetPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Custom URL Input */}
-            <div>
-              <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Or Enter Custom Vehicle Photo URL</label>
-              <input
-                type="url"
-                placeholder="https://images.unsplash.com/..."
-                value={customImageUrlInput}
-                onChange={(e) => setCustomImageUrlInput(e.target.value)}
-                className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 text-xs font-mono focus:outline-none focus:border-amber-400"
-              />
+            {/* Direct Device Photo Upload (Phone Gallery / Desktop) */}
+            <div className="pt-2 border-t border-slate-800/80">
+              <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1.5">
+                Or Upload Real Photo Directly From Device Gallery:
+              </label>
+              <label className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
+                <Upload className="w-4 h-4 text-cyan-400" />
+                <span>Choose Photo From Phone / Laptop</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
             </div>
 
             <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
@@ -1217,7 +1318,7 @@ export const PartnersFleetPage: React.FC = () => {
                 onClick={handleSaveVehicleImage}
                 className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
               >
-                <Check className="w-4 h-4" /> Save New Photo
+                <Check className="w-4 h-4" /> Save Color Finish
               </button>
             </div>
           </div>
@@ -1374,7 +1475,7 @@ export const PartnersFleetPage: React.FC = () => {
                   vehicleVehicleBookingsTab === 'completed'
                     ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
                     : 'text-slate-400 hover:text-white'
-                }`}
+              }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" /> Completed Trips ({getVehicleBookings(selectedVehicleForBookings).completed.length})
               </button>
