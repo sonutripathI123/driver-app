@@ -12,8 +12,8 @@ interface AuthContextType {
 
 const defaultAdminUser: User = {
   id: 'admin-seed-01',
-  email: 'admin@opalchauffeurs.com.au',
-  full_name: 'Sonu Tripathi (Director)',
+  email: 'book@opalchauffeurs.com.au',
+  full_name: 'Harps Randhawa (Director)',
   role: 'ADMIN',
   phone: '+61 432 000 718',
   is_active: true,
@@ -28,7 +28,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.email && parsed.email.includes('opalchauffeurs.com.au')) {
-          return parsed;
+          return {
+            ...parsed,
+            full_name: 'Harps Randhawa (Director)',
+            email: 'book@opalchauffeurs.com.au'
+          };
         }
       }
     } catch (e) {}
@@ -48,7 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const switchRole = (role: UserRole) => {
     const roleNames: Record<UserRole, string> = {
-      ADMIN: 'Sonu Tripathi (Director)',
+      ADMIN: 'Harps Randhawa (Director)',
       OPERATIONS_MANAGER: 'Marcus Sterling (Ops Lead)',
       DISPATCHER: 'Olivia Vance (Lead Dispatcher)',
       ACCOUNTANT: 'Gregory Finch (CFO & Tax)',

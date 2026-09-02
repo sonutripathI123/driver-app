@@ -168,14 +168,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
       <div className="p-4 border-t border-[#1E2738] bg-[#06090F]">
         <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] shadow-md">
           <div className="w-8 h-8 rounded-lg bg-[#06090F] border border-[#DFCAA8] flex items-center justify-center text-[#DFCAA8] font-black text-xs">
-            ST
+            HR
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-black text-[#0A0E1A] truncate">
-              Sonu Tripathi (Director)
+              Harps Randhawa (Director)
             </p>
             <p className="text-[10px] text-slate-600 font-mono truncate font-bold">
-              admin@opalchauffeurs.com.au
+              book@opalchauffeurs.com.au
             </p>
           </div>
         </div>
