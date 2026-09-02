@@ -523,7 +523,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 1: Gross Revenue */}
         <div
           onClick={() => setActiveModal('REVENUE')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -547,7 +547,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 2: Net Operating Profit */}
         <div
           onClick={() => setActiveModal('PROFIT')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -571,7 +571,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 3: Bookings & Trips Queue */}
         <div
           onClick={() => setActiveModal('BOOKINGS')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -596,7 +596,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -640,7 +640,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-4 flex-wrap gap-2">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] shrink-0 shadow-sm">
-              <Shield className="w-4 h-4" />
+              <Shield className="w-4 h-4 text-[#0A0E1A]" />
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-black text-[#0A0E1A] truncate">Human-in-the-Loop Dispatch & Allocation</h3>
@@ -652,10 +652,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('operate')}
-            className="text-xs font-black text-[#0A0E1A] underline flex items-center gap-1 shrink-0 ml-auto"
+            className="text-xs font-black text-[#0A0E1A] hover:underline flex items-center gap-1 shrink-0 ml-auto"
           >
             <span>View full queue</span>
-            <ArrowRight className="w-3.5 h-3.5 text-[#0A0E1A]" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
 
@@ -664,7 +664,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {pendingBookings.map((b) => (
             <div
               key={b.id}
-              className="p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm text-[#0A0E1A]"
+              className="luxury-row-hover p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm text-[#0A0E1A]"
             >
               <div className="space-y-1.5 min-w-0 w-full md:flex-1">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">

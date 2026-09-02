@@ -63,24 +63,23 @@
 [class*="bg-[#F5EFE6]"],
 [class*="bg-white"] {
   color: #0A0E1A !important;
-  background-color: #FAF6F0;
 }
 
 /* Deep Child Text Override for Light Surfaces */
-.glass-panel *,
-.glass-panel-beige *,
-.glass-panel-gold *,
-.glass-panel-cyan *,
-[class*="bg-[#FAF6F0]"] *,
-[class*="bg-[#FAF8F5]"] *,
-[class*="bg-[#FFFFFF]"] *,
-[class*="bg-[#F5EDE0]"] *,
-[class*="bg-[#F5EFE6]"] *,
-[class*="bg-white"] * {
+.glass-panel *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *):not(.badge-dark *),
+.glass-panel-beige *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+.glass-panel-gold *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+.glass-panel-cyan *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-[#FAF6F0]"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-[#FAF8F5]"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-[#FFFFFF]"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-[#F5EDE0]"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-[#F5EFE6]"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
+[class*="bg-white"] *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *) {
   color: #0A0E1A;
 }
 
-/* Exceptions: Dark buttons or badges inside light containers */
+/* Exceptions: Dark buttons or dark initial badges inside light containers */
 .glass-panel button[class*="bg-[#06090F]"],
 .glass-panel button[class*="bg-[#06090F]"] *,
 .glass-panel button[class*="bg-[#1A2233]"],
@@ -96,7 +95,7 @@
   color: #FFFFFF !important;
 }
 
-/* Light Card Panels Border and Shadow */
+/* Light Card Panels Base */
 .glass-panel {
   background: #FAF6F0;
   border: 1px solid #E6D8C3;
@@ -117,13 +116,7 @@
 
 /* 2. DARK SURFACES (Canvas, Sidebar, Top Header, Dark Buttons) */
 header[class*="bg-[#06090F]"],
-header[class*="bg-[#06090F]"] span,
-header[class*="bg-[#06090F]"] a,
-header[class*="bg-[#06090F]"] p,
 aside[class*="bg-[#06090F]"],
-aside[class*="bg-[#06090F]"] span,
-aside[class*="bg-[#06090F]"] a,
-aside[class*="bg-[#06090F]"] p,
 button[class*="bg-[#06090F]"],
 button[class*="bg-[#0D1322]"],
 button[class*="bg-[#121824]"],
@@ -151,38 +144,62 @@ a[class*="bg-[#06090F]"] * {
   color: #FFFFFF !important;
 }
 
+/* =========================================================================
+   👑 LUXURY TACTILE HOVER MICRO-INTERACTIONS (FEEL / TACTILE FEEDBACK)
+   ========================================================================= */
+
+/* 1. Interactive Metric Cards Hover (Dashboard, Analytics, Client Cards) */
+.luxury-card-hover {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.luxury-card-hover:hover {
+  background-color: #F3E9D9 !important;
+  border-color: #C2A16B !important;
+  transform: translateY(-3px);
+  box-shadow: 0 14px 35px -5px rgba(194, 161, 107, 0.28), 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* 2. Table Rows Hover (Live Operate, Invoicing, Clients) */
+tr.luxury-row-hover,
+div.luxury-row-hover {
+  transition: all 0.15s ease-in-out;
+}
+tr.luxury-row-hover:hover,
+div.luxury-row-hover:hover {
+  background-color: #F2E8D8 !important;
+  border-color: #C2A16B !important;
+  box-shadow: inset 4px 0 0 #C2A16B, 0 4px 12px rgba(194, 161, 107, 0.12) !important;
+}
+
+/* 3. Dark Action Button Hover */
 button[class*="bg-[#06090F]"]:hover,
 button[class*="bg-[#0D1322]"]:hover,
 button[class*="bg-[#121824]"]:hover,
 button[class*="bg-[#1A2233]"]:hover,
-button[class*="bg-[#121A2D]"]:hover {
-  background: #1A2233;
+button[class*="bg-[#121A2D]"]:hover,
+.luxury-btn-dark:hover {
+  background-color: #162032 !important;
+  border-color: #F0D5AC !important;
   color: #FFFFFF !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(223, 202, 168, 0.35) !important;
 }
 
-/* Light Pills / Badges inside Dark Headers: Force Black Text */
-header .badge,
-header div[class*="bg-[#FAF6F0]"],
-header div[class*="bg-[#FAF6F0]"] *,
-header div[class*="bg-[#DFCAA8]"],
-header div[class*="bg-[#DFCAA8]"] *,
-header button[class*="bg-[#FAF6F0]"],
-header button[class*="bg-[#FAF6F0]"] * {
-  color: #0A0E1A !important;
+/* 4. Light Badges / Category Pills Hover */
+.luxury-pill-hover {
+  transition: all 0.15s ease-in-out;
+}
+.luxury-pill-hover:hover {
+  background-color: #EBDDC8 !important;
+  border-color: #C2A16B !important;
+  transform: scale(1.02);
 }
 
-/* Inputs & selects inside light containers */
-.glass-panel input, .glass-panel select, .glass-panel textarea,
-[class*="bg-[#FAF6F0]"] input, [class*="bg-[#FAF6F0]"] select, [class*="bg-[#FAF6F0]"] textarea,
-[class*="bg-[#FFFFFF]"] input, [class*="bg-[#FFFFFF]"] select, [class*="bg-[#FFFFFF]"] textarea {
-  color: #0A0E1A !important;
-  background-color: #FFFFFF !important;
+/* 5. Inputs & Selects Focus / Hover */
+input:hover, select:hover, textarea:hover {
+  border-color: #C2A16B !important;
 }
-
-/* Gradients neutralisation */
-.gold-gradient-text, .beige-gradient-text, .cyan-gradient-text, .emerald-gradient-text {
-  color: #0A0E1A !important;
-  font-weight: 900 !important;
-  background: none !important;
-  -webkit-text-fill-color: initial !important;
+input:focus, select:focus, textarea:focus {
+  border-color: #0A0E1A !important;
+  box-shadow: 0 0 0 2px rgba(194, 161, 107, 0.3) !important;
 }
