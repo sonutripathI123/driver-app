@@ -159,12 +159,12 @@ export const FlightRadarPage: React.FC = () => {
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Airport Flight Radar & Automation</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Airport Flight Radar & Automation</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
               ALL AUSTRALIA AIRPORTS ACTIVE
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#0A0E1A] font-bold mt-1">
             Real-time commercial flight tracking across all Australian airports (MEL, SYD, BNE, PER, ADL, AVV, ESS) with automatic pickup buffer.
           </p>
         </div>
@@ -172,18 +172,18 @@ export const FlightRadarPage: React.FC = () => {
         {/* Flight Search Form */}
         <form onSubmit={handleLookup} className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:w-60">
-            <Search className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
+            <Search className="w-4 h-4 absolute left-3 top-2.5 text-[#0A0E1A]" />
             <input
               type="text"
               value={flightQuery}
               onChange={(e) => setFlightQuery(e.target.value)}
               placeholder="e.g. VA214, EK404, QF400"
-              className="w-full pl-9 pr-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-100 uppercase font-mono focus:outline-none focus:border-amber-400 font-bold"
+              className="w-full pl-9 pr-3 py-2 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-xs text-[#0A0E1A] uppercase font-mono focus:outline-none focus:border-[#0A0E1A] font-black placeholder-[#0A0E1A]/50"
             />
           </div>
           <button
             type="submit"
-            className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs whitespace-nowrap shadow-lg shadow-cyan-500/25 transition-all"
+            className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs whitespace-nowrap shadow-md hover:scale-[1.02] transition-all"
           >
             Track Flight ✈️
           </button>
@@ -198,60 +198,56 @@ export const FlightRadarPage: React.FC = () => {
 
         {/* Right Column: Flight Telemetry & Delay Compensation Card (7 Cols) */}
         <div className="lg:col-span-7 flex flex-col space-y-4">
-          <div className="glass-panel-cyan p-6 rounded-2xl space-y-4 text-xs shadow-2xl animate-in fade-in duration-300">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="glass-panel p-6 rounded-2xl space-y-4 text-xs shadow-xl animate-in fade-in duration-300 text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 shadow-md shadow-cyan-500/20">
-                  <Plane className="w-6 h-6" />
+                <div className="p-2.5 rounded-2xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A] shadow-sm">
+                  <Plane className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-slate-100 font-mono tracking-wide">{flightData.flight_number}</h3>
-                  <span className="text-xs text-amber-300 font-semibold">{flightData.airline}</span>
+                  <h3 className="text-lg font-black text-[#0A0E1A] font-mono tracking-wide">{flightData.flight_number}</h3>
+                  <span className="text-xs text-[#0A0E1A] font-bold">{flightData.airline}</span>
                 </div>
               </div>
 
               <span
-                className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${
-                  flightData.delay_minutes > 0
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 animate-pulse'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                }`}
+                className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8]"
               >
                 ● {flightData.status} {flightData.delay_minutes > 0 ? `(+${flightData.delay_minutes}m)` : '✓'}
               </span>
             </div>
 
             {/* Flight Route Details */}
-            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-950/80 border border-slate-800">
+            <div className="grid grid-cols-2 gap-4 p-4 rounded-xl bg-[#06090F] border border-[#1E2738] text-white">
               <div>
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Departure Origin</span>
-                <span className="text-sm font-bold text-slate-200 block mt-0.5">{flightData.origin_airport}</span>
-                <span className="text-[11px] text-slate-400 block mt-0.5 font-mono">Gate Dep: {flightData.origin_gate}</span>
+                <span className="text-[10px] uppercase font-bold text-white block">Departure Origin</span>
+                <span className="text-sm font-black text-white block mt-0.5">{flightData.origin_airport}</span>
+                <span className="text-[11px] text-white block mt-0.5 font-mono font-bold">Gate Dep: {flightData.origin_gate}</span>
               </div>
               <div className="text-right">
-                <span className="text-[10px] uppercase font-bold text-slate-400 block">Arrival Destination</span>
-                <span className="text-sm font-bold text-cyan-300 block mt-0.5">{flightData.destination_airport}</span>
-                <span className="text-[11px] text-amber-300 block mt-0.5 font-mono font-bold">{flightData.terminal} • {flightData.gate}</span>
+                <span className="text-[10px] uppercase font-bold text-white block">Arrival Destination</span>
+                <span className="text-sm font-black text-white block mt-0.5">{flightData.destination_airport}</span>
+                <span className="text-[11px] text-white block mt-0.5 font-mono font-bold">{flightData.terminal} • {flightData.gate}</span>
               </div>
             </div>
 
             {/* Automated Rescheduling Action Box */}
-            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 space-y-2">
-              <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                <AlertTriangle className="w-4 h-4 text-amber-400" />
+            <div className="p-4 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] space-y-2 text-[#0A0E1A]">
+              <div className="flex items-center gap-2 text-[#0A0E1A] font-black text-xs">
+                <AlertTriangle className="w-4 h-4 text-[#0A0E1A] shrink-0" />
                 <span>Automated Pickup Reschedule Trigger:</span>
               </div>
-              <p className="text-slate-300 text-xs leading-relaxed">
+              <p className="text-[#0A0E1A] text-xs leading-relaxed font-bold">
                 {flightData.delay_minutes > 0 ? (
                   <>
                     Flight delayed by <strong>{flightData.delay_minutes} mins</strong>. Chauffeur pickup automatically shifted to{' '}
-                    <strong className="text-white font-mono">{flightData.rescheduled_pickup_time}</strong>.
+                    <strong className="text-[#0A0E1A] font-mono font-black">{flightData.rescheduled_pickup_time}</strong>.
                     Passenger and driver SMS alerts dispatched.
                   </>
                 ) : (
                   <>
                     Flight is running <strong>100% on schedule</strong>. Chauffeur pickup scheduled for{' '}
-                    <strong className="text-white font-mono">{flightData.rescheduled_pickup_time}</strong>.
+                    <strong className="text-[#0A0E1A] font-mono font-black">{flightData.rescheduled_pickup_time}</strong>.
                   </>
                 )}
               </p>
@@ -259,18 +255,18 @@ export const FlightRadarPage: React.FC = () => {
           </div>
 
           {/* Complimentary Wait Time & Billing Simulator */}
-          <div className="glass-panel p-5 rounded-2xl border-slate-800 space-y-3 text-xs shadow-lg">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-              <div className="flex items-center gap-2 text-slate-200 font-bold">
-                <Clock className="w-4 h-4 text-emerald-400" />
+          <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] space-y-3 text-xs shadow-lg text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-2">
+              <div className="flex items-center gap-2 text-[#0A0E1A] font-black">
+                <Clock className="w-4 h-4 text-[#0A0E1A]" />
                 <span>Meet & Greet Wait-Time Billing Calculator</span>
               </div>
-              <span className="text-emerald-400 font-semibold font-mono">60 Min Complimentary</span>
+              <span className="text-[#0A0E1A] font-black font-mono">60 Min Complimentary</span>
             </div>
 
             <div className="flex items-center gap-4">
               <div className="flex-1">
-                <label className="block text-slate-400 mb-1">Total Wait Time Since Touchdown (Minutes):</label>
+                <label className="block text-[#0A0E1A] font-bold mb-1">Total Wait Time Since Touchdown (Minutes):</label>
                 <input
                   type="range"
                   min="0"
@@ -278,19 +274,19 @@ export const FlightRadarPage: React.FC = () => {
                   step="5"
                   value={waitMinutes}
                   onChange={(e) => setWaitMinutes(parseInt(e.target.value))}
-                  className="w-full accent-amber-500 cursor-pointer"
+                  className="w-full accent-[#06090F] cursor-pointer"
                 />
-                <div className="flex justify-between text-[10px] text-slate-400 mt-1 font-mono">
+                <div className="flex justify-between text-[10px] text-[#0A0E1A] mt-1 font-mono font-bold">
                   <span>0 min</span>
                   <span>60 min (Free Limit)</span>
                   <span>120 min</span>
                 </div>
               </div>
 
-              <div className="text-right pl-4 border-l border-slate-800 min-w-[120px]">
-                <span className="text-[10px] text-slate-400 block">Excess Wait Charge</span>
-                <span className="text-xl font-mono font-black text-amber-400">${excessWaitTimeCharge.toFixed(2)} AUD</span>
-                <span className="text-[10px] text-slate-400 block mt-0.5">
+              <div className="text-right pl-4 border-l border-[#E6D8C3] min-w-[120px]">
+                <span className="text-[10px] text-[#0A0E1A] font-bold block">Excess Wait Charge</span>
+                <span className="text-2xl font-mono font-black text-[#0A0E1A]">${excessWaitTimeCharge.toFixed(2)} AUD</span>
+                <span className="text-[10px] text-[#0A0E1A] font-bold block mt-0.5">
                   ({Math.max(0, waitMinutes - 60)}m @ $1.50/m)
                 </span>
               </div>

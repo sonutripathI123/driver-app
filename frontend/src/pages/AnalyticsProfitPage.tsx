@@ -209,27 +209,27 @@ export const AnalyticsProfitPage: React.FC = () => {
     <div className="space-y-6">
       {/* Download Alert Toast */}
       {downloadSuccessMessage && (
-        <div className="p-3.5 rounded-2xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 font-bold text-xs flex items-center justify-between shadow-xl animate-in fade-in">
+        <div className="p-3.5 rounded-2xl bg-[#06090F] border border-[#DFCAA8] text-white font-bold text-xs flex items-center justify-between shadow-xl animate-in fade-in">
           <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            <CheckCircle2 className="w-4 h-4 text-white" />
             <span>{downloadSuccessMessage}</span>
           </div>
-          <button onClick={() => setDownloadSuccessMessage(null)} className="text-emerald-400 hover:text-white">
+          <button onClick={() => setDownloadSuccessMessage(null)} className="text-white hover:text-[#DFCAA8]">
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
       {/* Header */}
-      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
+      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Profit Analytics & Financial Ledgers</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Profit Analytics & Financial Ledgers</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
               EXECUTIVE REPORTING
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#0A0E1A] font-bold mt-1">
             Gross & net operating margins, vehicle fleet ROI, driver performance scorecards, and RFC 4180 CSV exports.
           </p>
         </div>
@@ -238,82 +238,82 @@ export const AnalyticsProfitPage: React.FC = () => {
         <div className="flex items-center gap-3 w-full md:w-auto">
           <button
             onClick={handleDownloadTripProfitability}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-700 hover:border-amber-500/50 hover:bg-slate-800 text-slate-200 text-xs font-bold transition-all shadow-md active:scale-95"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] hover:bg-[#FAF6F0] text-[#0A0E1A] text-xs font-black transition-all shadow-sm active:scale-95"
           >
-            <FileSpreadsheet className="w-4 h-4 text-amber-400" />
+            <FileSpreadsheet className="w-4 h-4 text-[#0A0E1A]" />
             <span>Trip Profitability CSV</span>
           </button>
 
           <button
             onClick={handleDownloadFinancialLedger}
-            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl glow-gold-btn text-slate-950 text-xs font-bold shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+            className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white text-xs font-black shadow-md active:scale-95 transition-all"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 text-white" />
             <span>Financial Ledger CSV</span>
           </button>
         </div>
       </div>
 
       {/* 3 Interactive Metric Overview Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="glass-panel p-5 rounded-2xl border-amber-500/30 shadow-xl">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Average Trip Margin</span>
-          <span className="text-2xl font-mono font-black gold-gradient-text mt-2 block">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-[#0A0E1A]">
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-xl text-[#0A0E1A]">
+          <span className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider block">Average Trip Margin</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] mt-2 block">
             {profitReport?.average_margin_pct.toFixed(1)}%
           </span>
-          <span className="text-xs text-emerald-400 flex items-center gap-1 mt-1">
-            <ArrowUpRight className="w-3.5 h-3.5" /> +4.2% higher than target
+          <span className="text-xs text-[#0A0E1A] font-black flex items-center gap-1 mt-1">
+            <ArrowUpRight className="w-3.5 h-3.5 text-[#0A0E1A]" /> +4.2% higher than target
           </span>
         </div>
 
-        <div className="glass-panel p-5 rounded-2xl border-emerald-500/30 shadow-xl">
-          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Total Net Operating Profit</span>
-          <span className="text-2xl font-mono font-black text-emerald-400 mt-2 block">
+        <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-xl text-[#0A0E1A]">
+          <span className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider block">Total Net Operating Profit</span>
+          <span className="text-2xl font-mono font-black text-[#0A0E1A] mt-2 block">
             ${profitReport?.total_gross_profit.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-xs text-slate-400 mt-1 block">Excluding 10% Australian GST</span>
+          <span className="text-xs text-[#0A0E1A] font-bold mt-1 block">Excluding 10% Australian GST</span>
         </div>
 
         {/* Low / Negative Margin Flags Card with Interactive Investigation Button */}
         <div
           onClick={() => setIsFlaggedTripsModalOpen(true)}
-          className="glass-panel p-5 rounded-2xl border-rose-500/40 hover:border-rose-400 transition-all cursor-pointer group shadow-xl relative overflow-hidden"
+          className="glass-panel p-5 rounded-2xl border-[#DFCAA8] hover:border-[#0A0E1A] transition-all cursor-pointer group shadow-xl relative overflow-hidden text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Low / Negative Margin Flags</span>
-            <span className="px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 text-[10px] font-bold font-mono flex items-center gap-1">
-              <ShieldAlert className="w-3 h-3 text-rose-400" /> Action Required
+            <span className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider block">Low / Negative Margin Flags</span>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] text-[10px] font-black font-mono flex items-center gap-1">
+              <ShieldAlert className="w-3 h-3 text-[#0A0E1A]" /> Action Required
             </span>
           </div>
           <div className="flex items-baseline justify-between mt-2">
-            <span className="text-2xl font-mono font-black text-cyan-300 block">
+            <span className="text-2xl font-mono font-black text-[#0A0E1A] block">
               {profitReport?.low_margin_trips_count} Flags
             </span>
-            <span className="text-xs text-emerald-400 font-bold">0 Negative Trips</span>
+            <span className="text-xs text-[#0A0E1A] font-black">0 Negative Trips</span>
           </div>
-          <div className="mt-2.5 pt-2 border-t border-slate-800 flex items-center justify-between text-[11px] text-amber-300 group-hover:text-amber-200 font-semibold">
+          <div className="mt-2.5 pt-2 border-t border-[#E6D8C3] flex items-center justify-between text-[11px] text-[#0A0E1A] font-black">
             <span>🔍 Click to investigate root causes & safety measures</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform text-[#0A0E1A]" />
           </div>
         </div>
       </div>
 
       {/* Luxury Interactive Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-[#0A0E1A]">
         {/* Weekly Revenue vs Direct Fleet Cost Chart (7 Cols) */}
-        <div className="lg:col-span-7 glass-panel p-6 rounded-2xl space-y-4 shadow-xl">
+        <div className="lg:col-span-7 glass-panel p-6 rounded-2xl space-y-4 shadow-xl border-[#E6D8C3] text-[#0A0E1A]">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-sm font-bold text-slate-100">Weekly Revenue vs Direct Costs & Net Profit</h3>
-              <p className="text-xs text-slate-400">Hover pillars for interactive daily financial breakdown</p>
+              <h3 className="text-sm font-black text-[#0A0E1A]">Weekly Revenue vs Direct Costs & Net Profit</h3>
+              <p className="text-xs text-[#0A0E1A] font-bold">Hover pillars for interactive daily financial breakdown</p>
             </div>
-            <span className="text-xs font-mono text-emerald-400 font-bold bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
+            <span className="text-xs font-mono text-[#0A0E1A] font-black bg-[#FFFFFF] px-2.5 py-1 rounded-lg border border-[#DFCAA8]">
               51.4% Avg Net Margin
             </span>
           </div>
 
           {/* Custom Luxury SVG Bar Chart */}
-          <div className="h-[280px] w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-slate-800">
+          <div className="h-[280px] w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-[#E6D8C3]">
             {revenueChartData.map((item, idx) => {
               const revHeight = (item.revenue / maxRevenue) * 100;
               const costHeight = (item.cost / maxRevenue) * 100;
@@ -329,19 +329,19 @@ export const AnalyticsProfitPage: React.FC = () => {
                 >
                   {/* Complete 3-Color Tooltip on hover */}
                   {isHovered && (
-                    <div className="absolute -top-20 z-30 bg-slate-950 border border-amber-500/50 p-2.5 rounded-xl text-[10px] font-mono shadow-2xl space-y-0.5 min-w-[150px] animate-in fade-in">
-                      <span className="text-amber-400 font-black block border-b border-slate-800 pb-1 text-xs">
+                    <div className="absolute -top-20 z-30 bg-[#06090F] border border-[#DFCAA8] p-2.5 rounded-xl text-[10px] font-mono shadow-2xl space-y-0.5 min-w-[150px] animate-in fade-in text-white">
+                      <span className="text-white font-black block border-b border-slate-700 pb-1 text-xs">
                         {item.day}: ${item.revenue.toFixed(2)} AUD
                       </span>
-                      <div className="flex justify-between text-rose-400 pt-0.5">
-                        <span>🔴 Fleet Cost:</span>
+                      <div className="flex justify-between text-white pt-0.5 font-bold">
+                        <span>Fleet Cost:</span>
                         <strong>-${item.cost.toFixed(2)}</strong>
                       </div>
-                      <div className="flex justify-between text-emerald-400 font-bold">
-                        <span>🟢 Net Profit:</span>
+                      <div className="flex justify-between text-white font-bold">
+                        <span>Net Profit:</span>
                         <strong>+${item.profit.toFixed(2)}</strong>
                       </div>
-                      <div className="flex justify-between text-cyan-300 text-[9px] pt-0.5 border-t border-slate-800">
+                      <div className="flex justify-between text-white text-[9px] pt-0.5 border-t border-slate-700 font-bold">
                         <span>Margin:</span>
                         <strong>{item.margin}%</strong>
                       </div>
@@ -349,30 +349,30 @@ export const AnalyticsProfitPage: React.FC = () => {
                   )}
 
                   <div className="w-full flex items-end justify-center gap-1 h-[210px]">
-                    {/* Revenue Bar (Gold) */}
+                    {/* Revenue Bar */}
                     <div
                       style={{ height: `${revHeight}%` }}
-                      className={`w-3.5 rounded-t-md bg-gradient-to-t from-amber-600 to-amber-400 transition-all duration-300 ${
-                        isHovered ? 'scale-110 shadow-lg shadow-amber-500/40' : 'opacity-85'
+                      className={`w-3.5 rounded-t-md bg-[#0A0E1A] transition-all duration-300 ${
+                        isHovered ? 'scale-110' : 'opacity-85'
                       }`}
                     />
-                    {/* Direct Cost Bar (Red) */}
+                    {/* Direct Cost Bar */}
                     <div
                       style={{ height: `${costHeight}%` }}
-                      className={`w-2.5 rounded-t-md bg-gradient-to-t from-rose-700 to-rose-400 transition-all duration-300 ${
-                        isHovered ? 'scale-110 shadow-lg shadow-rose-500/40' : 'opacity-70'
+                      className={`w-2.5 rounded-t-md bg-[#7B6035] transition-all duration-300 ${
+                        isHovered ? 'scale-110' : 'opacity-70'
                       }`}
                     />
-                    {/* Net Profit Bar (Emerald) */}
+                    {/* Net Profit Bar */}
                     <div
                       style={{ height: `${profitHeight}%` }}
-                      className={`w-3.5 rounded-t-md bg-gradient-to-t from-emerald-600 to-emerald-400 transition-all duration-300 ${
-                        isHovered ? 'scale-110 shadow-lg shadow-emerald-500/40' : 'opacity-90'
+                      className={`w-3.5 rounded-t-md bg-[#DFCAA8] transition-all duration-300 ${
+                        isHovered ? 'scale-110' : 'opacity-90'
                       }`}
                     />
                   </div>
 
-                  <span className={`text-[11px] font-mono mt-2 transition-colors ${isHovered ? 'text-amber-400 font-bold' : 'text-slate-400'}`}>
+                  <span className="text-[11px] font-mono mt-2 text-[#0A0E1A] font-black">
                     {item.day}
                   </span>
                 </div>
@@ -381,92 +381,92 @@ export const AnalyticsProfitPage: React.FC = () => {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center justify-center gap-6 text-xs text-slate-300 pt-1">
+          <div className="flex items-center justify-center gap-6 text-xs text-[#0A0E1A] font-bold pt-1">
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-amber-400" />
-              <span>Gross Revenue (Yellow)</span>
+              <span className="w-3 h-3 rounded bg-[#0A0E1A]" />
+              <span>Gross Revenue</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-rose-400" />
-              <span>Direct Fleet Cost (Red)</span>
+              <span className="w-3 h-3 rounded bg-[#7B6035]" />
+              <span>Direct Fleet Cost</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded bg-emerald-400" />
-              <span>Net Profit (Green)</span>
+              <span className="w-3 h-3 rounded bg-[#DFCAA8]" />
+              <span>Net Profit</span>
             </div>
           </div>
         </div>
 
         {/* Revenue Share by Vehicle Class (5 Cols) */}
-        <div className="lg:col-span-5 glass-panel p-6 rounded-2xl space-y-4 shadow-xl">
+        <div className="lg:col-span-5 glass-panel p-6 rounded-2xl space-y-4 shadow-xl border-[#E6D8C3] text-[#0A0E1A]">
           <div>
-            <h3 className="text-sm font-bold text-slate-100">Revenue Contribution by Fleet Class</h3>
-            <p className="text-xs text-slate-400">Class utilization and customer preference breakdown</p>
+            <h3 className="text-sm font-black text-[#0A0E1A]">Revenue Contribution by Fleet Class</h3>
+            <p className="text-xs text-[#0A0E1A] font-bold">Class utilization and customer preference breakdown</p>
           </div>
 
           {/* Visual Progress Bars */}
-          <div className="space-y-4 pt-2">
+          <div className="space-y-4 pt-2 text-[#0A0E1A]">
             {fleetShare.map((item) => (
-              <div key={item.name} className="space-y-1.5 text-xs">
+              <div key={item.name} className="space-y-1.5 text-xs text-[#0A0E1A]">
                 <div className="flex items-center justify-between">
-                  <span className="font-semibold text-slate-200">{item.name}</span>
-                  <span className="font-mono font-bold text-slate-300">{item.pct}% ({item.trips} trips)</span>
+                  <span className="font-black text-[#0A0E1A]">{item.name}</span>
+                  <span className="font-mono font-black text-[#0A0E1A]">{item.pct}% ({item.trips} trips)</span>
                 </div>
-                <div className="w-full h-2.5 rounded-full bg-slate-950 overflow-hidden border border-slate-800">
+                <div className="w-full h-2.5 rounded-full bg-[#FFFFFF] overflow-hidden border border-[#E6D8C3]">
                   <div
                     style={{ width: `${item.pct}%` }}
-                    className={`h-full rounded-full transition-all duration-500 ${item.color}`}
+                    className="h-full rounded-full bg-[#0A0E1A] transition-all duration-500"
                   />
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-slate-400 space-y-1">
-            <span className="font-bold text-slate-200 block">Fleet ROI Insight:</span>
+          <div className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-xs text-[#0A0E1A] font-bold space-y-1 shadow-sm">
+            <span className="font-black text-[#0A0E1A] block">Fleet ROI Insight:</span>
             <p>Mercedes S-Class Executive Sedan represents the highest gross margin contribution (58.2%).</p>
           </div>
         </div>
       </div>
 
       {/* Driver Performance KPI Leaderboard Table (All Registered Chauffeurs) */}
-      <div className="glass-panel rounded-2xl overflow-hidden border-slate-800 shadow-2xl">
-        <div className="p-4 bg-slate-950/80 border-b border-slate-800 flex items-center justify-between">
+      <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl">
+        <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Award className="w-4 h-4 text-amber-400" />
-            <h3 className="text-xs font-bold text-slate-100 uppercase tracking-wider">
+            <Award className="w-4 h-4 text-[#0A0E1A]" />
+            <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">
               Chauffeur Performance Scorecards ({driverKPIs.length} Registered Drivers)
             </h3>
           </div>
-          <span className="text-xs text-slate-400 font-mono">Live On-Time & Payout Metrics</span>
+          <span className="text-xs text-[#0A0E1A] font-mono font-bold">Live On-Time & Payout Metrics</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
-            <thead className="bg-slate-950/60 text-slate-400 uppercase font-mono tracking-wider border-b border-slate-800">
+            <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
               <tr>
-                <th className="py-3.5 px-4 font-semibold">Chauffeur</th>
-                <th className="py-3.5 px-4 font-semibold">Phone Contact</th>
-                <th className="py-3.5 px-4 font-semibold">Passenger Rating</th>
-                <th className="py-3.5 px-4 font-semibold">Completed Trips</th>
-                <th className="py-3.5 px-4 font-semibold">On-Time Arrival Rate</th>
-                <th className="py-3.5 px-4 font-semibold text-right">Total Payout Earnings</th>
+                <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Chauffeur</th>
+                <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Phone Contact</th>
+                <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Passenger Rating</th>
+                <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Completed Trips</th>
+                <th className="py-3.5 px-4 font-black text-[#0A0E1A]">On-Time Arrival Rate</th>
+                <th className="py-3.5 px-4 font-black text-right text-[#0A0E1A]">Total Payout Earnings</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60 font-mono">
+            <tbody className="divide-y divide-[#E6D8C3] font-mono bg-[#FFFFFF]">
               {driverKPIs.map((d, idx) => (
-                <tr key={d.driver_id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="py-3.5 px-4 font-sans font-bold text-slate-100 flex items-center gap-2.5">
-                    <span className="w-5 h-5 rounded-full bg-slate-800 text-amber-400 flex items-center justify-center text-[10px] font-mono">
+                <tr key={d.driver_id} className="hover:bg-[#F5EDE0] transition-colors">
+                  <td className="py-3.5 px-4 font-sans font-black text-[#0A0E1A] flex items-center gap-2.5">
+                    <span className="w-5 h-5 rounded-full bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] flex items-center justify-center text-[10px] font-mono font-black">
                       #{idx + 1}
                     </span>
                     {d.full_name}
                   </td>
-                  <td className="py-3.5 px-4 text-slate-400 text-xs font-mono">{d.phone || '+61 400 000 000'}</td>
-                  <td className="py-3.5 px-4 text-amber-400 font-bold">⭐ {d.rating.toFixed(2)} / 5.0</td>
-                  <td className="py-3.5 px-4 text-slate-300">{d.total_trips_completed} journeys</td>
-                  <td className="py-3.5 px-4 text-emerald-400 font-bold">{d.on_time_arrival_rate_pct.toFixed(1)}%</td>
-                  <td className="py-3.5 px-4 text-right font-bold text-slate-100">${d.total_earnings.toFixed(2)} AUD</td>
+                  <td className="py-3.5 px-4 text-[#0A0E1A] text-xs font-mono font-bold">{d.phone || '+61 400 000 000'}</td>
+                  <td className="py-3.5 px-4 text-[#0A0E1A] font-black">⭐ {d.rating.toFixed(2)} / 5.0</td>
+                  <td className="py-3.5 px-4 text-[#0A0E1A] font-bold">{d.total_trips_completed} journeys</td>
+                  <td className="py-3.5 px-4 text-[#0A0E1A] font-black">{d.on_time_arrival_rate_pct.toFixed(1)}%</td>
+                  <td className="py-3.5 px-4 text-right font-black text-[#0A0E1A]">${d.total_earnings.toFixed(2)} AUD</td>
                 </tr>
               ))}
             </tbody>
@@ -478,75 +478,75 @@ export const AnalyticsProfitPage: React.FC = () => {
           MODAL: LOW MARGIN ROOT CAUSE INVESTIGATION & SAFETY MEASURES
       ───────────────────────────────────────────────────────────── */}
       {isFlaggedTripsModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="glass-panel p-6 rounded-3xl border border-rose-500/40 w-full max-w-3xl shadow-2xl space-y-4 max-h-[88vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-3xl shadow-2xl space-y-4 max-h-[88vh] flex flex-col text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400">
-                  <ShieldAlert className="w-6 h-6" />
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] shadow-sm">
+                  <ShieldAlert className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">Low Margin Trips — Root Cause Investigation</h3>
-                  <p className="text-xs text-slate-400">
+                  <h3 className="text-base font-black text-[#0A0E1A]">Low Margin Trips — Root Cause Investigation</h3>
+                  <p className="text-xs text-[#0A0E1A] font-bold">
                     2 trips flagged below 25% profit target • Cost spike breakdown & preventive safety measures
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsFlaggedTripsModalOpen(false)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#E6D8C3]"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-[#0A0E1A]" />
               </button>
             </div>
 
             {/* Flagged Trips List */}
             <div className="overflow-y-auto space-y-4 flex-1 pr-1 text-xs">
               {flaggedTrips.map((trip, idx) => (
-                <div key={idx} className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-3 shadow-md">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-900 pb-2.5">
+                <div key={idx} className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-3 shadow-sm text-[#0A0E1A]">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-[#E6D8C3] pb-2.5">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 rounded bg-slate-900 text-amber-400 font-mono font-bold text-xs border border-slate-700">
+                        <span className="px-2.5 py-0.5 rounded-lg bg-[#FAF6F0] text-[#0A0E1A] font-mono font-black text-xs border border-[#E6D8C3]">
                           {trip.booking_number}
                         </span>
-                        <span className="font-bold text-slate-100">{trip.route}</span>
+                        <span className="font-black text-[#0A0E1A]">{trip.route}</span>
                       </div>
-                      <span className="text-[11px] text-slate-400 font-mono block mt-0.5">
+                      <span className="text-[11px] text-[#0A0E1A] font-mono font-bold block mt-0.5">
                         Vehicle: {trip.vehicle} • Chauffeur: {trip.chauffeur}
                       </span>
                     </div>
 
                     <div className="text-right flex sm:flex-col items-center sm:items-end justify-between font-mono">
-                      <span className="text-[10px] text-slate-400 uppercase font-bold">Net Profit Margin</span>
-                      <span className="text-base font-black text-rose-400">
+                      <span className="text-[10px] text-[#0A0E1A] uppercase font-bold">Net Profit Margin</span>
+                      <span className="text-base font-black text-[#0A0E1A]">
                         {trip.margin_pct}% (${trip.net_profit.toFixed(2)} AUD)
                       </span>
                     </div>
                   </div>
 
                   {/* Financial Stats Grid */}
-                  <div className="grid grid-cols-3 gap-2 text-center bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 font-mono text-[11px]">
+                  <div className="grid grid-cols-3 gap-2 text-center bg-[#FAF6F0] p-2.5 rounded-xl border border-[#E6D8C3] font-mono text-[11px] text-[#0A0E1A]">
                     <div>
-                      <span className="text-slate-400 block text-[10px]">GROSS FARE</span>
-                      <strong className="text-slate-200">${trip.gross_revenue.toFixed(2)} AUD</strong>
+                      <span className="text-[#0A0E1A] block text-[10px] font-bold">GROSS FARE</span>
+                      <strong className="text-[#0A0E1A] font-black">${trip.gross_revenue.toFixed(2)} AUD</strong>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px]">DIRECT COST</span>
-                      <strong className="text-rose-400">-${trip.direct_cost.toFixed(2)} AUD</strong>
+                      <span className="text-[#0A0E1A] block text-[10px] font-bold">DIRECT COST</span>
+                      <strong className="text-[#0A0E1A] font-black">-${trip.direct_cost.toFixed(2)} AUD</strong>
                     </div>
                     <div>
-                      <span className="text-slate-400 block text-[10px]">COMPANY PROFIT</span>
-                      <strong className="text-emerald-400">+${trip.net_profit.toFixed(2)} AUD</strong>
+                      <span className="text-[#0A0E1A] block text-[10px] font-bold">COMPANY PROFIT</span>
+                      <strong className="text-[#0A0E1A] font-black">+${trip.net_profit.toFixed(2)} AUD</strong>
                     </div>
                   </div>
 
                   {/* Root Cause Spikes */}
-                  <div className="space-y-1.5 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                    <span className="text-[11px] font-bold text-rose-300 flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5" /> Root Cause of Cost Spike:
+                  <div className="space-y-1.5 p-3 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]">
+                    <span className="text-[11px] font-black text-[#0A0E1A] flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5 text-[#0A0E1A]" /> Root Cause of Cost Spike:
                     </span>
-                    <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
+                    <ul className="list-disc list-inside space-y-1 text-[#0A0E1A] text-[11px] font-bold">
                       {trip.spike_reasons.map((reason, rIdx) => (
                         <li key={rIdx}>{reason}</li>
                       ))}
@@ -554,11 +554,11 @@ export const AnalyticsProfitPage: React.FC = () => {
                   </div>
 
                   {/* Preventive Safety Measures */}
-                  <div className="space-y-1.5 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <span className="text-[11px] font-bold text-emerald-300 flex items-center gap-1.5">
-                      <Lightbulb className="w-3.5 h-3.5 text-emerald-400" /> Recommended Preventive Action for Future:
+                  <div className="space-y-1.5 p-3 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]">
+                    <span className="text-[11px] font-black text-[#0A0E1A] flex items-center gap-1.5">
+                      <Lightbulb className="w-3.5 h-3.5 text-[#0A0E1A]" /> Recommended Preventive Action for Future:
                     </span>
-                    <ul className="list-disc list-inside space-y-1 text-slate-300 text-[11px]">
+                    <ul className="list-disc list-inside space-y-1 text-[#0A0E1A] text-[11px] font-bold">
                       {trip.preventive_measures.map((measure, mIdx) => (
                         <li key={mIdx}>{measure}</li>
                       ))}
@@ -568,10 +568,10 @@ export const AnalyticsProfitPage: React.FC = () => {
               ))}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-800">
+            <div className="flex justify-end pt-3 border-t border-[#E6D8C3]">
               <button
                 onClick={() => setIsFlaggedTripsModalOpen(false)}
-                className="px-5 py-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white text-xs font-bold"
+                className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black shadow-md transition-all"
               >
                 Close Investigation
               </button>

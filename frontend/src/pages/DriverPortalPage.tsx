@@ -263,34 +263,30 @@ export const DriverPortalPage: React.FC = () => {
       )}
 
       {/* 1. Driver Profile Header (Ultra-Clean, NO admin clutter) */}
-      <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between gap-3 shadow-lg">
+      <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between gap-3 shadow-lg text-white">
         <div className="flex items-center gap-3">
           {/* Driver Avatar */}
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-slate-950 font-black text-base flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+          <div className="w-11 h-11 rounded-2xl bg-[#06090F] border border-[#DFCAA8] text-white font-black text-base flex items-center justify-center shadow-md shrink-0">
             {currentDriver.name.charAt(0)}
           </div>
 
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-sm sm:text-base font-black text-slate-100">{currentDriver.name}</h2>
+              <h2 className="text-sm sm:text-base font-black text-white">{currentDriver.name}</h2>
               <span
-                className={`px-2 py-0.5 rounded-full text-[9px] font-bold ${
-                  activeTrip.status === 'EN_ROUTE' || activeTrip.status === 'PICKED_UP'
-                    ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30 animate-pulse'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                }`}
+                className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#121A2D] text-white border border-[#DFCAA8]"
               >
                 ● {activeTrip.status === 'COMPLETED' ? 'On Duty' : 'Active Trip'}
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5 truncate max-w-[240px] sm:max-w-none">
-              🚘 Reg: <strong className="text-amber-400">{currentDriver.plate}</strong> • {currentDriver.vehicle}
+            <p className="text-[11px] text-white font-mono mt-0.5 truncate max-w-[240px] sm:max-w-none">
+              🚘 Reg: <strong className="text-white">{currentDriver.plate}</strong> • {currentDriver.vehicle}
             </p>
           </div>
         </div>
 
         {/* Live Duty Pill */}
-        <span className="px-3 py-1.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-bold hidden sm:inline-block">
+        <span className="px-3 py-1.5 rounded-xl bg-[#121A2D] border border-[#DFCAA8] text-white text-xs font-bold hidden sm:inline-block">
           🟢 Connected Live
         </span>
       </div>
@@ -301,14 +297,14 @@ export const DriverPortalPage: React.FC = () => {
           onClick={() => setActiveTab('ACTIVE')}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'ACTIVE'
-              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+              : 'text-white hover:text-[#DFCAA8]'
           }`}
         >
           <Car className="w-3.5 h-3.5" />
           <span>Active & Today</span>
           {activeTrip.status !== 'COMPLETED' && (
-            <span className="w-2 h-2 rounded-full bg-slate-950 animate-ping ml-0.5" />
+            <span className="w-2 h-2 rounded-full bg-[#0A0E1A] animate-ping ml-0.5" />
           )}
         </button>
 
@@ -316,8 +312,8 @@ export const DriverPortalPage: React.FC = () => {
           onClick={() => setActiveTab('UPCOMING')}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'UPCOMING'
-              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+              : 'text-white hover:text-[#DFCAA8]'
           }`}
         >
           <Clock className="w-3.5 h-3.5" />
@@ -328,8 +324,8 @@ export const DriverPortalPage: React.FC = () => {
           onClick={() => setActiveTab('HISTORY')}
           className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
             activeTab === 'HISTORY'
-              ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-md shadow-amber-500/25'
-              : 'text-slate-400 hover:text-slate-200'
+              ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+              : 'text-white hover:text-[#DFCAA8]'
           }`}
         >
           <CheckCircle2 className="w-3.5 h-3.5" />
@@ -341,28 +337,20 @@ export const DriverPortalPage: React.FC = () => {
       {/* TAB 1: ACTIVE & TODAY TRIP MANIFEST                                       */}
       {/* ========================================================================= */}
       {activeTab === 'ACTIVE' && (
-        <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="p-5 sm:p-7 rounded-3xl bg-[#121A2D] border border-amber-500/30 shadow-2xl space-y-6">
+        <div className="space-y-4 animate-in fade-in duration-200 text-white">
+          <div className="p-5 sm:p-7 rounded-3xl bg-[#121A2D] border border-[#DFCAA8]/40 shadow-2xl space-y-6">
             {/* Top Badges */}
-            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 pb-4">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-4">
               <div className="flex items-center gap-2.5">
-                <span className="font-mono font-black text-amber-400 text-sm">{activeTrip.bookingNumber}</span>
-                <span className="px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 text-[10px] font-bold tracking-wider uppercase">
+                <span className="font-mono font-black text-white text-sm">{activeTrip.bookingNumber}</span>
+                <span className="px-2.5 py-0.5 rounded-md bg-[#0D1322] text-white text-[10px] font-bold tracking-wider uppercase border border-slate-700">
                   {activeTrip.tripType}
                 </span>
               </div>
 
               {/* Dynamic Live Status Badge */}
               <span
-                className={`px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide flex items-center gap-1.5 ${
-                  activeTrip.status === 'EN_ROUTE'
-                    ? 'bg-blue-500/20 text-blue-300 border border-blue-500/40 animate-pulse'
-                    : activeTrip.status === 'ARRIVED'
-                    ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40 ring-1 ring-purple-400/50'
-                    : activeTrip.status === 'PICKED_UP'
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 animate-pulse'
-                    : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                }`}
+                className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide flex items-center gap-1.5 bg-[#0D1322] text-white border border-[#DFCAA8]"
               >
                 ● {activeTrip.status === 'EN_ROUTE'
                   ? 'EN ROUTE (On The Way)'
@@ -377,8 +365,8 @@ export const DriverPortalPage: React.FC = () => {
             {/* Passenger Row + Call Button */}
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="text-xl font-black text-slate-100">{activeTrip.passengerName}</h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <h3 className="text-xl font-black text-white">{activeTrip.passengerName}</h3>
+                <p className="text-xs text-white mt-0.5">
                   {activeTrip.paxCount} Passengers • {activeTrip.luggageCount} Suitcases • {activeTrip.passengerPhone}
                 </p>
               </div>
@@ -386,43 +374,43 @@ export const DriverPortalPage: React.FC = () => {
               {/* Direct Call Button (Phone Call Trigger) */}
               <a
                 href={`tel:${activeTrip.passengerPhone}`}
-                className="px-5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/30 hover:scale-105 transition-all"
+                className="px-5 py-2.5 rounded-2xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center gap-2 shadow-lg transition-all"
               >
-                <Phone className="w-4 h-4 fill-slate-950" />
+                <Phone className="w-4 h-4 text-white" />
                 <span>Call</span>
               </a>
             </div>
 
             {/* Journey Details List */}
-            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-3.5 text-xs">
+            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-3.5 text-xs text-white">
               {/* Pickup Time */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <Clock className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 text-white">
+                <Clock className="w-4 h-4 text-white shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Pickup Date & Time</span>
-                  <span className="font-bold text-slate-100 text-sm">
+                  <span className="text-[10px] uppercase font-bold text-white block">Pickup Date & Time</span>
+                  <span className="font-bold text-white text-sm">
                     {activeTrip.pickupDate}, {activeTrip.pickupTime}
                   </span>
                 </div>
               </div>
 
               {/* Pickup Address */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <MapPin className="w-4 h-4 text-emerald-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 text-white">
+                <MapPin className="w-4 h-4 text-white shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Pickup Location</span>
-                  <span className="font-semibold text-slate-200 leading-relaxed block">
+                  <span className="text-[10px] uppercase font-bold text-white block">Pickup Location</span>
+                  <span className="font-semibold text-white leading-relaxed block">
                     {activeTrip.pickupAddress}
                   </span>
                 </div>
               </div>
 
               {/* Destination Address */}
-              <div className="flex items-start gap-3 text-slate-300">
-                <MapPin className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div className="flex items-start gap-3 text-white">
+                <MapPin className="w-4 h-4 text-white shrink-0 mt-0.5" />
                 <div>
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">Destination Dropoff</span>
-                  <span className="font-semibold text-slate-200 leading-relaxed block">
+                  <span className="text-[10px] uppercase font-bold text-white block">Destination Dropoff</span>
+                  <span className="font-semibold text-white leading-relaxed block">
                     {activeTrip.dropoffAddress}
                   </span>
                 </div>
@@ -430,21 +418,21 @@ export const DriverPortalPage: React.FC = () => {
 
               {/* Flight Information */}
               {activeTrip.isAirport && (
-                <div className="p-3.5 rounded-xl bg-[#121A2D] border border-cyan-500/30 flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-cyan-300">
-                    <Plane className="w-4 h-4 shrink-0" />
+                <div className="p-3.5 rounded-xl bg-[#121A2D] border border-slate-700 flex items-center justify-between text-white">
+                  <div className="flex items-center gap-2 text-white">
+                    <Plane className="w-4 h-4 shrink-0 text-white" />
                     <span className="font-bold font-mono">Flight: {activeTrip.flightNumber}</span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">
+                  <span className="px-2.5 py-0.5 rounded bg-[#0D1322] text-white border border-slate-700 text-[10px] font-bold">
                     Status: {activeTrip.flightStatus}
                   </span>
                 </div>
               )}
 
               {/* Driver Payout & Instructions */}
-              <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs">
-                <span className="text-slate-400">Guaranteed Driver Payout:</span>
-                <span className="font-mono font-black text-emerald-400 text-sm">
+              <div className="pt-2 border-t border-slate-800 flex justify-between items-center text-xs text-white">
+                <span className="text-white">Guaranteed Driver Payout:</span>
+                <span className="font-mono font-black text-white text-sm">
                   ${activeTrip.driverPayout.toFixed(2)} AUD
                 </span>
               </div>
@@ -453,19 +441,19 @@ export const DriverPortalPage: React.FC = () => {
             {/* Navigation Button */}
             <button
               onClick={() => handleOpenMaps(activeTrip.pickupAddress)}
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#0D1322] hover:bg-[#162036] border border-[#1F2E4D] hover:border-cyan-400/60 text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-[#0D1322] hover:bg-[#162036] border border-[#DFCAA8] text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
             >
-              <Navigation className="w-4 h-4" />
+              <Navigation className="w-4 h-4 text-white" />
               <span>Open in Google Maps / Navigation ➔</span>
             </button>
 
             {/* Live Trip Action Progression Stepper (Sequential Live Sync With Admin) */}
-            <div className="pt-4 border-t border-[#1F2E4D] space-y-3">
+            <div className="pt-4 border-t border-[#1F2E4D] space-y-3 text-white">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] uppercase font-bold text-slate-400 tracking-wider">
+                <span className="text-[11px] uppercase font-bold text-white tracking-wider">
                   Live Trip Stepper (Step-by-Step Sync with Admin)
                 </span>
-                <span className="text-[10px] text-amber-400 font-mono">
+                <span className="text-[10px] text-white font-mono font-bold">
                   Current: {activeTrip.status}
                 </span>
               </div>
@@ -476,8 +464,8 @@ export const DriverPortalPage: React.FC = () => {
                   onClick={() => handleUpdateStatus('EN_ROUTE')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'EN_ROUTE'
-                      ? 'bg-blue-500 text-slate-950 shadow-lg shadow-blue-500/40 ring-2 ring-blue-300 font-black'
-                      : 'bg-[#0D1322] text-slate-300 hover:bg-slate-800 border border-slate-800'
+                      ? 'bg-white text-[#0A0E1A] shadow-lg ring-2 ring-white font-black'
+                      : 'bg-[#0D1322] text-white hover:bg-slate-800 border border-slate-800'
                   }`}
                 >
                   1. En Route 🚗
@@ -488,8 +476,8 @@ export const DriverPortalPage: React.FC = () => {
                   onClick={() => handleUpdateStatus('ARRIVED')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'ARRIVED'
-                      ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/40 ring-2 ring-purple-300 font-black'
-                      : 'bg-[#0D1322] text-slate-300 hover:bg-purple-950/40 border border-slate-800'
+                      ? 'bg-white text-[#0A0E1A] shadow-lg ring-2 ring-white font-black'
+                      : 'bg-[#0D1322] text-white hover:bg-slate-800 border border-slate-800'
                   }`}
                 >
                   2. Arrived 📍
@@ -500,8 +488,8 @@ export const DriverPortalPage: React.FC = () => {
                   onClick={() => handleUpdateStatus('PICKED_UP')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'PICKED_UP'
-                      ? 'bg-cyan-500 text-slate-950 shadow-lg shadow-cyan-500/40 ring-2 ring-cyan-300 font-black'
-                      : 'bg-[#0D1322] text-slate-300 hover:bg-cyan-950/40 border border-slate-800'
+                      ? 'bg-white text-[#0A0E1A] shadow-lg ring-2 ring-white font-black'
+                      : 'bg-[#0D1322] text-white hover:bg-slate-800 border border-slate-800'
                   }`}
                 >
                   3. On Board 👤
@@ -512,8 +500,8 @@ export const DriverPortalPage: React.FC = () => {
                   onClick={() => handleUpdateStatus('COMPLETED')}
                   className={`py-3 px-3 rounded-xl text-xs font-bold transition-all ${
                     activeTrip.status === 'COMPLETED'
-                      ? 'bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/40 font-black'
-                      : 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 border border-emerald-500/30'
+                      ? 'bg-white text-[#0A0E1A] shadow-lg font-black'
+                      : 'bg-[#0D1322] text-white hover:bg-slate-800 border border-slate-800'
                   }`}
                 >
                   4. Complete ✓
@@ -528,31 +516,31 @@ export const DriverPortalPage: React.FC = () => {
       {/* TAB 2: UPCOMING SCHEDULED TRIPS                                           */}
       {/* ========================================================================= */}
       {activeTab === 'UPCOMING' && (
-        <div className="space-y-4 animate-in fade-in duration-200">
+        <div className="space-y-4 animate-in fade-in duration-200 text-white">
           {upcomingTrips.map((trip) => (
             <div
               key={trip.id}
-              className="p-5 rounded-3xl bg-[#121A2D] border border-[#1F2E4D] hover:border-amber-500/40 transition-all space-y-3 shadow-md"
+              className="p-5 rounded-3xl bg-[#121A2D] border border-[#1F2E4D] space-y-3 shadow-md text-white"
             >
               <div className="flex items-center justify-between border-b border-slate-800 pb-2.5">
-                <span className="font-mono font-bold text-amber-400 text-sm">{trip.bookingNumber}</span>
-                <span className="font-mono font-bold text-emerald-400 text-xs">+${trip.driverPayout.toFixed(2)} AUD</span>
+                <span className="font-mono font-bold text-white text-sm">{trip.bookingNumber}</span>
+                <span className="font-mono font-bold text-white text-xs">+${trip.driverPayout.toFixed(2)} AUD</span>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="font-bold text-slate-100 text-sm">{trip.passengerName}</h4>
-                  <p className="text-xs text-slate-400">{trip.paxCount} Pax • {trip.tripType}</p>
+                  <h4 className="font-bold text-white text-sm">{trip.passengerName}</h4>
+                  <p className="text-xs text-white">{trip.paxCount} Pax • {trip.tripType}</p>
                 </div>
                 <a
                   href={`tel:${trip.passengerPhone}`}
-                  className="p-2 rounded-xl bg-[#0D1322] border border-slate-700 text-amber-400 hover:text-amber-300"
+                  className="p-2 rounded-xl bg-[#0D1322] border border-slate-700 text-white hover:text-[#DFCAA8]"
                 >
-                  <Phone className="w-4 h-4" />
+                  <Phone className="w-4 h-4 text-white" />
                 </a>
               </div>
 
-              <div className="text-xs text-slate-300 space-y-1">
+              <div className="text-xs text-white space-y-1">
                 <p>⏰ <strong>Scheduled:</strong> {trip.pickupDate} at {trip.pickupTime}</p>
                 <p>📍 <strong>Pickup:</strong> {trip.pickupAddress}</p>
                 <p>🏁 <strong>Dropoff:</strong> {trip.dropoffAddress}</p>
@@ -561,9 +549,9 @@ export const DriverPortalPage: React.FC = () => {
               <div className="pt-2 flex justify-end">
                 <button
                   onClick={() => handleOpenMaps(trip.pickupAddress)}
-                  className="px-4 py-1.5 rounded-xl bg-[#0D1322] border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center gap-1.5"
+                  className="px-4 py-1.5 rounded-xl bg-[#0D1322] border border-[#DFCAA8] text-white text-xs font-bold flex items-center gap-1.5"
                 >
-                  <Navigation className="w-3.5 h-3.5" />
+                  <Navigation className="w-3.5 h-3.5 text-white" />
                   <span>Preview Route on Map</span>
                 </button>
               </div>
@@ -576,26 +564,26 @@ export const DriverPortalPage: React.FC = () => {
       {/* TAB 3: HISTORY & EARNINGS BREAKDOWN                                       */}
       {/* ========================================================================= */}
       {activeTab === 'HISTORY' && (
-        <div className="space-y-4 animate-in fade-in duration-200">
+        <div className="space-y-4 animate-in fade-in duration-200 text-white">
           {/* Earnings Summary Card */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Total Today's Earnings</span>
-              <div className="text-2xl font-black font-mono text-emerald-400">
+            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1 text-white">
+              <span className="text-[10px] uppercase font-bold text-white">Total Today's Earnings</span>
+              <div className="text-2xl font-black font-mono text-white">
                 ${totalEarningsToday.toFixed(2)} AUD
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Trips Completed Today</span>
-              <div className="text-2xl font-black font-mono text-cyan-300">
+            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1 text-white">
+              <span className="text-[10px] uppercase font-bold text-white">Trips Completed Today</span>
+              <div className="text-2xl font-black font-mono text-white">
                 {historyTrips.length} Rides
               </div>
             </div>
 
-            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-              <span className="text-[10px] uppercase font-bold text-slate-400">Driver Performance</span>
-              <div className="text-2xl font-black font-mono text-amber-400">
+            <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1 text-white">
+              <span className="text-[10px] uppercase font-bold text-white">Driver Performance</span>
+              <div className="text-2xl font-black font-mono text-white">
                 ⭐ {currentDriver.rating} Rating
               </div>
             </div>
@@ -606,21 +594,21 @@ export const DriverPortalPage: React.FC = () => {
             {historyTrips.map((t) => (
               <div
                 key={t.id}
-                className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs"
+                className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-white"
               >
-                <div className="space-y-1">
+                <div className="space-y-1 text-white">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-bold text-slate-300">{t.bookingNumber}</span>
-                    <span className="text-emerald-400 font-bold font-mono">+${t.driverPayout.toFixed(2)} AUD</span>
-                    <span className="px-2 py-0.2 rounded bg-emerald-500/10 text-emerald-400 text-[10px]">
+                    <span className="font-mono font-bold text-white">{t.bookingNumber}</span>
+                    <span className="text-white font-bold font-mono">+${t.driverPayout.toFixed(2)} AUD</span>
+                    <span className="px-2 py-0.2 rounded bg-[#121A2D] text-white text-[10px] border border-slate-700">
                       COMPLETED ✓
                     </span>
                   </div>
-                  <p className="text-slate-200 font-semibold">{t.passengerName} • {t.pickupTime}</p>
-                  <p className="text-slate-400 text-[11px]">{t.pickupAddress} ➔ {t.dropoffAddress}</p>
+                  <p className="text-white font-bold">{t.passengerName} • {t.pickupTime}</p>
+                  <p className="text-white text-[11px]">{t.pickupAddress} ➔ {t.dropoffAddress}</p>
                 </div>
 
-                <span className="text-[10px] text-slate-500 font-mono">Paid to Chauffeur</span>
+                <span className="text-[10px] text-white font-mono">Paid to Chauffeur</span>
               </div>
             ))}
           </div>

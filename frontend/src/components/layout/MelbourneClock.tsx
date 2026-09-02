@@ -34,16 +34,16 @@ export const MelbourneClock: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-slate-900/90 border border-slate-800 shadow-inner">
-      <div className="p-1 rounded-md bg-amber-500/10 text-amber-400">
-        <Clock className="w-3.5 h-3.5 animate-spin text-amber-400" style={{ animationDuration: '60s' }} />
+    <div className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] shadow-inner text-white">
+      <div className="p-1 rounded-md bg-[#121A2D] text-white">
+        <Clock className="w-3.5 h-3.5 animate-spin text-white" style={{ animationDuration: '60s' }} />
       </div>
       <div className="flex flex-col text-left">
         <div className="flex items-center gap-1.5">
-          <span className="text-xs font-mono font-bold text-slate-100">{timeStr}</span>
-          <span className="text-[10px] font-semibold px-1 py-0.2 rounded bg-amber-500/20 text-amber-300">AEST</span>
+          <span className="text-xs font-mono font-black text-white">{timeStr}</span>
+          <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-[#121A2D] text-white border border-[#DFCAA8]">AEST</span>
         </div>
-        <span className="text-[10px] text-slate-400 font-medium">{dateStr} • Melbourne</span>
+        <span className="text-[10px] text-white font-bold">{dateStr} • Melbourne</span>
       </div>
     </div>
   );

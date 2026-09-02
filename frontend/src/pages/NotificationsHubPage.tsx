@@ -242,45 +242,45 @@ export const NotificationsHubPage: React.FC = () => {
     <div className="space-y-6 w-full max-w-full min-w-0 relative pb-12">
       {/* Floating In-App Dispatch Alert Toast with Sound */}
       {activePopupAlert && (
-        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-full bg-[#121A2D] border-2 border-emerald-400 shadow-2xl shadow-emerald-500/30 rounded-2xl p-4 animate-in slide-in-from-top duration-300">
+        <div className="fixed top-20 right-4 sm:right-8 z-50 max-w-md w-full bg-[#121A2D] border-2 border-[#DFCAA8] shadow-2xl rounded-2xl p-4 animate-in slide-in-from-top duration-300 text-white">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
-                <Bell className="w-5 h-5 animate-bounce" />
+              <div className="w-10 h-10 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white flex items-center justify-center shrink-0 mt-0.5">
+                <Bell className="w-5 h-5 text-white" />
               </div>
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black text-emerald-300">{activePopupAlert.title}</span>
+                  <span className="text-xs font-black text-white">{activePopupAlert.title}</span>
                 </div>
-                <p className="text-xs text-slate-200 leading-relaxed font-mono">
+                <p className="text-xs text-white leading-relaxed font-mono font-bold">
                   {activePopupAlert.body}
                 </p>
-                <span className="text-[10px] text-slate-400 font-mono block">Received: {activePopupAlert.time}</span>
+                <span className="text-[10px] text-white font-mono block">Received: {activePopupAlert.time}</span>
               </div>
             </div>
             <button
               onClick={() => setActivePopupAlert(null)}
-              className="text-slate-400 hover:text-slate-200 p-1"
+              className="text-white hover:text-[#DFCAA8] p-1"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4 text-white" />
             </button>
           </div>
         </div>
       )}
 
       {/* 1. Header Banner */}
-      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden shadow-xl">
+      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden shadow-xl text-white">
         <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
-            <Radio className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0D1322] border border-[#DFCAA8] text-white text-xs font-bold">
+            <Radio className="w-3.5 h-3.5 text-white animate-pulse" />
             <span>Real-Time Mobile Dispatch Center</span>
           </div>
 
-          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-slate-100">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-white">
             Mobile Dispatch & Push Notification Center
           </h1>
 
-          <p className="text-xs md:text-sm text-slate-400 leading-relaxed">
+          <p className="text-xs md:text-sm text-white leading-relaxed font-bold">
             Instant WhatsApp, SMS, and Sound Push alerts directly on your phone whenever a new booking arrives, a driver is allocated, or a trip milestone changes.
           </p>
         </div>
@@ -291,10 +291,10 @@ export const NotificationsHubPage: React.FC = () => {
           <button
             onClick={() => handleSendTestPing('PUSH')}
             disabled={testSending}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#162036] hover:bg-[#1E2C4A] border border-cyan-500/40 text-cyan-300 font-bold text-xs shadow-md transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md transition-all"
             title="Play chime sound and show native browser pop-up"
           >
-            <Bell className="w-4 h-4 text-cyan-400" />
+            <Bell className="w-4 h-4 text-white" />
             <span>Test Sound Pop-up 🔔</span>
           </button>
 
@@ -302,10 +302,10 @@ export const NotificationsHubPage: React.FC = () => {
           <button
             onClick={() => handleSendTestPing('SMS')}
             disabled={testSending}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 font-bold text-xs shadow-md transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md transition-all"
             title="Send test message alert via SMS"
           >
-            <Smartphone className="w-4 h-4 text-amber-400" />
+            <Smartphone className="w-4 h-4 text-white" />
             <span>Send SMS Ping ✉️</span>
           </button>
 
@@ -313,10 +313,10 @@ export const NotificationsHubPage: React.FC = () => {
           <button
             onClick={() => handleSendTestPing('WHATSAPP')}
             disabled={testSending}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-slate-950 font-black text-xs shadow-lg shadow-emerald-500/30 transition-all"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-lg transition-all"
             title="Send test WhatsApp alert"
           >
-            <MessageSquare className="w-4 h-4 text-slate-950" />
+            <MessageSquare className="w-4 h-4 text-white" />
             <span>Send WhatsApp Ping 📲</span>
           </button>
         </div>
@@ -324,14 +324,14 @@ export const NotificationsHubPage: React.FC = () => {
 
       {/* Test Result Action Banner */}
       {testResult && (
-        <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/80 to-slate-900 border border-emerald-500/40 text-slate-100 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in shadow-xl">
+        <div className="p-5 rounded-2xl bg-[#121A2D] border border-[#DFCAA8] text-white flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in fade-in shadow-xl">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
-              <CheckCircle2 className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white flex items-center justify-center shrink-0">
+              <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <p className="text-sm font-bold text-emerald-300">{testResult.message}</p>
-              <p className="text-xs text-slate-400">
+              <p className="text-sm font-bold text-white">{testResult.message}</p>
+              <p className="text-xs text-white">
                 {testResult.channel === 'SMS'
                   ? 'Click below to open in your phone Messages / SMS app:'
                   : testResult.channel === 'WHATSAPP'
@@ -346,13 +346,9 @@ export const NotificationsHubPage: React.FC = () => {
               href={testResult.actionUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg shrink-0 transition-all ${
-                testResult.channel === 'SMS'
-                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/25'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/25'
-              }`}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl font-black text-xs shadow-lg shrink-0 transition-all bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white"
             >
-              {testResult.channel === 'SMS' ? <Smartphone className="w-4 h-4" /> : <MessageSquare className="w-4 h-4" />}
+              {testResult.channel === 'SMS' ? <Smartphone className="w-4 h-4 text-white" /> : <MessageSquare className="w-4 h-4 text-white" />}
               <span>
                 {testResult.channel === 'SMS' ? '✉️ Open In Phone Messages (SMS) ➔' : '📱 Open In WhatsApp App / Web ➔'}
               </span>
@@ -362,92 +358,92 @@ export const NotificationsHubPage: React.FC = () => {
       )}
 
       {/* 2. Main Config Grid: Left (Channel Setup) & Right (Trigger Matrix) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 text-white">
         {/* Left Column: Mobile Phone & Delivery Channels (5 Cols) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-5">
+          <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-5 text-white">
             <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-3">
               <div className="flex items-center gap-2.5">
-                <Smartphone className="w-5 h-5 text-amber-400" />
-                <h3 className="text-sm font-bold text-slate-100">Owner Mobile Device Configuration</h3>
+                <Smartphone className="w-5 h-5 text-white" />
+                <h3 className="text-sm font-bold text-white">Owner Mobile Device Configuration</h3>
               </div>
             </div>
 
             <div className="space-y-4">
               {/* Phone Input */}
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-300 flex items-center justify-between">
+                <label className="text-xs font-semibold text-white flex items-center justify-between">
                   <span>Manager Mobile Phone Number</span>
-                  <span className="text-[10px] text-amber-400 font-mono">With Country Code (+91 / +61)</span>
+                  <span className="text-[10px] text-white font-mono font-bold">With Country Code (+91 / +61)</span>
                 </label>
                 <input
                   type="text"
                   value={settings.manager_phone}
                   onChange={(e) => setSettings({ ...settings, manager_phone: e.target.value })}
                   placeholder="+919305365420"
-                  className="w-full px-4 py-2.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] text-slate-100 font-mono text-xs focus:border-amber-400 focus:outline-none"
+                  className="w-full px-4 py-2.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] text-white font-mono text-xs focus:border-[#DFCAA8] focus:outline-none font-bold"
                 />
               </div>
 
               {/* Channels Toggles */}
               <div className="space-y-3 pt-2">
-                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block">Active Alert Channels</span>
+                <span className="text-xs font-bold text-white uppercase tracking-wider block">Active Alert Channels</span>
 
                 {/* WhatsApp Toggle */}
-                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                      <MessageSquare className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                      <MessageSquare className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-200 block">WhatsApp Dispatch Alerts</span>
-                      <span className="text-[10px] text-slate-400">Rich formatted cards with direct view links</span>
+                      <span className="text-xs font-bold text-white block">WhatsApp Dispatch Alerts</span>
+                      <span className="text-[10px] text-white">Rich formatted cards with direct view links</span>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={settings.whatsapp_enabled}
                     onChange={(e) => setSettings({ ...settings, whatsapp_enabled: e.target.checked })}
-                    className="w-4 h-4 rounded accent-emerald-500 cursor-pointer"
+                    className="w-4 h-4 rounded accent-white cursor-pointer"
                   />
                 </div>
 
                 {/* SMS Fallback Toggle */}
-                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                      <Smartphone className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                      <Smartphone className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-200 block">SMS Direct Gateway</span>
-                      <span className="text-[10px] text-slate-400">Cellular telecom carrier SMS to +91 9305365420</span>
+                      <span className="text-xs font-bold text-white block">SMS Direct Gateway</span>
+                      <span className="text-[10px] text-white">Cellular telecom carrier SMS to +91 9305365420</span>
                     </div>
                   </div>
                   <input
                     type="checkbox"
                     checked={settings.sms_enabled}
                     onChange={(e) => setSettings({ ...settings, sms_enabled: e.target.checked })}
-                    className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+                    className="w-4 h-4 rounded accent-white cursor-pointer"
                   />
                 </div>
 
                 {/* Browser Web Push & Sound */}
-                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+                <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                      <Bell className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                      <Bell className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <span className="text-xs font-bold text-slate-200 block">Browser Push & Sound Alert</span>
-                      <span className="text-[10px] text-slate-400">Chime sound + screen pop-up</span>
+                      <span className="text-xs font-bold text-white block">Browser Push & Sound Alert</span>
+                      <span className="text-[10px] text-white">Chime sound + screen pop-up</span>
                     </div>
                   </div>
                   {browserPushAllowed ? (
-                    <span className="px-2 py-1 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-bold">ACTIVE ✓</span>
+                    <span className="px-2 py-1 rounded bg-[#121A2D] border border-[#DFCAA8] text-white text-[10px] font-bold">ACTIVE ✓</span>
                   ) : (
                     <button
                       onClick={requestBrowserPermission}
-                      className="px-2.5 py-1 rounded bg-cyan-500 text-slate-950 text-[10px] font-bold hover:bg-cyan-400 transition-colors"
+                      className="px-2.5 py-1 rounded bg-[#06090F] border border-[#DFCAA8] text-white text-[10px] font-black hover:bg-[#1A2233] transition-colors"
                     >
                       Enable Sound & Push
                     </button>
@@ -459,9 +455,9 @@ export const NotificationsHubPage: React.FC = () => {
               <button
                 onClick={handleSaveSettings}
                 disabled={saving}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md transition-all"
               >
-                <Save className="w-4 h-4" />
+                <Save className="w-4 h-4 text-white" />
                 <span>{saving ? 'Saving...' : saveSuccess ? 'Saved Successfully! ✓' : 'Save Notification Settings'}</span>
               </button>
             </div>
@@ -470,124 +466,124 @@ export const NotificationsHubPage: React.FC = () => {
 
         {/* Right Column: Alert Trigger Event Matrix (7 Cols) */}
         <div className="lg:col-span-7 space-y-6">
-          <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-5">
+          <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-5 text-white">
             <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-3">
               <div className="flex items-center gap-2.5">
-                <Shield className="w-5 h-5 text-emerald-400" />
-                <h3 className="text-sm font-bold text-slate-100">Live Dispatch Trigger Rules</h3>
+                <Shield className="w-5 h-5 text-white" />
+                <h3 className="text-sm font-bold text-white">Live Dispatch Trigger Rules</h3>
               </div>
-              <span className="text-[10px] font-mono text-slate-400">Instant Mobile Ping</span>
+              <span className="text-[10px] font-mono text-white">Instant Mobile Ping</span>
             </div>
 
             {/* Triggers List */}
             <div className="space-y-3">
               {/* Trigger 1: New Booking */}
-              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
-                    <Sparkles className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">New Customer Booking Created & Paid</span>
-                    <span className="text-[10px] text-slate-400">Pings with route, passenger name, fare ($ AUD), and vehicle class</span>
+                    <span className="text-xs font-bold text-white block">New Customer Booking Created & Paid</span>
+                    <span className="text-[10px] text-white font-semibold">Pings with route, passenger name, fare ($ AUD), and vehicle class</span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.alert_on_new_booking}
                   onChange={(e) => setSettings({ ...settings, alert_on_new_booking: e.target.checked })}
-                  className="w-4 h-4 rounded accent-amber-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-white cursor-pointer"
                 />
               </div>
 
               {/* Trigger 2: Driver Allocated */}
-              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                    <Car className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                    <Car className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">Chauffeur Allocated & Dispatched</span>
-                    <span className="text-[10px] text-slate-400">Alerts when a driver and vehicle are assigned to a leg with payout rate</span>
+                    <span className="text-xs font-bold text-white block">Chauffeur Allocated & Dispatched</span>
+                    <span className="text-[10px] text-white font-semibold">Alerts when a driver and vehicle are assigned to a leg with payout rate</span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.alert_on_driver_allocation}
                   onChange={(e) => setSettings({ ...settings, alert_on_driver_allocation: e.target.checked })}
-                  className="w-4 h-4 rounded accent-blue-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-white cursor-pointer"
                 />
               </div>
 
               {/* Trigger 3: Trip Milestones */}
-              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                    <Clock className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                    <Clock className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">Trip Stepper Live Milestones</span>
-                    <span className="text-[10px] text-slate-400">Pings when chauffeur taps: En Route ➔ Arrived ➔ Picked Up ➔ Completed</span>
+                    <span className="text-xs font-bold text-white block">Trip Stepper Live Milestones</span>
+                    <span className="text-[10px] text-white font-semibold">Pings when chauffeur taps: En Route ➔ Arrived ➔ Picked Up ➔ Completed</span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.alert_on_trip_milestones}
                   onChange={(e) => setSettings({ ...settings, alert_on_trip_milestones: e.target.checked })}
-                  className="w-4 h-4 rounded accent-purple-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-white cursor-pointer"
                 />
               </div>
 
               {/* Trigger 4: Flight Delay */}
-              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
-                    <Plane className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                    <Plane className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">Airport Flight Delay Auto-Reschedule</span>
-                    <span className="text-[10px] text-slate-400">Alerts when FlightRadar detects delays and adjusts pickup buffer</span>
+                    <span className="text-xs font-bold text-white block">Airport Flight Delay Auto-Reschedule</span>
+                    <span className="text-[10px] text-white font-semibold">Alerts when FlightRadar detects delays and adjusts pickup buffer</span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.alert_on_flight_delay}
                   onChange={(e) => setSettings({ ...settings, alert_on_flight_delay: e.target.checked })}
-                  className="w-4 h-4 rounded accent-cyan-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-white cursor-pointer"
                 />
               </div>
 
               {/* Trigger 5: Urgent Unassigned Job Escalation */}
-              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between">
+              <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between text-white">
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-rose-500/20 text-rose-400 flex items-center justify-center">
-                    <AlertTriangle className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-white" />
                   </div>
                   <div>
-                    <span className="text-xs font-bold text-slate-200 block">Urgent Unassigned Job Escalation</span>
-                    <span className="text-[10px] text-slate-400">Sends high-priority alert if a job remains unallocated &lt; 4 hours before pickup</span>
+                    <span className="text-xs font-bold text-white block">Urgent Unassigned Job Escalation</span>
+                    <span className="text-[10px] text-white font-semibold">Sends high-priority alert if a job remains unallocated &lt; 4 hours before pickup</span>
                   </div>
                 </div>
                 <input
                   type="checkbox"
                   checked={settings.alert_on_unassigned_urgent}
                   onChange={(e) => setSettings({ ...settings, alert_on_unassigned_urgent: e.target.checked })}
-                  className="w-4 h-4 rounded accent-rose-500 cursor-pointer"
+                  className="w-4 h-4 rounded accent-white cursor-pointer"
                 />
               </div>
 
               {/* Trigger 6: 12-24h Customer Pre-Trip Reconfirmation (10am / 2pm Rule) */}
-              <div className="p-4 rounded-xl bg-gradient-to-r from-[#0D1322] to-[#121E36] border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="p-4 rounded-xl bg-[#0D1322] border border-[#DFCAA8] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white">
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0 mt-0.5">
-                    <Sparkles className="w-4 h-4" />
+                  <div className="w-8 h-8 rounded-lg bg-[#121A2D] border border-slate-700 text-white flex items-center justify-center shrink-0 mt-0.5">
+                    <Sparkles className="w-4 h-4 text-white" />
                   </div>
-                  <div className="space-y-1">
+                  <div className="space-y-1 text-white">
                     <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-amber-300">12-24h Pre-Trip Customer Reconfirmation</span>
-                      <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[9px] font-mono font-bold">10AM / 2PM RULE</span>
+                      <span className="text-xs font-bold text-white">12-24h Pre-Trip Customer Reconfirmation</span>
+                      <span className="px-2 py-0.5 rounded bg-[#121A2D] border border-[#DFCAA8] text-white text-[9px] font-mono font-bold">10AM / 2PM RULE</span>
                     </div>
-                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                    <p className="text-[11px] text-white leading-relaxed">
                       • <strong>Midnight – 8:00 AM trips:</strong> Dispatched at <strong>10:00 AM</strong> on the day prior.<br/>
                       • <strong>8:00 AM – Midnight trips:</strong> Dispatched at <strong>2:00 PM (14:00)</strong> on the day prior.
                     </p>
@@ -597,9 +593,9 @@ export const NotificationsHubPage: React.FC = () => {
                 <button
                   onClick={handleRunPreTripConfirmationScanner}
                   disabled={scanning}
-                  className="shrink-0 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                  className="shrink-0 px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md transition-all flex items-center gap-1.5"
                 >
-                  <Sparkles className="w-3.5 h-3.5" />
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
                   <span>{scanning ? 'Scanning...' : 'Run 12-24h Scanner ➔'}</span>
                 </button>
               </div>
@@ -609,13 +605,13 @@ export const NotificationsHubPage: React.FC = () => {
       </div>
 
       {/* 3. Live Mobile Alert Outbox Feed */}
-      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-4">
+      <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-5 sm:p-6 space-y-4 text-white">
         <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-3">
           <div className="flex items-center gap-2.5">
-            <Radio className="w-4 h-4 text-amber-400" />
-            <h3 className="text-sm font-bold text-slate-100">Live Mobile Alert Delivery Outbox</h3>
+            <Radio className="w-4 h-4 text-white" />
+            <h3 className="text-sm font-bold text-white">Live Mobile Alert Delivery Outbox</h3>
           </div>
-          <span className="text-[10px] font-mono text-slate-400">{notificationLogs.length} Messages Dispatched</span>
+          <span className="text-[10px] font-mono text-white">{notificationLogs.length} Messages Dispatched</span>
         </div>
 
         <div className="space-y-3">
@@ -626,22 +622,20 @@ export const NotificationsHubPage: React.FC = () => {
             return (
               <div
                 key={log.id}
-                className="p-4 rounded-xl bg-[#0D1322] border border-[#1F2E4D] hover:border-amber-500/30 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs"
+                className="p-4 rounded-xl bg-[#0D1322] border border-[#1F2E4D] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs text-white"
               >
-                <div className="space-y-1 min-w-0 flex-1">
+                <div className="space-y-1 min-w-0 flex-1 text-white">
                   <div className="flex items-center gap-2">
-                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold font-mono ${
-                      log.channel === 'WHATSAPP' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'
-                    }`}>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold font-mono bg-[#121A2D] border border-slate-700 text-white">
                       {log.channel}
                     </span>
-                    <span className="font-mono text-slate-300 font-bold">{log.recipient}</span>
-                    <span className="text-slate-600">•</span>
-                    <span className="text-[11px] text-slate-400 font-mono">
+                    <span className="font-mono text-white font-bold">{log.recipient}</span>
+                    <span className="text-white">•</span>
+                    <span className="text-[11px] text-white font-mono">
                       {new Date(log.created_at).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                     </span>
                   </div>
-                  <p className="text-slate-200 whitespace-pre-line font-mono text-[11px] mt-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
+                  <p className="text-white whitespace-pre-line font-mono text-[11px] mt-1 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800">
                     {log.content}
                   </p>
                 </div>
@@ -652,9 +646,9 @@ export const NotificationsHubPage: React.FC = () => {
                       href={smsUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 font-bold text-[11px] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-bold text-[11px] transition-all"
                     >
-                      <Smartphone className="w-3.5 h-3.5 text-amber-400" />
+                      <Smartphone className="w-3.5 h-3.5 text-white" />
                       <span>Open in SMS ➔</span>
                     </a>
                   ) : (
@@ -662,9 +656,9 @@ export const NotificationsHubPage: React.FC = () => {
                       href={waUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 font-bold text-[11px] transition-all"
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-bold text-[11px] transition-all"
                     >
-                      <MessageSquare className="w-3.5 h-3.5 text-emerald-400" />
+                      <MessageSquare className="w-3.5 h-3.5 text-white" />
                       <span>Open in WhatsApp ➔</span>
                     </a>
                   )}

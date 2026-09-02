@@ -499,7 +499,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             Admin Dashboard — Operations & Dispatch Command Center
           </h1>
 
-          <p className="text-xs md:text-sm text-slate-700 leading-relaxed font-semibold">
+          <p className="text-xs md:text-sm text-[#0A0E1A] leading-relaxed font-bold">
             Autonomous corporate chauffeur dispatch and live flight delay monitoring for Melbourne & interstate hubs.
             All allocations gated with driver conflict guards.
           </p>
@@ -509,11 +509,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="relative z-10 w-full md:w-auto shrink-0">
           <button
             onClick={() => onNavigate('operate')}
-            className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs shadow-md hover:scale-[1.02] transition-all"
+            className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md hover:scale-[1.02] transition-all"
           >
-            <Clock className="w-4 h-4 text-[#DFCAA8]" />
+            <Clock className="w-4 h-4 text-white" />
             <span>Review Pending Queue (2)</span>
-            <ArrowRight className="w-3.5 h-3.5 ml-0.5" />
+            <ArrowRight className="w-3.5 h-3.5 ml-0.5 text-white" />
           </button>
         </div>
       </div>
@@ -523,22 +523,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 1: Gross Revenue */}
         <div
           onClick={() => setActiveModal('REVENUE')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-black text-slate-600 tracking-wider truncate group-hover:text-[#0A0E1A] transition-colors">
+            <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
               GROSS REVENUE (INC GST)
             </span>
-            <DollarSign className="w-4 h-4 text-[#0A0E1A] shrink-0 group-hover:scale-110 transition-transform" />
+            <DollarSign className="w-4 h-4 text-[#0A0E1A] shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0E1A] truncate">
             ${grossRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-bold text-[#0A0E1A] max-w-full truncate">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">Ex GST: ${netRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
               Details ➔
             </span>
           </div>
@@ -547,22 +547,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 2: Net Operating Profit */}
         <div
           onClick={() => setActiveModal('PROFIT')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-black text-slate-600 tracking-wider truncate group-hover:text-[#0A0E1A] transition-colors">
+            <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
               NET OPERATING PROFIT
             </span>
-            <TrendingUp className="w-4 h-4 text-[#0A0E1A] shrink-0 group-hover:scale-110 transition-transform" />
+            <TrendingUp className="w-4 h-4 text-[#0A0E1A] shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0E1A] truncate">
             ${netProfit.toLocaleString('en-AU', { minimumFractionDigits: 2 })}
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-bold text-[#0A0E1A] max-w-full truncate">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">{profitMargin.toFixed(1)}% Operating Margin</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
               Margins ➔
             </span>
           </div>
@@ -571,23 +571,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 3: Bookings & Trips Queue */}
         <div
           onClick={() => setActiveModal('BOOKINGS')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-black text-slate-600 tracking-wider truncate group-hover:text-[#0A0E1A] transition-colors">
+            <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
               BOOKINGS & TRIPS QUEUE
             </span>
-            <CheckCircle2 className="w-4 h-4 text-[#0A0E1A] shrink-0 group-hover:scale-110 transition-transform" />
+            <CheckCircle2 className="w-4 h-4 text-[#0A0E1A] shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0E1A] truncate">
-            {totalRides} <span className="text-xs font-semibold text-slate-600 font-sans">Total Rides</span>
+            {totalRides} <span className="text-xs font-bold text-[#0A0E1A] font-sans">Total Rides</span>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-bold text-[#0A0E1A] max-w-full truncate">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0A0E1A] animate-ping shrink-0" />
               <span className="truncate">{completedRides} Completed • 2 Pending</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
               View All ➔
             </span>
           </div>
@@ -596,22 +596,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
-          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all group relative overflow-hidden shadow-md"
+          className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] hover:border-[#DFCAA8] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer hover:scale-[1.01] transition-all relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase font-black text-slate-600 tracking-wider truncate group-hover:text-[#0A0E1A] transition-colors">
+            <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
               ACTIVE DRIVERS & AVAILABILITY
             </span>
-            <Users className="w-4 h-4 text-[#0A0E1A] shrink-0 group-hover:scale-110 transition-transform" />
+            <Users className="w-4 h-4 text-[#0A0E1A] shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0E1A] truncate">
-            4 <span className="text-xs font-semibold text-slate-600 font-sans">Active Drivers</span>
+            4 <span className="text-xs font-bold text-[#0A0E1A] font-sans">Active Drivers</span>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-bold text-[#0A0E1A] max-w-full truncate">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">● 4 Available • 3 On Trip</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black group-hover:underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
               Driver Status ➔
             </span>
           </div>
@@ -644,7 +644,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
             <div className="min-w-0">
               <h3 className="text-sm font-black text-[#0A0E1A] truncate">Human-in-the-Loop Dispatch & Allocation</h3>
-              <p className="text-[11px] sm:text-xs text-slate-700 font-semibold truncate">
+              <p className="text-[11px] sm:text-xs text-[#0A0E1A] font-bold truncate">
                 AI-drafted chauffeur allocations requiring human review.
               </p>
             </div>
@@ -652,10 +652,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('operate')}
-            className="text-xs font-black text-[#0A0E1A] hover:underline flex items-center gap-1 shrink-0 ml-auto"
+            className="text-xs font-black text-[#0A0E1A] underline flex items-center gap-1 shrink-0 ml-auto"
           >
             <span>View full queue</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            <ArrowRight className="w-3.5 h-3.5 text-[#0A0E1A]" />
           </button>
         </div>
 
@@ -664,12 +664,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {pendingBookings.map((b) => (
             <div
               key={b.id}
-              className="p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm"
+              className="p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm text-[#0A0E1A]"
             >
               <div className="space-y-1.5 min-w-0 w-full md:flex-1">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">
                   <span className="font-mono font-black text-[#0A0E1A]">{b.booking_number}</span>
-                  <span className="text-slate-400">•</span>
+                  <span className="text-[#0A0E1A] font-bold">•</span>
                   <span className="font-black text-[#0A0E1A] truncate">{b.passenger_name}</span>
                   {b.legs[0]?.is_airport_pickup && (
                     <span className="px-2 py-0.5 rounded bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] text-[10px] font-mono shrink-0 font-black">
@@ -677,7 +677,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </span>
                   )}
                 </div>
-                <p className="text-[11px] text-slate-700 font-medium break-words line-clamp-2">
+                <p className="text-[11px] text-[#0A0E1A] font-bold break-words line-clamp-2">
                   {b.legs[0]?.pickup_address} ➔ {b.legs[0]?.dropoff_address}
                 </p>
               </div>
@@ -685,12 +685,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E6D8C3]">
                 <div className="text-left md:text-right font-mono min-w-0">
                   <span className="font-black text-[#0A0E1A] text-xs sm:text-sm block">${b.total_fare.toFixed(2)} AUD</span>
-                  <span className="text-[10px] text-slate-700 font-bold block">Net: +${(b.total_fare / 1.1 - 160).toFixed(2)}</span>
+                  <span className="text-[10px] text-[#0A0E1A] font-black block">Net: +${(b.total_fare / 1.1 - 160).toFixed(2)}</span>
                 </div>
 
                 <button
                   onClick={() => onNavigate('operate')}
-                  className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black transition-all text-xs shrink-0 shadow-sm"
+                  className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black transition-all text-xs shrink-0 shadow-sm"
                 >
                   Allocate Driver &rarr;
                 </button>
@@ -712,35 +712,35 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
-                  <DollarSign className="w-6 h-6" />
+                  <DollarSign className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Gross Revenue & Tax Breakdown</h2>
-                  <p className="text-xs text-slate-700 font-medium">ATO 1/11th Australian GST & Settlement Ledger</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">ATO 1/11th Australian GST & Settlement Ledger</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto text-[#0A0E1A]">
               {/* 3 Metric Pills */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">Total Collected (Inc GST)</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Total Collected (Inc GST)</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">${grossRev.toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">10% ATO GST Portion</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">10% ATO GST Portion</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">${(grossRev / 11).toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Revenue Ex-GST</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Net Revenue Ex-GST</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">${netRev.toFixed(2)} AUD</div>
                 </div>
               </div>
@@ -749,15 +749,15 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <div className="space-y-2">
                 <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Revenue By Booking Channel</h3>
                 <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <span className="text-[#0A0E1A] font-bold">🌐 Online Passenger Website Bookings (28 trips)</span>
                     <span className="font-mono font-black text-[#0A0E1A]">$11,240.00 AUD (60.9%)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <span className="text-[#0A0E1A] font-bold">🏢 Corporate Invoiced Accounts (B2B Multi-Leg)</span>
                     <span className="font-mono font-black text-[#0A0E1A]">$5,480.00 AUD (29.7%)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <span className="text-[#0A0E1A] font-bold">📞 Concierge Phone Quotes & Custom Charters</span>
                     <span className="font-mono font-black text-[#0A0E1A]">$1,730.00 AUD (9.4%)</span>
                   </div>
@@ -766,14 +766,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
-              <span className="text-xs text-slate-700 font-semibold">Australian Taxation Office (ATO) Compliant</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
+              <span className="text-xs text-[#0A0E1A] font-bold">Australian Taxation Office (ATO) Compliant</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('invoicing');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Go To GST Invoicing Hub ➔</span>
               </button>
@@ -790,34 +790,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
-                  <TrendingUp className="w-6 h-6" />
+                  <TrendingUp className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Net Profit & Operating Margins</h2>
-                  <p className="text-xs text-slate-700 font-medium">Direct Fleet Costs vs Gross Profit Analytics</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">Direct Fleet Costs vs Gross Profit Analytics</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto text-[#0A0E1A]">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Revenue (Ex GST)</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Net Revenue (Ex GST)</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">${netRev.toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">Total Direct Fleet Costs</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Total Direct Fleet Costs</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">-$8,970.00 AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
-                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Profit (+{profitMargin.toFixed(1)}%)</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
+                  <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Net Profit (+{profitMargin.toFixed(1)}%)</span>
                   <div className="text-xl font-black font-mono text-[#0A0E1A]">+${netProfit.toFixed(2)} AUD</div>
                 </div>
               </div>
@@ -826,24 +826,24 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <div className="space-y-2">
                 <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Profit Margin By Vehicle Class</h3>
                 <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <div>
                       <span className="font-black text-[#0A0E1A] block">Executive Sedan (BMW 7 / Mercedes E)</span>
-                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $4,210 • Driver Payouts: $1,800</span>
+                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $4,210 • Driver Payouts: $1,800</span>
                     </div>
                     <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,027.27 (52.9% Margin)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <div>
                       <span className="font-black text-[#0A0E1A] block">Premium Sedan (Mercedes S-Class S450)</span>
-                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $6,800 • Driver Payouts: $3,100</span>
+                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $6,800 • Driver Payouts: $3,100</span>
                     </div>
                     <span className="font-mono font-black text-[#0A0E1A] text-sm">+$3,081.82 (49.8% Margin)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
                     <div>
                       <span className="font-black text-[#0A0E1A] block">Luxury SUV & Minibus (V-Class / Sprinter)</span>
-                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $7,440 • Driver Payouts: $4,070</span>
+                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $7,440 • Driver Payouts: $4,070</span>
                     </div>
                     <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,693.64 (39.8% Margin)</span>
                   </div>
@@ -852,14 +852,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
-              <span className="text-xs text-slate-700 font-semibold">Target Margin: &gt; 45%</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
+              <span className="text-xs text-[#0A0E1A] font-bold">Target Margin: &gt; 45%</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('analytics');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>View Full Profit Reports ➔</span>
               </button>
@@ -876,23 +876,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
-                  <CheckCircle2 className="w-6 h-6" />
+                  <CheckCircle2 className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">All Bookings, Passengers & Driver Payouts</h2>
-                  <p className="text-xs text-slate-700 font-medium">Itemized ledger of who booked, fare paid, assigned driver and payout amount</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">Itemized ledger of who booked, fare paid, assigned driver and payout amount</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3 text-[#0A0E1A]">
               {/* Filter Tabs */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 {(['ALL', 'COMPLETED', 'IN_PROGRESS', 'PENDING'] as const).map((tab) => (
@@ -901,7 +901,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     onClick={() => setBookingFilter(tab)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                       bookingFilter === tab
-                        ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md'
+                        ? 'bg-[#06090F] text-white border border-[#DFCAA8] shadow-md'
                         : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FAF6F0]'
                     }`}
                   >
@@ -918,23 +918,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#0A0E1A]" />
                 <input
                   type="text"
                   placeholder="Search passenger or driver..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
+                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-[#0A0E1A]/50 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
 
             {/* Bookings List Table / Cards */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-3">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
               {filteredBookings.map((b) => (
                 <div
                   key={b.id}
-                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm"
+                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm text-[#0A0E1A]"
                 >
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#E6D8C3] pb-2.5">
                     <div className="flex items-center gap-2.5">
@@ -954,36 +954,36 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   </div>
 
                   {/* Route & Passenger Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-[#0A0E1A]">
                     {/* Left: Passenger & Route */}
-                    <div className="space-y-1.5">
+                    <div className="space-y-1.5 text-[#0A0E1A]">
                       <div className="flex items-center gap-2">
                         <span className="font-black text-[#0A0E1A]">{b.passengerName}</span>
-                        <span className="text-slate-600 text-[11px] font-bold">({b.passengerPhone})</span>
+                        <span className="text-[#0A0E1A] text-[11px] font-bold">({b.passengerPhone})</span>
                       </div>
-                      <p className="text-slate-700 leading-relaxed font-medium">
+                      <p className="text-[#0A0E1A] leading-relaxed font-bold">
                         📍 <strong>Pickup:</strong> {b.pickupAddress}<br />
                         🏁 <strong>Dropoff:</strong> {b.dropoffAddress}
                       </p>
-                      <span className="text-[10px] text-slate-600 font-mono font-bold block">⏰ Scheduled: {b.pickupTime}</span>
+                      <span className="text-[10px] text-[#0A0E1A] font-mono font-bold block">⏰ Scheduled: {b.pickupTime}</span>
                     </div>
 
                     {/* Right: Assigned Driver & Financials */}
-                    <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-1 text-xs">
+                    <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-1 text-xs text-[#0A0E1A]">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-600 font-bold">Assigned Chauffeur:</span>
+                        <span className="text-[#0A0E1A] font-bold">Assigned Chauffeur:</span>
                         <span className="font-black text-[#0A0E1A]">{b.driverName}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-600 font-bold">Vehicle & Plate:</span>
+                        <span className="text-[#0A0E1A] font-bold">Vehicle & Plate:</span>
                         <span className="font-mono font-black text-[#0A0E1A] text-[11px]">{b.vehiclePlate}</span>
                       </div>
                       <div className="flex justify-between items-center pt-1 border-t border-[#E6D8C3]">
-                        <span className="text-slate-600 font-bold">Total Customer Fare:</span>
+                        <span className="text-[#0A0E1A] font-bold">Total Customer Fare:</span>
                         <span className="font-mono font-black text-[#0A0E1A]">${b.totalFare.toFixed(2)} AUD</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-600 font-bold">Driver Payout:</span>
+                        <span className="text-[#0A0E1A] font-bold">Driver Payout:</span>
                         <span className="font-mono font-black text-[#0A0E1A]">-${b.driverPayout.toFixed(2)} AUD</span>
                       </div>
                       <div className="flex justify-between items-center pt-1 border-t border-[#E6D8C3]">
@@ -997,14 +997,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
-              <span className="text-xs text-slate-700 font-semibold">{filteredBookings.length} Bookings Evaluated</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
+              <span className="text-xs text-[#0A0E1A] font-bold">{filteredBookings.length} Bookings Evaluated</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('operate');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Open Live Dispatch Board ➔</span>
               </button>
@@ -1021,23 +1021,23 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
-                  <Users className="w-6 h-6" />
+                  <Users className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Active Drivers & Live Availability Status</h2>
-                  <p className="text-xs text-slate-700 font-medium">Driver Roster & Shift Tracking — Check who is free (Khali) or on active trip to allot upcoming bookings</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">Driver Roster & Shift Tracking — Check who is free (Khali) or on active trip to allot upcoming bookings</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3 text-[#0A0E1A]">
               {/* Filter Tabs */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 {(['ALL', 'AVAILABLE', 'ON_TRIP', 'OFF_DUTY'] as const).map((tab) => (
@@ -1046,7 +1046,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     onClick={() => setDriverFilter(tab)}
                     className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                       driverFilter === tab
-                        ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md'
+                        ? 'bg-[#06090F] text-white border border-[#DFCAA8] shadow-md'
                         : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FAF6F0]'
                     }`}
                   >
@@ -1063,28 +1063,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#0A0E1A]" />
                 <input
                   type="text"
                   placeholder="Search driver or car plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
+                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-[#0A0E1A]/50 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
 
             {/* Drivers Roster Grid */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-3">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
               {filteredDrivers.map((d) => (
                 <div
                   key={d.id}
-                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
+                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm text-[#0A0E1A]"
                 >
-                  <div className="space-y-1.5 min-w-0 flex-1">
+                  <div className="space-y-1.5 min-w-0 flex-1 text-[#0A0E1A]">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-black text-[#0A0E1A] text-sm">{d.name}</span>
-                      <span className="text-slate-600 text-xs font-bold">({d.phone})</span>
+                      <span className="text-[#0A0E1A] text-xs font-bold">({d.phone})</span>
                       <span
                         className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]"
                       >
@@ -1092,20 +1092,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                       </span>
                     </div>
 
-                    <p className="text-xs text-slate-700 font-mono font-bold">
+                    <p className="text-xs text-[#0A0E1A] font-mono font-bold">
                       🚘 {d.vehicle} • Plate: <strong>{d.plate}</strong>
                     </p>
 
                     {d.status === 'ON_TRIP' && d.currentRoute && (
-                      <p className="text-[11px] text-[#0A0E1A] bg-[#FAF6F0] border border-[#DFCAA8] p-2 rounded-lg font-medium">
+                      <p className="text-[11px] text-[#0A0E1A] bg-[#FAF6F0] border border-[#DFCAA8] p-2 rounded-lg font-bold">
                         <strong>Current Ride #{d.currentBookingNumber}:</strong> {d.currentRoute}
                       </p>
                     )}
                   </div>
 
                   <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E6D8C3]">
-                    <div className="text-left md:text-right font-mono text-xs">
-                      <span className="text-slate-700 block font-bold">Today: {d.todayCompletedTrips} Trips (${d.todayEarnings.toFixed(2)})</span>
+                    <div className="text-left md:text-right font-mono text-xs text-[#0A0E1A]">
+                      <span className="text-[#0A0E1A] block font-bold">Today: {d.todayCompletedTrips} Trips (${d.todayEarnings.toFixed(2)})</span>
                       <span className="text-[10px] text-[#0A0E1A] font-black">⭐ {d.rating} Rating • {d.onTimeRate}% On-Time</span>
                     </div>
 
@@ -1115,7 +1115,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           setActiveModal(null);
                           onNavigate('operate');
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all"
+                        className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all"
                       >
                         Allot Next Booking ➔
                       </button>
@@ -1136,14 +1136,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
-              <span className="text-xs text-slate-700 font-semibold">4 Drivers Available for Immediate Dispatch</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
+              <span className="text-xs text-[#0A0E1A] font-bold">4 Drivers Available for Immediate Dispatch</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('partners-fleet');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Manage Fleet & Partners ➔</span>
               </button>
@@ -1160,51 +1160,51 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
-                  <Plane className="w-6 h-6" />
+                  <Plane className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Live Airport Flight Radar & Customer Delays</h2>
-                  <p className="text-xs text-slate-700 font-medium">Real-time FlightAware radar tracking with customer delay compensation</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">Real-time FlightAware radar tracking with customer delay compensation</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-white" />
               </button>
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="p-4 bg-[#0E1526] border-b border-[#1F2E4D] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3 text-[#0A0E1A]">
               {/* Filter Tabs */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
-                <span className="text-xs font-bold text-slate-400 mr-2 flex items-center gap-1">
-                  <Filter className="w-3.5 h-3.5" /> Filter:
+                <span className="text-xs font-black text-[#0A0E1A] mr-2 flex items-center gap-1">
+                  <Filter className="w-3.5 h-3.5 text-[#0A0E1A]" /> Filter:
                 </span>
-                <span className="px-3 py-1 rounded-xl bg-cyan-500/20 text-cyan-300 text-xs font-bold border border-cyan-500/30">
+                <span className="px-3 py-1 rounded-xl bg-[#FFFFFF] text-[#0A0E1A] text-xs font-black border border-[#DFCAA8]">
                   ✈️ 6 Active Flights Tracked
                 </span>
-                <span className="px-3 py-1 rounded-xl bg-amber-500/20 text-amber-300 text-xs font-bold border border-amber-500/30">
+                <span className="px-3 py-1 rounded-xl bg-[#FFFFFF] text-[#0A0E1A] text-xs font-black border border-[#DFCAA8]">
                   🚨 3 Delayed Flights
                 </span>
               </div>
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-[#0A0E1A]" />
                 <input
                   type="text"
                   placeholder="Search passenger, flight, airline..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#121A2D] border border-[#1F2E4D] rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-[#0A0E1A]/50 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
 
             {/* Flights List */}
-            <div className="p-4 sm:p-6 overflow-y-auto space-y-3">
+            <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
               {[
                 {
                   id: 'fl-01',
@@ -1332,14 +1332,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 .map((f) => (
                   <div
                     key={f.id}
-                    className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm"
+                    className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm text-[#0A0E1A]"
                   >
                     {/* Header Row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#E6D8C3] pb-2.5">
                       <div className="flex flex-wrap items-center gap-2.5">
                         <span className="font-mono font-black text-[#0A0E1A] text-sm">✈️ {f.flightNumber}</span>
-                        <span className="text-slate-600 text-xs font-semibold">({f.airline})</span>
-                        <span className="text-slate-400">•</span>
+                        <span className="text-[#0A0E1A] text-xs font-bold">({f.airline})</span>
+                        <span className="text-[#0A0E1A] font-bold">•</span>
                         <span className="font-mono font-black text-[#0A0E1A] text-xs">{f.bookingNumber}</span>
                       </div>
 
@@ -1361,21 +1361,21 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     </div>
 
                     {/* Flight & Passenger Grid */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-[#0A0E1A]">
                       {/* Left: Customer & Flight Schedule */}
-                      <div className="space-y-1.5">
+                      <div className="space-y-1.5 text-[#0A0E1A]">
                         <div className="flex items-center gap-2">
                           <span className="font-black text-[#0A0E1A] text-sm">{f.passengerName}</span>
-                          <span className="text-slate-600 text-xs font-bold">({f.passengerPhone})</span>
+                          <span className="text-[#0A0E1A] text-xs font-bold">({f.passengerPhone})</span>
                         </div>
-                        <p className="text-slate-700 font-medium">
+                        <p className="text-[#0A0E1A] font-bold">
                           🛫 <strong>Route:</strong> {f.origin} ➔ {f.destination}
                         </p>
-                        <p className="text-slate-700 font-medium">
+                        <p className="text-[#0A0E1A] font-bold">
                           📍 <strong>Meeting Bay / Gate:</strong> {f.gate}
                         </p>
                         <div className="pt-1 font-mono text-xs">
-                          <span className="text-slate-600 font-medium">Scheduled Time: {f.scheduledTime}</span>
+                          <span className="text-[#0A0E1A] font-bold">Scheduled Time: {f.scheduledTime}</span>
                           <br />
                           <span className="text-[#0A0E1A] font-black">
                             Updated Real-Time Landing: {f.estimatedLanding}
@@ -1384,17 +1384,17 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                       </div>
 
                       {/* Right: Assigned Chauffeur & Buffer Action */}
-                      <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-2 text-xs">
+                      <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-2 text-xs text-[#0A0E1A]">
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-bold">Assigned Chauffeur:</span>
+                          <span className="text-[#0A0E1A] font-bold">Assigned Chauffeur:</span>
                           <span className="font-black text-[#0A0E1A]">{f.assignedDriver}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-bold">Driver Phone:</span>
+                          <span className="text-[#0A0E1A] font-bold">Driver Phone:</span>
                           <span className="font-mono text-[#0A0E1A] font-black">{f.driverPhone}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-600 font-bold">Vehicle Plate:</span>
+                          <span className="text-[#0A0E1A] font-bold">Vehicle Plate:</span>
                           <span className="font-mono font-black text-[#0A0E1A]">{f.vehiclePlate}</span>
                         </div>
                         <div className="pt-1.5 border-t border-[#E6D8C3]">
@@ -1409,16 +1409,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
-              <span className="text-xs text-slate-700 font-semibold">Automated Flight Delay Compensation Active</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
+              <span className="text-xs text-[#0A0E1A] font-bold">Automated Flight Delay Compensation Active</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('flights');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
-                <Plane className="w-4 h-4 text-[#DFCAA8]" />
+                <Plane className="w-4 h-4 text-white" />
                 <span>Open Full Flight Radar Page ➔</span>
               </button>
             </div>

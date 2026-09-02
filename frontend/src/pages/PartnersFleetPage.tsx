@@ -648,15 +648,15 @@ export const PartnersFleetPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
+      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Partner Network & Fleet Management</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Partner Network & Fleet Management</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
               AFFILIATE COMPLIANCE GATES
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-700 font-semibold mt-1">
             Subcontractor registry with automated insurance verification, luxury vehicle fleet catalog & same-model color customizer.
           </p>
         </div>
@@ -664,23 +664,23 @@ export const PartnersFleetPage: React.FC = () => {
         {/* Toolbar & Action Buttons */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Tab Switcher */}
-          <div className="flex p-1 bg-slate-950 rounded-xl border border-slate-800">
+          <div className="flex p-1 bg-[#06090F] rounded-xl border border-[#1E2738]">
             <button
               onClick={() => setActiveTab('partners')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs transition-all ${
                 activeTab === 'partners'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+                  : 'text-slate-400 hover:text-white font-bold'
               }`}
             >
               Subcontractor Partners ({partners.length})
             </button>
             <button
               onClick={() => setActiveTab('fleet')}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
+              className={`px-4 py-2 rounded-lg text-xs transition-all ${
                 activeTab === 'fleet'
-                  ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
-                  : 'text-slate-400 hover:text-white'
+                  ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+                  : 'text-slate-400 hover:text-white font-bold'
               }`}
             >
               Vehicle Fleet ({vehicles.length})
@@ -691,16 +691,16 @@ export const PartnersFleetPage: React.FC = () => {
           {activeTab === 'partners' ? (
             <button
               onClick={() => setIsAddPartnerOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs flex items-center gap-2 shadow-md hover:scale-[1.02] transition-all"
             >
-              <Plus className="w-4 h-4" /> + Onboard Partner
+              <Plus className="w-4 h-4 text-[#DFCAA8]" /> + Onboard Partner
             </button>
           ) : (
             <button
               onClick={() => setIsAddVehicleOpen(true)}
-              className="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-cyan-500/20 transition-all"
+              className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs flex items-center gap-2 shadow-md hover:scale-[1.02] transition-all"
             >
-              <Plus className="w-4 h-4" /> + Add Fleet Vehicle
+              <Plus className="w-4 h-4 text-[#DFCAA8]" /> + Add Fleet Vehicle
             </button>
           )}
         </div>
@@ -716,61 +716,61 @@ export const PartnersFleetPage: React.FC = () => {
             const totalCommissionEarned = pBookings.reduce((sum, b) => sum + b.commission_amount, 0);
 
             return (
-              <div key={p.id} className="glass-panel p-5 rounded-2xl border-slate-800 space-y-4 text-xs shadow-xl hover:border-slate-700 transition-all">
+              <div key={p.id} className="glass-panel p-5 rounded-2xl border-[#E6D8C3] space-y-4 text-xs shadow-xl hover:border-[#DFCAA8] transition-all text-[#0A0E1A]">
                 <div className="flex items-start justify-between">
                   <div>
-                    <h3 className="text-base font-black text-slate-100">{p.company_name}</h3>
-                    <span className="text-slate-400 font-mono text-[11px]">ABN: {p.abn || 'Not Provided'}</span>
+                    <h3 className="text-base font-black text-[#0A0E1A]">{p.company_name}</h3>
+                    <span className="text-[#0A0E1A] font-mono font-bold text-[11px]">ABN: {p.abn || 'Not Provided'}</span>
                   </div>
                   {p.is_compliance_verified ? (
-                    <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
-                      <ShieldCheck className="w-3.5 h-3.5" /> Compliant
+                    <span className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8]">
+                      <ShieldCheck className="w-3.5 h-3.5 text-[#0A0E1A]" /> Compliant
                     </span>
                   ) : (
-                    <span className="flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/30">
-                      <AlertTriangle className="w-3.5 h-3.5" /> Action Required
+                    <span className="flex items-center gap-1 text-[10px] font-black px-2.5 py-1 rounded-full bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8]">
+                      <AlertTriangle className="w-3.5 h-3.5 text-[#0A0E1A]" /> Action Required
                     </span>
                   )}
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 text-slate-300 bg-slate-950/70 p-3.5 rounded-xl border border-slate-800/80">
+                <div className="grid grid-cols-2 gap-2 text-[#0A0E1A] bg-[#FFFFFF] p-3.5 rounded-xl border border-[#E6D8C3]">
                   <div className="space-y-1">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Contact Person</span>
-                    <span className="font-bold text-slate-200 block">{p.contact_name}</span>
-                    <span className="text-[11px] text-slate-400 flex items-center gap-1 font-mono">
-                      <Phone className="w-3 h-3 text-cyan-400" /> {p.phone}
+                    <span className="text-[10px] text-[#0A0E1A] block uppercase font-bold tracking-wider">Contact Person</span>
+                    <span className="font-black text-[#0A0E1A] block">{p.contact_name}</span>
+                    <span className="text-[11px] text-[#0A0E1A] flex items-center gap-1 font-mono font-bold">
+                      <Phone className="w-3 h-3 text-[#0A0E1A]" /> {p.phone}
                     </span>
                   </div>
                   <div className="space-y-1 text-right">
-                    <span className="text-[10px] text-slate-400 block uppercase font-bold tracking-wider">Region & Terms</span>
-                    <span className="font-bold text-cyan-300 block">{p.city}</span>
-                    <span className="text-[11px] text-amber-400 font-bold font-mono">
+                    <span className="text-[10px] text-[#0A0E1A] block uppercase font-bold tracking-wider">Region & Terms</span>
+                    <span className="font-black text-[#0A0E1A] block">{p.city}</span>
+                    <span className="text-[11px] text-[#0A0E1A] font-black font-mono">
                       {p.commission_rate}% Subcontractor Comm.
                     </span>
                   </div>
                 </div>
 
-                <div className="p-3 rounded-xl bg-slate-950 border border-slate-800/80 text-[11px] space-y-1 font-mono">
+                <div className="p-3 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[11px] space-y-1 font-mono text-[#0A0E1A]">
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Public Liability Policy:</span>
-                    <span className="text-slate-200">{p.insurance_policy_number}</span>
+                    <span className="text-[#0A0E1A] font-bold font-sans">Public Liability Policy:</span>
+                    <span className="text-[#0A0E1A] font-black">{p.insurance_policy_number}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Insurance Expiry:</span>
-                    <span className="text-emerald-400 font-bold">{p.insurance_expiry}</span>
+                    <span className="text-[#0A0E1A] font-bold font-sans">Insurance Expiry:</span>
+                    <span className="text-[#0A0E1A] font-black">{p.insurance_expiry}</span>
                   </div>
                 </div>
 
                 {/* Partner Action Button: View Assigned Bookings */}
-                <div className="pt-2 flex items-center justify-between border-t border-slate-800/80">
-                  <div className="text-[11px] text-slate-400">
-                    Total Comm Earned: <strong className="text-amber-400 font-mono">${totalCommissionEarned.toFixed(2)} AUD</strong>
+                <div className="pt-2 flex items-center justify-between border-t border-[#E6D8C3]">
+                  <div className="text-[11px] text-[#0A0E1A] font-bold">
+                    Total Comm Earned: <strong className="text-[#0A0E1A] font-mono font-black">${totalCommissionEarned.toFixed(2)} AUD</strong>
                   </div>
                   <button
                     onClick={() => setSelectedPartnerForBookings(p)}
-                    className="px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-amber-500/50 text-slate-200 hover:text-amber-300 font-bold text-xs flex items-center gap-1.5 transition-all"
+                    className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 transition-all shadow-sm"
                   >
-                    <FileText className="w-3.5 h-3.5 text-amber-400" /> View Assigned Bookings ({pBookings.length})
+                    <FileText className="w-3.5 h-3.5 text-white" /> View Assigned Bookings ({pBookings.length})
                   </button>
                 </div>
               </div>
@@ -788,10 +788,10 @@ export const PartnersFleetPage: React.FC = () => {
             const basePhoto = v.image_url || getModelBasePhoto(v);
 
             return (
-              <div key={v.id} className="glass-panel p-5 rounded-2xl border-slate-800 space-y-3.5 text-xs shadow-xl hover:border-slate-700 transition-all flex flex-col justify-between">
+              <div key={v.id} className="glass-panel p-5 rounded-2xl border-[#E6D8C3] space-y-3.5 text-xs shadow-xl hover:border-[#DFCAA8] transition-all flex flex-col justify-between text-[#0A0E1A]">
                 <div>
                   {/* Vehicle Image Banner with Dynamic Color Filter */}
-                  <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-950 border border-slate-800 group">
+                  <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-950 border border-[#DFCAA8] group">
                     <img
                       src={basePhoto}
                       alt={`${v.make} ${v.model}`}
@@ -800,17 +800,17 @@ export const PartnersFleetPage: React.FC = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/15 to-transparent pointer-events-none" />
                     
-                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-950/80 backdrop-blur-md text-amber-300 border border-amber-500/30">
+                    <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] shadow-sm">
                       {v.category}
                     </span>
 
                     {/* Change Color Finish / Photo Button */}
                     <button
                       onClick={() => handleOpenImageEditor(v)}
-                      className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg bg-slate-950/85 hover:bg-amber-500 text-slate-300 hover:text-slate-950 border border-slate-700 backdrop-blur-md transition-all shadow-md flex items-center gap-1 text-[10px] font-bold"
+                      className="absolute top-2.5 right-2.5 px-2 py-1 rounded-lg bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] transition-all shadow-md flex items-center gap-1 text-[10px] font-black"
                       title="Change Color Finish / Upload Photo"
                     >
-                      <Palette className="w-3 h-3 text-amber-400" />
+                      <Palette className="w-3 h-3 text-white" />
                       <span>Color</span>
                     </button>
 
@@ -820,13 +820,13 @@ export const PartnersFleetPage: React.FC = () => {
                           {v.make} {v.model}
                         </span>
                         {v.color_name && (
-                          <span className="text-[10px] text-amber-300 font-semibold drop-shadow flex items-center gap-1">
+                          <span className="text-[10px] text-white font-bold drop-shadow flex items-center gap-1">
                             <span className="w-2 h-2 rounded-full border border-slate-700 inline-block" style={{ backgroundColor: v.color_hex || '#0a0a0a' }} />
                             {v.color_name}
                           </span>
                         )}
                       </div>
-                      <span className="text-[10px] px-2 py-0.5 rounded bg-amber-500 text-slate-950 font-bold font-mono">
+                      <span className="text-[10px] px-2 py-0.5 rounded bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-bold font-mono">
                         {v.year}
                       </span>
                     </div>
@@ -834,37 +834,37 @@ export const PartnersFleetPage: React.FC = () => {
 
                   {/* Details Header */}
                   <div className="mt-3 flex items-center justify-between">
-                    <span className="text-slate-400 font-mono text-xs">
-                      Plate: <strong className="text-amber-400 text-sm font-black">{v.registration_plate}</strong>
+                    <span className="text-[#0A0E1A] font-mono text-xs font-bold">
+                      Plate: <strong className="text-[#0A0E1A] text-sm font-black">{v.registration_plate}</strong>
                     </span>
-                    <span className="text-emerald-400 text-[11px] font-bold flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Active Fleet
+                    <span className="text-[#0A0E1A] text-[11px] font-black flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-[#0A0E1A] animate-pulse" /> Active Fleet
                     </span>
                   </div>
 
                   {/* PAX and Luggage Badges */}
-                  <div className="grid grid-cols-2 gap-2 pt-2 text-slate-300 text-center">
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Passengers</span>
-                      <span className="font-black text-sm text-cyan-300 font-mono">{v.passenger_capacity} PAX</span>
+                  <div className="grid grid-cols-2 gap-2 pt-2 text-[#0A0E1A] text-center">
+                    <div className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3]">
+                      <span className="text-[10px] text-[#0A0E1A] block uppercase font-bold">Passengers</span>
+                      <span className="font-black text-sm text-[#0A0E1A] font-mono">{v.passenger_capacity} PAX</span>
                     </div>
-                    <div className="p-2.5 rounded-xl bg-slate-950/80 border border-slate-800">
-                      <span className="text-[10px] text-slate-400 block uppercase font-bold">Luggage</span>
-                      <span className="font-black text-sm text-amber-300 font-mono">{v.luggage_capacity} Bags</span>
+                    <div className="p-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3]">
+                      <span className="text-[10px] text-[#0A0E1A] block uppercase font-bold">Luggage</span>
+                      <span className="font-black text-sm text-[#0A0E1A] font-mono">{v.luggage_capacity} Bags</span>
                     </div>
                   </div>
                 </div>
 
                 {/* Vehicle Action Button: View Bookings & Schedule */}
-                <div className="pt-2 border-t border-slate-800/80">
+                <div className="pt-2 border-t border-[#E6D8C3]">
                   <button
                     onClick={() => {
                       setSelectedVehicleForBookings(v);
                       setVehicleBookingsTab('advance');
                     }}
-                    className="w-full py-2.5 rounded-xl bg-gradient-to-r from-slate-900 to-slate-800 hover:from-cyan-500/20 hover:to-blue-500/20 border border-slate-700 hover:border-cyan-400/50 text-slate-200 hover:text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-md"
+                    className="w-full py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs flex items-center justify-center gap-2 transition-all shadow-md"
                   >
-                    <Calendar className="w-3.5 h-3.5 text-cyan-400" /> View Schedule & Bookings ({totalTrips})
+                    <Calendar className="w-3.5 h-3.5 text-white" /> View Schedule & Bookings ({totalTrips})
                   </button>
                 </div>
               </div>
@@ -877,151 +877,151 @@ export const PartnersFleetPage: React.FC = () => {
           MODAL 1: ONBOARD NEW SUBCONTRACTOR PARTNER
       ───────────────────────────────────────────────────────────── */}
       {isAddPartnerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-lg shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                  <Users className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-lg shadow-2xl space-y-4 text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] shadow-sm">
+                  <Users className="w-5 h-5 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">Onboard New Subcontractor Partner</h3>
-                  <p className="text-[11px] text-slate-400">Register verified interstate chauffeur network</p>
+                  <h3 className="text-base font-black text-[#0A0E1A]">Onboard New Subcontractor Partner</h3>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">Register verified interstate chauffeur network</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsAddPartnerOpen(false)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#E6D8C3]"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4 text-[#0A0E1A]" />
               </button>
             </div>
 
             <form onSubmit={handleCreatePartner} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Company Name *</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Company Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Perth Luxury Transfers"
                     value={newPartner.company_name}
                     onChange={(e) => setNewPartner({ ...newPartner, company_name: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Contact Person *</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Contact Person *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Jason Scott"
                     value={newPartner.contact_name}
                     onChange={(e) => setNewPartner({ ...newPartner, contact_name: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Phone / WhatsApp *</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Phone / WhatsApp *</label>
                   <input
                     type="text"
                     required
                     placeholder="+61 400 000 000"
                     value={newPartner.phone}
                     onChange={(e) => setNewPartner({ ...newPartner, phone: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-mono font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Email *</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Email *</label>
                   <input
                     type="email"
                     required
                     placeholder="ops@partner.com.au"
                     value={newPartner.email}
                     onChange={(e) => setNewPartner({ ...newPartner, email: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Region / City</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Region / City</label>
                   <select
                     value={newPartner.city}
                     onChange={(e) => setNewPartner({ ...newPartner, city: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-bold"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black"
                   >
-                    <option value="Sydney">Sydney</option>
-                    <option value="Brisbane">Brisbane</option>
-                    <option value="Perth">Perth</option>
-                    <option value="Adelaide">Adelaide</option>
-                    <option value="Gold Coast">Gold Coast</option>
-                    <option value="Canberra">Canberra</option>
-                    <option value="Melbourne">Melbourne</option>
+                    <option value="Sydney" className="text-[#0A0E1A]">Sydney</option>
+                    <option value="Brisbane" className="text-[#0A0E1A]">Brisbane</option>
+                    <option value="Perth" className="text-[#0A0E1A]">Perth</option>
+                    <option value="Adelaide" className="text-[#0A0E1A]">Adelaide</option>
+                    <option value="Gold Coast" className="text-[#0A0E1A]">Gold Coast</option>
+                    <option value="Canberra" className="text-[#0A0E1A]">Canberra</option>
+                    <option value="Melbourne" className="text-[#0A0E1A]">Melbourne</option>
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">ABN Number</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">ABN Number</label>
                   <input
                     type="text"
                     placeholder="12 345 678 901"
                     value={newPartner.abn}
                     onChange={(e) => setNewPartner({ ...newPartner, abn: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-mono font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Commission %</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Commission %</label>
                   <input
                     type="number"
                     step="0.5"
                     value={newPartner.commission_rate}
                     onChange={(e) => setNewPartner({ ...newPartner, commission_rate: parseFloat(e.target.value) })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-amber-300 font-bold font-mono focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black font-mono focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Public Liability Policy #</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Public Liability Policy #</label>
                   <input
                     type="text"
                     placeholder="POL-AU-2026-X"
                     value={newPartner.insurance_policy_number}
                     onChange={(e) => setNewPartner({ ...newPartner, insurance_policy_number: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-mono font-black"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Insurance Expiry</label>
+                  <label className="text-[10px] text-[#0A0E1A] block uppercase font-black mb-1">Insurance Expiry</label>
                   <input
                     type="date"
                     value={newPartner.insurance_expiry}
                     onChange={(e) => setNewPartner({ ...newPartner, insurance_expiry: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-mono font-black"
                   />
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-4 border-t border-[#E6D8C3]">
                 <button
                   type="button"
                   onClick={() => setIsAddPartnerOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 font-bold hover:text-white"
+                  className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] font-black text-xs shadow-sm transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+                  className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
                 >
-                  <Check className="w-4 h-4" /> Save Partner
+                  <CheckCircle2 className="w-4 h-4 text-white" /> Save Partner Network
                 </button>
               </div>
             </form>
@@ -1033,21 +1033,21 @@ export const PartnersFleetPage: React.FC = () => {
           MODAL 2: ADD NEW VEHICLE TO FLEET
       ───────────────────────────────────────────────────────────── */}
       {isAddVehicleOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-lg shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
-                  <Car className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-lg shadow-2xl space-y-4 text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] shadow-sm">
+                  <Car className="w-5 h-5 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">Add Luxury Fleet Vehicle</h3>
-                  <p className="text-[11px] text-slate-400">Register new car with custom color finish & seating specs</p>
+                  <h3 className="text-base font-black text-[#0A0E1A]">Add Luxury Fleet Vehicle</h3>
+                  <p className="text-[11px] text-slate-700 font-semibold">Register new car with custom color finish & seating specs</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsAddVehicleOpen(false)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-slate-400 hover:text-[#0A0E1A]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1056,11 +1056,11 @@ export const PartnersFleetPage: React.FC = () => {
             <form onSubmit={handleCreateVehicle} className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Make / Brand</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Make / Brand</label>
                   <select
                     value={newVehicle.make}
                     onChange={(e) => setNewVehicle({ ...newVehicle, make: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-bold"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-bold"
                   >
                     <option value="Mercedes-Benz">Mercedes-Benz</option>
                     <option value="Audi">Audi</option>
@@ -1071,25 +1071,25 @@ export const PartnersFleetPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Model Name *</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Model Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. S-Class S580 or V-Class"
                     value={newVehicle.model}
                     onChange={(e) => setNewVehicle({ ...newVehicle, model: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-bold focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Category</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Category</label>
                   <select
                     value={newVehicle.category}
                     onChange={(e) => setNewVehicle({ ...newVehicle, category: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-bold text-[11px]"
+                    className="w-full px-3 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-bold text-[11px]"
                   >
                     <option value="SEDAN_EXECUTIVE">Sedan Executive</option>
                     <option value="SUV_PREMIUM">SUV Premium</option>
@@ -1099,55 +1099,55 @@ export const PartnersFleetPage: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Plate Number *</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Plate Number *</label>
                   <input
                     type="text"
                     required
-                    placeholder="CROWN-09"
+                    placeholder="OPAL-09"
                     value={newVehicle.registration_plate}
                     onChange={(e) => setNewVehicle({ ...newVehicle, registration_plate: e.target.value })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-amber-300 font-black font-mono focus:outline-none focus:border-cyan-400"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black font-mono focus:outline-none focus:border-[#0A0E1A] uppercase"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Year</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Year</label>
                   <input
                     type="number"
                     value={newVehicle.year}
                     onChange={(e) => setNewVehicle({ ...newVehicle, year: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-mono font-bold"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Max Passengers (PAX)</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Max Passengers (PAX)</label>
                   <input
                     type="number"
                     min="1"
                     max="14"
                     value={newVehicle.passenger_capacity}
                     onChange={(e) => setNewVehicle({ ...newVehicle, passenger_capacity: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-cyan-300 font-black font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1">Max Luggage (Bags)</label>
+                  <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1">Max Luggage (Bags)</label>
                   <input
                     type="number"
                     min="1"
                     max="14"
                     value={newVehicle.luggage_capacity}
                     onChange={(e) => setNewVehicle({ ...newVehicle, luggage_capacity: parseInt(e.target.value) })}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-amber-300 font-black font-mono"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black font-mono"
                   />
                 </div>
               </div>
 
               {/* Color Shader Selector */}
               <div>
-                <label className="text-[10px] text-slate-400 block uppercase font-bold mb-1.5">Select Vehicle Color Finish</label>
+                <label className="text-[10px] text-slate-700 block uppercase font-bold mb-1.5">Select Vehicle Color Finish</label>
                 <div className="grid grid-cols-3 gap-2">
                   {COLOR_SHADERS.map((color, idx) => (
                     <div
@@ -1158,32 +1158,32 @@ export const PartnersFleetPage: React.FC = () => {
                         color_hex: color.colorHex,
                         color_filter: color.filter,
                       })}
-                      className={`p-2 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
+                      className={`p-2.5 rounded-xl border cursor-pointer transition-all flex items-center gap-2 ${
                         newVehicle.color_name === color.name
-                          ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50'
-                          : 'border-slate-800 bg-slate-950/70 hover:border-slate-700'
+                          ? 'border-[#DFCAA8] bg-[#FAF6F0] ring-2 ring-[#DFCAA8]'
+                          : 'border-[#E6D8C3] bg-[#FFFFFF] hover:bg-[#FAF6F0]'
                       }`}
                     >
-                      <div className="w-4 h-4 rounded-full border border-slate-600 shrink-0" style={{ backgroundColor: color.colorHex }} />
-                      <span className="text-[10px] text-slate-300 font-bold truncate">{color.name}</span>
+                      <div className="w-4 h-4 rounded-full border border-slate-400 shrink-0" style={{ backgroundColor: color.colorHex }} />
+                      <span className="text-[10px] text-[#0A0E1A] font-bold truncate">{color.name}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4 border-t border-slate-800">
+              <div className="flex justify-end gap-2 pt-4 border-t border-[#E6D8C3]">
                 <button
                   type="button"
                   onClick={() => setIsAddVehicleOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 font-bold hover:text-white"
+                  className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-slate-800 border border-[#E6D8C3] font-bold text-xs shadow-sm transition-all"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-black flex items-center gap-1.5 shadow-lg shadow-cyan-500/20"
+                  className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
                 >
-                  <Check className="w-4 h-4" /> Add Vehicle
+                  <Check className="w-4 h-4 text-[#DFCAA8]" /> Add Vehicle
                 </button>
               </div>
             </form>
@@ -1195,32 +1195,32 @@ export const PartnersFleetPage: React.FC = () => {
           MODAL 3: VEHICLE COLOR SHADER & CUSTOM PHOTO UPLOADER
       ───────────────────────────────────────────────────────────── */}
       {editingVehicleImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-lg shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
-                  <Palette className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-lg shadow-2xl space-y-4 text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] shadow-sm">
+                  <Palette className="w-5 h-5 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">
+                  <h3 className="text-base font-black text-[#0A0E1A]">
                     Change Vehicle Color Finish
                   </h3>
-                  <p className="text-[11px] text-slate-400">
+                  <p className="text-[11px] text-slate-700 font-semibold">
                     {editingVehicleImage.make} {editingVehicleImage.model} ({editingVehicleImage.registration_plate})
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setEditingVehicleImage(null)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-slate-400 hover:text-[#0A0E1A]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Guaranteed Same-Car Live Preview with Real-Time Color Shader */}
-            <div className="relative w-full h-52 rounded-2xl overflow-hidden bg-slate-950 border border-slate-800 shadow-inner">
+            <div className="relative w-full h-52 rounded-2xl overflow-hidden bg-slate-950 border border-[#DFCAA8] shadow-inner">
               <img
                 src={customImageUrlInput || getModelBasePhoto(editingVehicleImage)}
                 alt="Preview"
@@ -1233,12 +1233,12 @@ export const PartnersFleetPage: React.FC = () => {
                   <span className="text-white font-black text-sm drop-shadow-md block">
                     {editingVehicleImage.make} {editingVehicleImage.model}
                   </span>
-                  <span className="text-[10px] text-amber-300 font-mono font-bold">
+                  <span className="text-[10px] text-[#DFCAA8] font-mono font-bold">
                     Rego: {editingVehicleImage.registration_plate}
                   </span>
                 </div>
-                <span className="px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700 text-amber-300 text-xs font-bold flex items-center gap-1.5 shadow-md">
-                  <span className="w-2.5 h-2.5 rounded-full border border-slate-600" style={{ backgroundColor: selectedColorHex }} />
+                <span className="px-3 py-1 rounded-full bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black flex items-center gap-1.5 shadow-md">
+                  <span className="w-2.5 h-2.5 rounded-full border border-slate-400" style={{ backgroundColor: selectedColorHex }} />
                   {selectedColorName}
                 </span>
               </div>
@@ -1247,10 +1247,10 @@ export const PartnersFleetPage: React.FC = () => {
             {/* Same-Model Color Swatches (Car Never Changes Model!) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">
+                <label className="text-[10px] text-slate-700 uppercase font-bold tracking-wider">
                   Select Color Finish for {editingVehicleImage.model}:
                 </label>
-                <span className="text-[10px] text-emerald-400 font-mono font-bold">✓ 100% Same Model Silhouette</span>
+                <span className="text-[10px] text-emerald-800 font-mono font-black">✓ 100% Same Model Silhouette</span>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
@@ -1266,21 +1266,21 @@ export const PartnersFleetPage: React.FC = () => {
                       }}
                       className={`p-2.5 rounded-xl border flex items-center gap-2.5 cursor-pointer transition-all ${
                         isSelected
-                          ? 'border-amber-400 bg-amber-500/10 ring-1 ring-amber-400/50 shadow-md shadow-amber-500/10'
-                          : 'border-slate-800 bg-slate-950/70 hover:border-slate-700 hover:bg-slate-900'
+                          ? 'border-[#DFCAA8] bg-[#FFFFFF] ring-2 ring-[#DFCAA8] shadow-md'
+                          : 'border-[#E6D8C3] bg-[#FFFFFF] hover:bg-[#FAF6F0]'
                       }`}
                     >
                       <div
-                        className="w-5 h-5 rounded-full border border-slate-600 shrink-0 shadow-sm"
+                        className="w-5 h-5 rounded-full border border-slate-400 shrink-0 shadow-sm"
                         style={{ backgroundColor: color.colorHex }}
                       />
                       <div className="flex-1 min-w-0">
-                        <span className={`text-[11px] font-bold block truncate ${isSelected ? 'text-amber-300' : 'text-slate-200'}`}>
+                        <span className={`text-[11px] font-black block truncate ${isSelected ? 'text-[#0A0E1A]' : 'text-slate-800'}`}>
                           {color.name}
                         </span>
                       </div>
                       {isSelected && (
-                        <Check className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                        <Check className="w-3.5 h-3.5 text-[#0A0E1A] shrink-0" />
                       )}
                     </div>
                   );
@@ -1289,12 +1289,12 @@ export const PartnersFleetPage: React.FC = () => {
             </div>
 
             {/* Direct Device Photo Upload (Phone Gallery / Desktop) */}
-            <div className="pt-2 border-t border-slate-800/80">
-              <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1.5">
+            <div className="pt-2 border-t border-[#E6D8C3]">
+              <label className="text-[10px] text-slate-700 uppercase font-bold block mb-1.5">
                 Or Upload Real Photo Directly From Device Gallery:
               </label>
-              <label className="w-full py-2.5 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-cyan-400 text-slate-300 hover:text-cyan-300 font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all">
-                <Upload className="w-4 h-4 text-cyan-400" />
+              <label className="w-full py-2.5 px-3 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A] font-bold text-xs flex items-center justify-center gap-2 cursor-pointer transition-all shadow-sm">
+                <Upload className="w-4 h-4 text-[#7B6035]" />
                 <span>Choose Photo From Phone / Laptop</span>
                 <input
                   type="file"
@@ -1305,20 +1305,20 @@ export const PartnersFleetPage: React.FC = () => {
               </label>
             </div>
 
-            <div className="flex justify-end gap-2 pt-3 border-t border-slate-800">
+            <div className="flex justify-end gap-2 pt-3 border-t border-[#E6D8C3]">
               <button
                 type="button"
                 onClick={() => setEditingVehicleImage(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-slate-400 font-bold hover:text-white text-xs"
+                className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-slate-800 border border-[#E6D8C3] font-bold text-xs shadow-sm transition-all"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={handleSaveVehicleImage}
-                className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/20"
+                className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] border border-[#DFCAA8] text-[#FAF6F0] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
               >
-                <Check className="w-4 h-4" /> Save Color Finish
+                <Check className="w-4 h-4 text-[#DFCAA8]" /> Save Color Finish
               </button>
             </div>
           </div>
@@ -1329,23 +1329,23 @@ export const PartnersFleetPage: React.FC = () => {
           MODAL 4: PARTNER ASSIGNED BOOKINGS HISTORY
       ───────────────────────────────────────────────────────────── */}
       {selectedPartnerForBookings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400">
-                  <Briefcase className="w-6 h-6" />
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A]">
+                  <Briefcase className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">{selectedPartnerForBookings.company_name}</h3>
-                  <span className="text-xs text-amber-400 font-mono">
+                  <h3 className="text-base font-black text-[#0A0E1A]">{selectedPartnerForBookings.company_name}</h3>
+                  <span className="text-xs text-slate-700 font-mono font-bold">
                     {selectedPartnerForBookings.city} Network • {selectedPartnerForBookings.commission_rate}% Agreed Comm.
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedPartnerForBookings(null)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-slate-400 hover:text-[#0A0E1A]"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1353,21 +1353,21 @@ export const PartnersFleetPage: React.FC = () => {
 
             {/* Summary Cards */}
             <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Total Dispatched</span>
-                <span className="text-base font-black text-slate-100 font-mono">
+              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-sm">
+                <span className="text-[10px] text-slate-600 block uppercase font-bold">Total Dispatched</span>
+                <span className="text-base font-black text-[#0A0E1A] font-mono">
                   {getPartnerBookings(selectedPartnerForBookings).length} Rides
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Total Turnover</span>
-                <span className="text-base font-black text-cyan-300 font-mono">
+              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-sm">
+                <span className="text-[10px] text-slate-600 block uppercase font-bold">Total Turnover</span>
+                <span className="text-base font-black text-[#0A0E1A] font-mono">
                   ${getPartnerBookings(selectedPartnerForBookings).reduce((sum, b) => sum + b.fare_amount, 0).toFixed(2)} AUD
                 </span>
               </div>
-              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-[10px] text-slate-400 block uppercase font-bold">Net Comm Earned</span>
-                <span className="text-base font-black text-amber-400 font-mono">
+              <div className="p-3.5 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-sm">
+                <span className="text-[10px] text-slate-600 block uppercase font-bold">Net Comm Earned</span>
+                <span className="text-base font-black text-amber-800 font-mono">
                   ${getPartnerBookings(selectedPartnerForBookings).reduce((sum, b) => sum + b.commission_amount, 0).toFixed(2)} AUD
                 </span>
               </div>
@@ -1376,51 +1376,51 @@ export const PartnersFleetPage: React.FC = () => {
             {/* Bookings List */}
             <div className="overflow-y-auto space-y-3 flex-1 pr-1">
               {getPartnerBookings(selectedPartnerForBookings).map((b) => (
-                <div key={b.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+                <div key={b.id} className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-2 text-xs shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded bg-slate-900 text-slate-300 font-mono font-bold text-[11px] border border-slate-700">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#FAF6F0] text-[#0A0E1A] font-mono font-black text-[11px] border border-[#E6D8C3]">
                         {b.booking_number}
                       </span>
-                      <span className="font-bold text-slate-200">{b.passenger_name}</span>
+                      <span className="font-black text-[#0A0E1A]">{b.passenger_name}</span>
                     </div>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
                         b.status === 'COMPLETED'
-                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                          : 'bg-cyan-100 text-cyan-900 border border-cyan-300'
                       }`}
                     >
                       {b.status}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px]">
+                  <div className="grid grid-cols-2 gap-2 text-slate-700 text-[11px]">
                     <div>
-                      <span className="text-slate-500 block text-[10px]">PICKUP</span>
-                      <strong className="text-slate-300">{b.pickup_location}</strong>
+                      <span className="text-slate-500 block text-[10px] font-bold">PICKUP</span>
+                      <strong className="text-[#0A0E1A]">{b.pickup_location}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500 block text-[10px]">DROPOFF</span>
-                      <strong className="text-slate-300">{b.dropoff_location}</strong>
+                      <span className="text-slate-500 block text-[10px] font-bold">DROPOFF</span>
+                      <strong className="text-[#0A0E1A]">{b.dropoff_location}</strong>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-900 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-slate-400">{b.pickup_datetime}</span>
+                  <div className="pt-2 border-t border-[#E6D8C3] flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-slate-600 font-semibold">{b.pickup_datetime}</span>
                     <div className="flex items-center gap-3">
-                      <span className="text-slate-300">Fare: <strong>${b.fare_amount.toFixed(2)}</strong></span>
-                      <span className="text-amber-400 font-bold">Comm: +${b.commission_amount.toFixed(2)} AUD</span>
+                      <span className="text-slate-700">Fare: <strong className="text-[#0A0E1A]">${b.fare_amount.toFixed(2)}</strong></span>
+                      <span className="text-amber-800 font-black">Comm: +${b.commission_amount.toFixed(2)} AUD</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-800">
+            <div className="flex justify-end pt-3 border-t border-[#E6D8C3]">
               <button
                 onClick={() => setSelectedPartnerForBookings(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white text-xs font-bold"
+                className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] text-xs font-black shadow-md transition-all"
               >
                 Close
               </button>
@@ -1433,48 +1433,48 @@ export const PartnersFleetPage: React.FC = () => {
           MODAL 5: VEHICLE ADVANCE BOOKINGS & COMPLETED TRIPS
       ───────────────────────────────────────────────────────────── */}
       {selectedVehicleForBookings && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="glass-panel p-6 rounded-3xl border border-slate-700 w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] p-6 sm:p-7 rounded-3xl w-full max-w-2xl shadow-2xl space-y-4 max-h-[85vh] flex flex-col text-[#0A0E1A]">
+            <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-400">
-                  <Car className="w-6 h-6" />
+                <div className="p-2.5 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A]">
+                  <Car className="w-6 h-6 text-[#0A0E1A]" />
                 </div>
                 <div>
-                  <h3 className="text-base font-black text-slate-100">
+                  <h3 className="text-base font-black text-[#0A0E1A]">
                     {selectedVehicleForBookings.make} {selectedVehicleForBookings.model}
                   </h3>
-                  <span className="text-xs text-amber-400 font-mono">
-                    Plate: <strong className="text-amber-300">{selectedVehicleForBookings.registration_plate}</strong> • ({selectedVehicleForBookings.year})
+                  <span className="text-xs text-slate-700 font-mono font-bold">
+                    Plate: <strong className="text-[#0A0E1A]">{selectedVehicleForBookings.registration_plate}</strong> • ({selectedVehicleForBookings.year})
                   </span>
                 </div>
               </div>
               <button
                 onClick={() => setSelectedVehicleForBookings(null)}
-                className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white"
+                className="p-1.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-slate-400 hover:text-[#0A0E1A]"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Tab Switcher: Advance Bookings vs Completed Trips */}
-            <div className="flex p-1 bg-slate-950 rounded-xl border border-slate-800">
+            <div className="flex p-1 bg-[#06090F] rounded-xl border border-[#1E2738]">
               <button
                 onClick={() => setVehicleBookingsTab('advance')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 ${
                   vehicleVehicleBookingsTab === 'advance'
-                    ? 'bg-cyan-500 text-slate-950 shadow-md shadow-cyan-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+                    : 'text-slate-400 hover:text-white font-bold'
                 }`}
               >
                 <Calendar className="w-3.5 h-3.5" /> Advance Scheduled Bookings ({getVehicleBookings(selectedVehicleForBookings).advance.length})
               </button>
               <button
                 onClick={() => setVehicleBookingsTab('completed')}
-                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                className={`flex-1 py-2 rounded-lg text-xs transition-all flex items-center justify-center gap-1.5 ${
                   vehicleVehicleBookingsTab === 'completed'
-                    ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md'
+                    : 'text-slate-400 hover:text-white font-bold'
               }`}
               >
                 <CheckCircle2 className="w-3.5 h-3.5" /> Completed Trips ({getVehicleBookings(selectedVehicleForBookings).completed.length})
@@ -1487,53 +1487,53 @@ export const PartnersFleetPage: React.FC = () => {
                 ? getVehicleBookings(selectedVehicleForBookings).advance
                 : getVehicleBookings(selectedVehicleForBookings).completed
               ).map((trip) => (
-                <div key={trip.id} className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+                <div key={trip.id} className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-2 text-xs shadow-sm">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="px-2.5 py-0.5 rounded bg-slate-900 text-slate-300 font-mono font-bold text-[11px] border border-slate-700">
+                      <span className="px-2.5 py-0.5 rounded-lg bg-[#FAF6F0] text-[#0A0E1A] font-mono font-black text-[11px] border border-[#E6D8C3]">
                         {trip.booking_number}
                       </span>
-                      <span className="font-bold text-slate-200">{trip.passenger_name}</span>
+                      <span className="font-black text-[#0A0E1A]">{trip.passenger_name}</span>
                     </div>
                     <span
-                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
                         trip.status === 'COMPLETED'
-                          ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-cyan-500/15 text-cyan-300 border border-cyan-500/30'
+                          ? 'bg-emerald-100 text-emerald-900 border border-emerald-300'
+                          : 'bg-cyan-100 text-cyan-900 border border-cyan-300'
                       }`}
                     >
                       {trip.status === 'ADVANCE_SCHEDULED' ? '📅 ADVANCE SCHEDULED' : trip.status}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 text-slate-400 text-[11px]">
+                  <div className="grid grid-cols-2 gap-2 text-slate-700 text-[11px]">
                     <div>
-                      <span className="text-slate-500 block text-[10px]">PICKUP POINT</span>
-                      <strong className="text-slate-300">{trip.pickup_location}</strong>
+                      <span className="text-slate-500 block text-[10px] font-bold">PICKUP POINT</span>
+                      <strong className="text-[#0A0E1A]">{trip.pickup_location}</strong>
                     </div>
                     <div>
-                      <span className="text-slate-500 block text-[10px]">DESTINATION</span>
-                      <strong className="text-slate-300">{trip.dropoff_location}</strong>
+                      <span className="text-slate-500 block text-[10px] font-bold">DESTINATION</span>
+                      <strong className="text-[#0A0E1A]">{trip.dropoff_location}</strong>
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-900 flex items-center justify-between text-[11px] font-mono">
-                    <span className="text-cyan-300 flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-cyan-400" /> {trip.pickup_datetime}
+                  <div className="pt-2 border-t border-[#E6D8C3] flex items-center justify-between text-[11px] font-mono">
+                    <span className="text-cyan-900 font-bold flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-cyan-700" /> {trip.pickup_datetime}
                     </span>
                     <div className="flex items-center gap-3">
-                      <span className="text-slate-400">Driver: <strong className="text-slate-200">{trip.driver_name}</strong></span>
-                      <span className="text-amber-400 font-bold">${trip.fare_amount.toFixed(2)} AUD</span>
+                      <span className="text-slate-600">Driver: <strong className="text-[#0A0E1A]">{trip.driver_name}</strong></span>
+                      <span className="text-amber-800 font-black">${trip.fare_amount.toFixed(2)} AUD</span>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="flex justify-end pt-3 border-t border-slate-800">
+            <div className="flex justify-end pt-3 border-t border-[#E6D8C3]">
               <button
                 onClick={() => setSelectedVehicleForBookings(null)}
-                className="px-4 py-2 rounded-xl bg-slate-900 text-slate-300 hover:text-white text-xs font-bold"
+                className="px-5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] text-xs font-black shadow-md transition-all"
               >
                 Close
               </button>

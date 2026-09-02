@@ -433,28 +433,28 @@ export const BookingsOperatePage: React.FC = () => {
   };
 
   const statusColors: Record<LegStatus, string> = {
-    PENDING: 'bg-amber-500/15 text-amber-300 border-amber-500/30',
-    ALLOCATED: 'bg-blue-500/15 text-blue-300 border-blue-500/30',
-    DISPATCHED: 'bg-indigo-500/15 text-indigo-300 border-indigo-500/30',
-    EN_ROUTE: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/30 animate-pulse',
-    ARRIVED: 'bg-purple-500/15 text-purple-300 border-purple-500/30',
-    PICKED_UP: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/30',
-    COMPLETED: 'bg-slate-800 text-slate-300 border-slate-700',
-    CANCELLED: 'bg-rose-500/15 text-rose-300 border-rose-500/30',
+    PENDING: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    ALLOCATED: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    DISPATCHED: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    EN_ROUTE: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    ARRIVED: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    PICKED_UP: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    COMPLETED: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
+    CANCELLED: 'bg-[#FFFFFF] text-[#0A0E1A] border border-[#DFCAA8] font-black',
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-[#0A0E1A]">
       {/* Top Header & View Controls */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-6 rounded-2xl">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-6 rounded-2xl shadow-lg bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A]">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Live Operate & Dispatch Board</h1>
-            <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Live Operate & Dispatch Board</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
               ONE MASTER BOOKING ENGINE
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[#0A0E1A] font-bold mt-1">
             Real-time Add-Allocate-Settle operational lifecycle with net profit margins and driver schedule conflict guards.
           </p>
         </div>
@@ -463,45 +463,45 @@ export const BookingsOperatePage: React.FC = () => {
           {/* Onboard New Driver Button */}
           <button
             onClick={() => setIsAddDriverOpen(true)}
-            className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+            className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
             title="Onboard and add a new chauffeur"
           >
-            <UserPlus className="w-3.5 h-3.5" />
-            <span>+ Onboard Driver</span>
+            <UserPlus className="w-3.5 h-3.5 text-white" />
+            <span className="text-white font-black">+ Onboard Driver</span>
           </button>
 
           {/* Reset Test Trip Button */}
           <button
             onClick={handleResetTripStatus}
-            className="px-3.5 py-2 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-sm"
             title="Reset Sahil Tripathi trip to EN_ROUTE"
           >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span>Reset Test to EN_ROUTE</span>
+            <RefreshCw className="w-3.5 h-3.5 text-white" />
+            <span className="text-white font-black">Reset Test to EN_ROUTE</span>
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={loadData}
-            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-300 hover:text-amber-400 transition-colors"
+            className="p-2.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white hover:bg-[#1A2233] transition-colors shadow-sm"
           >
-            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 text-white ${loading ? 'animate-spin' : ''}`} />
           </button>
 
           {/* Table / Kanban View Toggle */}
-          <div className="flex p-1 bg-slate-950 rounded-xl border border-slate-800">
+          <div className="flex p-1 bg-[#06090F] rounded-xl border border-[#1E2738]">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'table' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
+                viewMode === 'table' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover:text-white font-bold'
               }`}
             >
               Table View
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                viewMode === 'kanban' ? 'bg-amber-500 text-slate-950 shadow' : 'text-slate-400 hover:text-white'
+              className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
+                viewMode === 'kanban' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover:text-white font-bold'
               }`}
             >
               Kanban Board
@@ -511,37 +511,37 @@ export const BookingsOperatePage: React.FC = () => {
       </div>
 
       {/* Search and Filters Bar */}
-      <div className="flex items-center gap-4 bg-slate-900/60 p-4 rounded-xl border border-slate-800">
+      <div className="flex items-center gap-4 bg-[#FAF6F0] p-4 rounded-2xl border border-[#E6D8C3] shadow-md">
         <div className="relative flex-1">
-          <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-500" />
+          <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#0A0E1A]" />
           <input
             type="text"
             placeholder="Search booking number, passenger name, flight number or address..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 bg-slate-950/80 border border-slate-800 rounded-xl text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500/50"
+            className="w-full pl-10 pr-4 py-2 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-xs text-[#0A0E1A] placeholder-slate-600 font-black focus:outline-none focus:border-[#0A0E1A]"
           />
         </div>
       </div>
 
       {/* Main Table View */}
       {viewMode === 'table' ? (
-        <div className="glass-panel rounded-2xl overflow-hidden border-slate-800">
+        <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl bg-[#FAF6F0]">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
-              <thead className="bg-slate-950/80 text-slate-400 uppercase font-mono tracking-wider border-b border-slate-800">
+              <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
                 <tr>
-                  <th className="py-3.5 px-4 font-semibold">Booking Ref</th>
-                  <th className="py-3.5 px-4 font-semibold">Passenger & Contact</th>
-                  <th className="py-3.5 px-4 font-semibold">Route & Vehicle Class</th>
-                  <th className="py-3.5 px-4 font-semibold">Pickup Time (AEST)</th>
-                  <th className="py-3.5 px-4 font-semibold">Status</th>
-                  <th className="py-3.5 px-4 font-semibold">Assigned Driver / Partner</th>
-                  <th className="py-3.5 px-4 font-semibold">Fare & Margin</th>
-                  <th className="py-3.5 px-4 font-semibold text-right">Actions</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Booking Ref</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Passenger & Contact</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Route & Vehicle Class</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Pickup Time (AEST)</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Status</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Assigned Driver / Partner</th>
+                  <th className="py-3.5 px-4 font-black text-[#0A0E1A]">Fare & Margin</th>
+                  <th className="py-3.5 px-4 font-black text-right text-[#0A0E1A]">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/60">
+              <tbody className="divide-y divide-[#E6D8C3] font-sans">
                 {bookings.map((b) =>
                   b.legs.map((leg) => {
                     const assignedDriver = drivers.find((d) => d.id === leg.driver_id);
@@ -552,68 +552,70 @@ export const BookingsOperatePage: React.FC = () => {
                     const marginPct = (margin / Math.max(1, netExGst)) * 100;
 
                     return (
-                      <tr key={leg.id} className="hover:bg-slate-800/30 transition-colors">
-                        <td className="py-4 px-4 font-mono font-bold text-amber-400">
+                      <tr key={leg.id} className="bg-[#FFFFFF] hover:bg-[#FAF6F0] transition-colors">
+                        <td className="py-4 px-4 font-mono font-black text-[#0A0E1A]">
                           {b.booking_number}
-                          <span className="block text-[10px] text-slate-400">Leg #{leg.leg_number}</span>
+                          <span className="block text-[10px] text-[#0A0E1A] font-bold font-sans">Leg #{leg.leg_number}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className="font-semibold text-slate-100">{b.passenger_name || 'VIP Client'}</span>
-                          <span className="block text-[10px] text-slate-400">{b.passenger_phone || '+61 400 000 000'}</span>
+                          <span className="font-black text-[#0A0E1A] block text-sm">{b.passenger_name || 'VIP Client'}</span>
+                          <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">{b.passenger_phone || '+61 400 000 000'}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <div className="flex items-center gap-1.5 text-slate-200">
-                            <MapPin className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                            <span className="truncate max-w-[180px]">{leg.pickup_address}</span>
+                          <div className="flex items-center gap-1.5 text-[#0A0E1A] font-black">
+                            <MapPin className="w-3.5 h-3.5 text-[#0A0E1A] shrink-0" />
+                            <span className="truncate max-w-[180px] text-[#0A0E1A]">{leg.pickup_address}</span>
                           </div>
-                          <div className="flex items-center gap-1.5 text-slate-400 text-[11px] mt-0.5">
-                            <span className="truncate max-w-[180px]">➔ {leg.dropoff_address}</span>
+                          <div className="flex items-center gap-1.5 text-[#0A0E1A] text-[11px] font-bold mt-0.5">
+                            <span className="truncate max-w-[180px] text-[#0A0E1A]">➔ {leg.dropoff_address}</span>
                           </div>
                           {leg.is_airport_pickup && (
-                            <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 mt-1 rounded bg-cyan-500/10 text-cyan-300 border border-cyan-500/20">
-                              <Plane className="w-2.5 h-2.5" /> Airport Meet & Greet ({leg.flight_number || 'Tullamarine'})
+                            <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 mt-1 rounded-md bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-black">
+                              <Plane className="w-2.5 h-2.5 text-[#0A0E1A]" /> Airport Meet & Greet ({leg.flight_number || 'Tullamarine'})
                             </span>
                           )}
                         </td>
-                        <td className="py-4 px-4 font-mono text-slate-300">
+                        <td className="py-4 px-4 font-mono text-[#0A0E1A] font-black">
                           {new Date(leg.pickup_datetime).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                          <span className="block text-[10px] text-slate-400">{new Date(leg.pickup_datetime).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}</span>
+                          <span className="block text-[10px] text-[#0A0E1A] font-bold font-sans">{new Date(leg.pickup_datetime).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}</span>
                         </td>
                         <td className="py-4 px-4">
-                          <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${statusColors[leg.status]}`}>
+                          <span className="px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]">
                             {leg.status}
                           </span>
                         </td>
                         <td className="py-4 px-4">
                           {assignedDriver ? (
                             <div className="flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center text-[10px]">
+                              <div className="w-7 h-7 rounded-xl bg-[#06090F] text-white border border-[#DFCAA8] font-black flex items-center justify-center text-xs shadow-sm">
                                 {assignedDriver.full_name.charAt(0)}
                               </div>
                               <div>
-                                <span className="font-semibold text-slate-200">{assignedDriver.full_name}</span>
-                                <span className="block text-[10px] text-slate-400">Cost: ${leg.allocation_cost.toFixed(2)}</span>
+                                <span className="font-black text-[#0A0E1A] block">{assignedDriver.full_name}</span>
+                                <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Cost: ${leg.allocation_cost.toFixed(2)} AUD</span>
                               </div>
                             </div>
                           ) : leg.partner_id ? (
-                            <div className="text-cyan-300 font-semibold">
+                            <div className="text-[#0A0E1A] font-black">
                               Subcontractor Offload
-                              <span className="block text-[10px] text-slate-400">Payout: ${leg.partner_payout_amount.toFixed(2)}</span>
+                              <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Payout: ${leg.partner_payout_amount.toFixed(2)} AUD</span>
                             </div>
                           ) : (
-                            <span className="text-amber-400/80 italic text-xs">Unallocated</span>
+                            <span className="inline-flex px-2.5 py-1 rounded-full bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-black text-[11px]">
+                              Unallocated
+                            </span>
                           )}
                         </td>
                         <td className="py-4 px-4 font-mono">
-                          <span className="font-bold text-slate-100">${grossFare.toFixed(2)}</span>
-                          <span className="block text-[10px] text-emerald-400 font-semibold">
+                          <span className="font-black text-[#0A0E1A] text-sm">${grossFare.toFixed(2)}</span>
+                          <span className="block text-[11px] text-[#0A0E1A] font-black">
                             +${margin.toFixed(2)} ({marginPct.toFixed(0)}%)
                           </span>
                         </td>
                         <td className="py-4 px-4 text-right">
                           <button
                             onClick={() => handleOpenAllocation(b, leg)}
-                            className="px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold transition-all"
+                            className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
                           >
                             Dispatch / Offload
                           </button>
@@ -632,26 +634,26 @@ export const BookingsOperatePage: React.FC = () => {
           {(['PENDING', 'ALLOCATED', 'EN_ROUTE', 'COMPLETED'] as LegStatus[]).map((colStatus) => {
             const legsInCol = bookings.flatMap((b) => b.legs.filter((l) => l.status === colStatus).map((l) => ({ booking: b, leg: l })));
             return (
-              <div key={colStatus} className="glass-panel p-4 rounded-2xl flex flex-col space-y-3">
-                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-                  <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">{colStatus}</h3>
-                  <span className="px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-mono">
+              <div key={colStatus} className="glass-panel p-4 rounded-2xl flex flex-col space-y-3 shadow-lg bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A]">
+                <div className="flex items-center justify-between pb-2 border-b border-[#E6D8C3]">
+                  <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">{colStatus}</h3>
+                  <span className="px-2 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] text-xs font-mono font-black shadow-sm">
                     {legsInCol.length}
                   </span>
                 </div>
 
                 <div className="space-y-3 flex-1 overflow-y-auto max-h-[550px]">
                   {legsInCol.map(({ booking, leg }) => (
-                    <div key={leg.id} className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 hover:border-amber-500/40 transition-all">
+                    <div key={leg.id} className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#0A0E1A] transition-all shadow-sm text-[#0A0E1A]">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="font-mono font-bold text-amber-400">{booking.booking_number}</span>
-                        <span className="font-bold text-slate-100">${booking.total_fare.toFixed(2)}</span>
+                        <span className="font-mono font-black text-[#0A0E1A]">{booking.booking_number}</span>
+                        <span className="font-mono font-black text-[#0A0E1A]">${booking.total_fare.toFixed(2)}</span>
                       </div>
-                      <p className="text-xs text-slate-200 font-semibold mt-1">{booking.passenger_name}</p>
-                      <p className="text-[11px] text-slate-400 mt-1 truncate">{leg.pickup_address} ➔ {leg.dropoff_address}</p>
+                      <p className="text-xs text-[#0A0E1A] font-black mt-1">{booking.passenger_name}</p>
+                      <p className="text-[11px] text-[#0A0E1A] font-bold mt-1 truncate">{leg.pickup_address} ➔ {leg.dropoff_address}</p>
                       <button
                         onClick={() => handleOpenAllocation(booking, leg)}
-                        className="w-full mt-3 py-1.5 rounded-lg bg-slate-800 hover:bg-amber-500 hover:text-slate-950 text-slate-300 text-xs font-semibold transition-all"
+                        className="w-full mt-3 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-sm"
                       >
                         Manage Allocation
                       </button>
@@ -666,46 +668,46 @@ export const BookingsOperatePage: React.FC = () => {
 
       {/* Driver Allocation Modal */}
       {selectedLeg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
-          <div className="glass-panel-gold max-w-lg w-full p-6 rounded-2xl relative space-y-5 animate-in fade-in zoom-in-95">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl text-[#0A0E1A]">
             <button
               onClick={() => setSelectedLeg(null)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-5 right-5 text-white hover:bg-[#1A2233] p-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-white" />
             </button>
 
             <div>
-              <h3 className="text-lg font-black text-slate-100">Dispatch & Driver Allocation</h3>
-              <p className="text-xs text-amber-400 mt-0.5">
-                Master Booking: <strong className="font-mono text-white">{selectedLeg.leg.pickup_address} ➔ {selectedLeg.leg.dropoff_address}</strong>
+              <h3 className="text-lg font-black text-[#0A0E1A]">Dispatch & Driver Allocation</h3>
+              <p className="text-xs text-[#0A0E1A] font-bold mt-1">
+                Master Booking: <strong className="font-mono text-[#0A0E1A]">{selectedLeg.leg.pickup_address} ➔ {selectedLeg.leg.dropoff_address}</strong>
               </p>
             </div>
 
             {allocationError && (
-              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs flex items-center gap-2 font-black">
+                <AlertCircle className="w-4 h-4 shrink-0 text-[#0A0E1A]" />
                 <span>{allocationError}</span>
               </div>
             )}
 
             {allocationSuccess && (
-              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 shrink-0" />
+              <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs flex items-center gap-2 font-black">
+                <CheckCircle className="w-4 h-4 shrink-0 text-[#0A0E1A]" />
                 <span>{allocationSuccess}</span>
               </div>
             )}
 
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">Select Fleet Chauffeur</label>
+                <label className="block font-black text-[#0A0E1A] mb-1.5">Select Fleet Chauffeur</label>
                 <select
                   value={allocationDriverId}
                   onChange={(e) => setAllocationDriverId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                 >
                   {drivers.map((d) => (
-                    <option key={d.id} value={d.id}>
+                    <option key={d.id} value={d.id} className="text-[#0A0E1A]">
                       {d.full_name} (⭐ {d.rating.toFixed(2)} • {d.status})
                     </option>
                   ))}
@@ -713,14 +715,14 @@ export const BookingsOperatePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">Select Fleet Vehicle</label>
+                <label className="block font-black text-[#0A0E1A] mb-1.5">Select Fleet Vehicle</label>
                 <select
                   value={allocationVehicleId}
                   onChange={(e) => setAllocationVehicleId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                 >
                   {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>
+                    <option key={v.id} value={v.id} className="text-[#0A0E1A]">
                       {v.make} {v.model} ({v.registration_plate} • {v.category})
                     </option>
                   ))}
@@ -728,37 +730,37 @@ export const BookingsOperatePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5">Driver Allocation Payout Rate ($ AUD)</label>
+                <label className="block font-black text-[#0A0E1A] mb-1.5">Driver Allocation Payout Rate ($ AUD)</label>
                 <input
                   type="number"
                   value={allocationCost}
                   onChange={(e) => setAllocationCost(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 focus:outline-none focus:border-amber-500 font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black font-mono focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
 
             {allocatedWhatsAppUrl && (
-              <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 space-y-2">
-                <span className="text-[11px] font-bold text-emerald-300 block">
+              <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] space-y-2.5 text-[#0A0E1A]">
+                <span className="text-xs font-black text-[#0A0E1A] block">
                   ✓ Chauffeur Allocated! Send trip link to Driver WhatsApp:
                 </span>
                 <a
                   href={allocatedWhatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 transition-all"
+                  className="w-full py-3 px-4 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white font-black text-xs flex items-center justify-center gap-2 border border-[#DFCAA8] shadow-lg transition-all"
                 >
-                  <Send className="w-4 h-4" />
+                  <Send className="w-4 h-4 text-white" />
                   <span>📱 Send Driver Portal Link to WhatsApp ➔</span>
                 </a>
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+            <div className="flex items-center justify-between pt-4 border-t border-[#E6D8C3]">
               <button
                 onClick={() => setOffloadModalOpen(true)}
-                className="px-4 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-xs font-bold transition-all"
+                className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all shadow-sm"
               >
                 Subcontractor Offload &rarr;
               </button>
@@ -770,14 +772,14 @@ export const BookingsOperatePage: React.FC = () => {
                       setSelectedLeg(null);
                       setAllocatedWhatsAppUrl(null);
                     }}
-                    className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                    className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all shadow-sm"
                   >
                     Done & Close
                   </button>
                 )}
                 <button
                   onClick={handleExecuteAllocation}
-                  className="px-6 py-2.5 rounded-xl glow-gold-btn text-slate-950 font-bold text-xs"
+                  className="px-6 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs shadow-md transition-all"
                 >
                   Confirm Allocation
                 </button>
@@ -789,31 +791,31 @@ export const BookingsOperatePage: React.FC = () => {
 
       {/* Subcontractor Partner Offload Modal */}
       {offloadModalOpen && selectedLeg && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4">
-          <div className="glass-panel-cyan max-w-md w-full p-6 rounded-2xl relative space-y-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-md w-full p-6 sm:p-7 rounded-3xl relative space-y-4 shadow-2xl text-[#0A0E1A]">
             <button
               onClick={() => setOffloadModalOpen(false)}
-              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1"
+              className="absolute top-5 right-5 text-[#0A0E1A] hover:bg-[#E6D8C3] p-1.5 rounded-xl bg-white border border-[#E6D8C3]"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5 text-[#0A0E1A]" />
             </button>
 
-            <h3 className="text-base font-black text-slate-100">Broadcast 15-Min Partner Offer</h3>
-            <p className="text-xs text-slate-400">
+            <h3 className="text-base font-black text-[#0A0E1A]">Broadcast 15-Min Partner Offer</h3>
+            <p className="text-xs text-[#0A0E1A] font-bold">
               Dispatches an instant email/SMS offer to the affiliate partner with a 15-minute countdown window.
             </p>
 
-            <div className="space-y-3 text-xs">
+            <div className="space-y-3.5 text-xs">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Select Partner Network</label>
+                <label className="block font-black text-[#0A0E1A] mb-1">Select Partner Network</label>
                 <select
                   value={offloadPartnerId}
                   onChange={(e) => setOffloadPartnerId(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black"
                 >
-                  <option value="">-- Select Compliant Partner --</option>
+                  <option value="" className="text-[#0A0E1A]">-- Select Compliant Partner --</option>
                   {partners.map((p) => (
-                    <option key={p.id} value={p.id}>
+                    <option key={p.id} value={p.id} className="text-[#0A0E1A]">
                       {p.company_name} ({p.city})
                     </option>
                   ))}
@@ -821,21 +823,21 @@ export const BookingsOperatePage: React.FC = () => {
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1">Offered Subcontractor Payout ($)</label>
+                <label className="block font-black text-[#0A0E1A] mb-1">Offered Subcontractor Payout ($)</label>
                 <input
                   type="number"
                   value={offloadPayout}
                   onChange={(e) => setOffloadPayout(parseFloat(e.target.value) || 0)}
-                  className="w-full px-3 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-mono font-black"
                 />
               </div>
             </div>
 
             <button
               onClick={handleBroadcastPartnerOffer}
-              className="w-full mt-4 py-2.5 rounded-xl glow-cyan-btn text-white font-bold text-xs flex items-center justify-center gap-2"
+              className="w-full mt-4 py-3 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center justify-center gap-2 shadow-md transition-all"
             >
-              <Send className="w-4 h-4" />
+              <Send className="w-4 h-4 text-white" />
               <span>Broadcast Offer (15-Min Timer)</span>
             </button>
           </div>
@@ -845,112 +847,112 @@ export const BookingsOperatePage: React.FC = () => {
       {/* Onboard New Chauffeur Modal (ADMIN PANEL ONLY) */}
       {isAddDriverOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
-          <div className="bg-[#0D1322] border-2 border-amber-500/50 max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl shadow-amber-500/10">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl text-[#0A0E1A]">
             <button
               onClick={() => setIsAddDriverOpen(false)}
-              className="absolute top-5 right-5 text-slate-400 hover:text-white p-1 rounded-lg bg-slate-900 border border-slate-800"
+              className="absolute top-5 right-5 text-[#0A0E1A] hover:bg-[#E6D8C3] p-1.5 rounded-xl bg-white border border-[#E6D8C3]"
             >
-              <X className="w-4 h-4" />
+              <X className="w-5 h-5 text-[#0A0E1A]" />
             </button>
 
             <div className="flex items-center gap-2.5">
-              <div className="w-10 h-10 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                <UserPlus className="w-5 h-5" />
+              <div className="w-10 h-10 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] shadow-sm">
+                <UserPlus className="w-5 h-5 text-[#0A0E1A]" />
               </div>
               <div>
-                <h3 className="text-lg font-black text-slate-100">Onboard New Fleet Chauffeur</h3>
-                <p className="text-xs text-slate-400">Add driver credentials for automated WhatsApp dispatch & job allocations.</p>
+                <h3 className="text-lg font-black text-[#0A0E1A]">Onboard New Fleet Chauffeur</h3>
+                <p className="text-xs text-[#0A0E1A] font-bold">Add driver credentials for automated WhatsApp dispatch & job allocations.</p>
               </div>
             </div>
 
             <form onSubmit={handleSaveNewDriver} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Driver Full Name *</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Driver Full Name *</label>
                   <input
                     type="text"
                     required
                     placeholder="e.g. Amit Sharma"
                     value={newDriverName}
                     onChange={(e) => setNewDriverName(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">WhatsApp / Phone Number *</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">WhatsApp / Phone Number *</label>
                   <input
                     type="tel"
                     required
                     placeholder="+91 9876543210 or +61 400..."
                     value={newDriverPhone}
                     onChange={(e) => setNewDriverPhone(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Email Address</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Email Address</label>
                   <input
                     type="email"
-                    placeholder="driver@crownchauffeurs.com.au"
+                    placeholder="driver@opalchauffeurs.com.au"
                     value={newDriverEmail}
                     onChange={(e) => setNewDriverEmail(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Accreditation / License No</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Accreditation / License No</label>
                   <input
                     type="text"
                     placeholder="VIC-DA-88219"
                     value={newDriverLicense}
                     onChange={(e) => setNewDriverLicense(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Assigned Vehicle</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Assigned Vehicle</label>
                   <input
                     type="text"
                     placeholder="Mercedes-Benz S-Class S450"
                     value={newDriverVehicle}
                     onChange={(e) => setNewDriverVehicle(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
                 </div>
 
                 <div>
-                  <label className="block font-bold text-slate-300 mb-1">Registration Plate</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Registration Plate</label>
                   <input
                     type="text"
                     placeholder="VIC-VIP-77"
                     value={newDriverPlate}
                     onChange={(e) => setNewDriverPlate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-100 focus:outline-none focus:border-amber-400 font-mono uppercase"
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black uppercase"
                   />
                 </div>
               </div>
 
-              <div className="pt-3 border-t border-[#1F2E4D] flex items-center justify-end gap-2.5">
+              <div className="pt-3 border-t border-[#E6D8C3] flex items-center justify-end gap-2.5">
                 <button
                   type="button"
                   onClick={() => setIsAddDriverOpen(false)}
-                  className="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold transition-all"
+                  className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all shadow-sm"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-1.5 shadow-lg shadow-amber-500/30 transition-all"
+                  className="px-6 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
                 >
-                  <Check className="w-4 h-4" />
+                  <Check className="w-4 h-4 text-white" />
                   <span>Save & Onboard Driver</span>
                 </button>
               </div>

@@ -151,27 +151,27 @@ export const QuoteBookingPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-2xl">
+      <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-black text-slate-100 tracking-tight">Instant Quote & 3D Booking Engine</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-400 text-xs font-bold font-mono">
+            <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Instant Quote & 3D Booking Engine</h1>
+            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
               REAL-TIME PAYMENT GATEWAY
             </span>
           </div>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-slate-700 font-semibold mt-1">
             Seamless booking with integrated Credit Card, Apple Pay, PayID & Corporate Account payment auto-settlement.
           </p>
         </div>
 
         {/* Journey Type Switcher */}
-        <div className="flex p-1 bg-slate-950 rounded-xl border border-slate-800">
+        <div className="flex p-1 bg-[#06090F] rounded-xl border border-[#1E2738]">
           {(['ONE_WAY', 'RETURN', 'HOURLY'] as const).map((type) => (
             <button
               key={type}
               onClick={() => setJourneyType(type)}
-              className={`px-4 py-2 rounded-lg text-xs font-bold transition-all ${
-                journeyType === type ? 'bg-amber-500 text-slate-950 shadow-md shadow-amber-500/30' : 'text-slate-400 hover:text-white'
+              className={`px-4 py-2 rounded-lg text-xs transition-all ${
+                journeyType === type ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black shadow-md' : 'text-slate-400 hover:text-white font-bold'
               }`}
             >
               {type === 'ONE_WAY' ? 'One-Way Transfer' : type === 'RETURN' ? 'Return Journey' : 'Hourly As-Directed'}
@@ -192,41 +192,41 @@ export const QuoteBookingPage: React.FC = () => {
           </div>
 
           {/* Pricing & GST Breakdown Card */}
-          <div className="glass-panel p-5 rounded-2xl border-amber-500/30 space-y-3 text-xs shadow-xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <span className="font-bold text-slate-300">Quote Calculation Summary</span>
-              <span className="text-amber-400 font-mono font-bold">Australian 10% GST Included</span>
+          <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] space-y-3 text-xs shadow-xl">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E6D8C3]">
+              <span className="font-black text-[#0A0E1A]">Quote Calculation Summary</span>
+              <span className="text-slate-700 font-mono font-bold">Australian 10% GST Included</span>
             </div>
 
-            <div className="space-y-1.5 text-slate-400">
+            <div className="space-y-1.5 text-slate-700 font-semibold">
               <div className="flex justify-between">
                 <span>Base Flagfall & Distance (~28 km)</span>
-                <span className="text-slate-200 font-mono">${(fare.exGst - (isAirport ? 22.73 : 0)).toFixed(2)}</span>
+                <span className="text-[#0A0E1A] font-mono font-bold">${(fare.exGst - (isAirport ? 22.73 : 0)).toFixed(2)}</span>
               </div>
               {isAirport && (
-                <div className="flex justify-between text-cyan-400">
+                <div className="flex justify-between text-cyan-900 font-bold">
                   <span>Airport Toll & Meet & Greet (60m)</span>
                   <span className="font-mono">+$22.73</span>
                 </div>
               )}
-              <div className="flex justify-between">
+              <div className="flex justify-between text-[#0A0E1A]">
                 <span>Subtotal (Ex GST)</span>
-                <span className="text-slate-200 font-mono">${fare.exGst.toFixed(2)}</span>
+                <span className="text-[#0A0E1A] font-mono font-bold">${fare.exGst.toFixed(2)}</span>
               </div>
-              <div className="flex justify-between text-amber-400 font-medium">
+              <div className="flex justify-between text-[#0A0E1A] font-bold">
                 <span>10% Australian GST (1/11th)</span>
                 <span className="font-mono">+${fare.gst.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+            <div className="pt-3 border-t border-[#E6D8C3] flex items-center justify-between text-[#0A0E1A]">
               <div>
-                <span className="text-xs text-slate-400 block">Total Customer Fare</span>
-                <span className="text-2xl font-mono font-black gold-gradient-text">${fare.gross.toFixed(2)} AUD</span>
+                <span className="text-xs text-[#0A0E1A] font-bold block">Total Customer Fare</span>
+                <span className="text-3xl font-mono font-black text-[#0A0E1A]">${fare.gross.toFixed(2)} AUD</span>
               </div>
               <div className="text-right">
-                <span className="text-[11px] text-slate-400 block">25% Deposit Option</span>
-                <span className="text-sm font-mono font-bold text-emerald-400">${fare.deposit.toFixed(2)} AUD</span>
+                <span className="text-[11px] text-[#0A0E1A] font-bold block">25% Deposit Option</span>
+                <span className="text-sm font-mono font-black text-[#0A0E1A]">${fare.deposit.toFixed(2)} AUD</span>
               </div>
             </div>
           </div>
@@ -234,37 +234,37 @@ export const QuoteBookingPage: React.FC = () => {
 
         {/* Right Column: Interactive Booking & Payment Form (7 Cols) */}
         <div className="lg:col-span-7">
-          <form onSubmit={handleConfirmBooking} className="glass-panel p-6 rounded-2xl space-y-5 text-xs shadow-2xl">
-            <div className="flex items-center gap-2 text-sm font-bold text-slate-100 border-b border-slate-800 pb-3">
-              <Compass className="w-4 h-4 text-amber-400" />
+          <form onSubmit={handleConfirmBooking} className="glass-panel p-6 rounded-2xl space-y-5 text-xs shadow-xl">
+            <div className="flex items-center gap-2 text-sm font-black text-[#0A0E1A] border-b border-[#E6D8C3] pb-3">
+              <Compass className="w-4 h-4 text-amber-600" />
               <span>Journey Details (Leg #1)</span>
             </div>
 
             {/* Pickup & Dropoff Inputs */}
             <div className="space-y-3">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-amber-400" /> Pickup Location
+                <label className="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-amber-600" /> Pickup Location
                 </label>
                 <input
                   type="text"
                   required
                   value={pickupAddress}
                   onChange={(e) => setPickupAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-cyan-400" /> Destination Dropoff
+                <label className="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <MapPin className="w-3.5 h-3.5 text-cyan-600" /> Destination Dropoff
                 </label>
                 <input
                   type="text"
                   required
                   value={dropoffAddress}
                   onChange={(e) => setDropoffAddress(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-500"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
@@ -272,40 +272,40 @@ export const QuoteBookingPage: React.FC = () => {
             {/* Date, Time & Airport Meet Toggle */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5 text-slate-400" /> Pickup Date
+                <label className="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5 text-slate-600" /> Pickup Date
                 </label>
                 <input
                   type="date"
                   required
                   value={pickupDate}
                   onChange={(e) => setPickupDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-bold"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" /> Pickup Time (AEST)
+                <label className="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5 text-slate-600" /> Pickup Time (AEST)
                 </label>
                 <input
                   type="time"
                   required
                   value={pickupTime}
                   onChange={(e) => setPickupTime(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="w-full px-3 py-2 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-bold"
                 />
               </div>
 
               <div>
-                <label className="block font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5">
-                  <Plane className="w-3.5 h-3.5 text-sky-400" /> Airport Transfer?
+                <label className="block font-bold text-slate-800 mb-1.5 flex items-center gap-1.5">
+                  <Plane className="w-3.5 h-3.5 text-sky-600" /> Airport Transfer?
                 </label>
                 <button
                   type="button"
                   onClick={() => setIsAirport(!isAirport)}
-                  className={`w-full py-2 rounded-xl font-bold border transition-all ${
-                    isAirport ? 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40' : 'bg-slate-950 text-slate-400 border-slate-800'
+                  className={`w-full py-2.5 rounded-xl font-black border transition-all ${
+                    isAirport ? 'bg-[#06090F] text-[#FAF6F0] border-[#DFCAA8] shadow-sm' : 'bg-[#FFFFFF] text-[#0A0E1A] border-[#E6D8C3]'
                   }`}
                 >
                   {isAirport ? '✈️ Yes (Meet & Greet)' : 'No Airport'}
@@ -315,18 +315,18 @@ export const QuoteBookingPage: React.FC = () => {
 
             {/* Flight Number if Airport */}
             {isAirport && (
-              <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-500/30 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
+              <div className="p-3.5 rounded-xl bg-cyan-50 border border-cyan-200 grid grid-cols-1 sm:grid-cols-2 gap-3 animate-in fade-in">
                 <div>
-                  <label className="block font-semibold text-cyan-300 mb-1">Flight Number (OpenSky Radar Live)</label>
+                  <label className="block font-bold text-cyan-950 mb-1">Flight Number (OpenSky Radar Live)</label>
                   <input
                     type="text"
                     value={flightNumber}
                     onChange={(e) => setFlightNumber(e.target.value)}
                     placeholder="e.g. QF400 or VA214"
-                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-cyan-500/40 text-slate-100 uppercase font-mono"
+                    className="w-full px-3 py-2 rounded-lg bg-[#FFFFFF] border border-cyan-300 text-[#0A0E1A] uppercase font-mono font-black"
                   />
                 </div>
-                <div className="flex flex-col justify-center text-[11px] text-cyan-200">
+                <div className="flex flex-col justify-center text-[11px] text-cyan-900 font-semibold">
                   <span>✓ 60-min complimentary wait-time from touchdown</span>
                   <span>✓ Automated delay pickup rescheduling</span>
                 </div>
@@ -334,8 +334,8 @@ export const QuoteBookingPage: React.FC = () => {
             )}
 
             {/* Passenger Contact Information */}
-            <div className="pt-2 border-t border-slate-800 space-y-3">
-              <span className="font-bold text-slate-300 block">Passenger & Corporate Contact</span>
+            <div className="pt-2 border-t border-[#E6D8C3] space-y-3">
+              <span className="font-black text-[#0A0E1A] block">Passenger & Corporate Contact</span>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <input
                   type="text"
@@ -343,7 +343,7 @@ export const QuoteBookingPage: React.FC = () => {
                   placeholder="Full Name"
                   value={passengerName}
                   onChange={(e) => setPassengerName(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] placeholder-slate-400 font-bold"
                 />
                 <input
                   type="tel"
@@ -351,7 +351,7 @@ export const QuoteBookingPage: React.FC = () => {
                   placeholder="Mobile (+61...)"
                   value={passengerPhone}
                   onChange={(e) => setPassengerPhone(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100 font-mono"
+                  className="px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] placeholder-slate-400 font-mono font-bold"
                 />
                 <input
                   type="email"
@@ -359,48 +359,56 @@ export const QuoteBookingPage: React.FC = () => {
                   placeholder="Email"
                   value={passengerEmail}
                   onChange={(e) => setPassengerEmail(e.target.value)}
-                  className="px-3 py-2 rounded-xl bg-slate-950 border border-slate-800 text-slate-100"
+                  className="px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] placeholder-slate-400 font-bold"
                 />
               </div>
             </div>
 
             {/* Deposit vs Full Payment Amount Option */}
-            <div className="pt-2 border-t border-slate-800 space-y-2">
-              <span className="font-bold text-slate-300 block">Settlement Schedule</span>
+            <div className="pt-2 border-t border-[#E6D8C3] space-y-2">
+              <span className="font-black text-[#0A0E1A] block">Settlement Schedule</span>
               <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setPaymentOption('FULL')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all ${
                     paymentOption === 'FULL'
-                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-[#06090F] border-[#DFCAA8] text-[#FAF6F0] shadow-md scale-100'
+                      : 'bg-[#FFFFFF] border-[#E6D8C3] text-[#0A0E1A]'
                   }`}
                 >
-                  <span className="font-bold block text-slate-100">Pay Full Fare (100%)</span>
-                  <span className="text-xs font-mono font-bold text-amber-400">${fare.gross.toFixed(2)} AUD</span>
+                  <span className={`font-black block text-xs ${paymentOption === 'FULL' ? 'text-[#FAF6F0]' : 'text-[#0A0E1A]'}`}>
+                    Pay Full Fare (100%)
+                  </span>
+                  <span className={`text-xs font-mono font-bold ${paymentOption === 'FULL' ? 'text-[#DFCAA8]' : 'text-amber-800'}`}>
+                    ${fare.gross.toFixed(2)} AUD
+                  </span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentOption('DEPOSIT_25')}
-                  className={`p-3 rounded-xl border text-left transition-all ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all ${
                     paymentOption === 'DEPOSIT_25'
-                      ? 'bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'bg-slate-950 border-slate-800 text-slate-400'
+                      ? 'bg-[#06090F] border-[#DFCAA8] text-[#FAF6F0] shadow-md scale-100'
+                      : 'bg-[#FFFFFF] border-[#E6D8C3] text-[#0A0E1A]'
                   }`}
                 >
-                  <span className="font-bold block text-slate-100">Pay 25% Deposit Now</span>
-                  <span className="text-xs font-mono font-bold text-emerald-400">${fare.deposit.toFixed(2)} AUD</span>
+                  <span className={`font-black block text-xs ${paymentOption === 'DEPOSIT_25' ? 'text-[#FAF6F0]' : 'text-[#0A0E1A]'}`}>
+                    Pay 25% Deposit Now
+                  </span>
+                  <span className={`text-xs font-mono font-bold ${paymentOption === 'DEPOSIT_25' ? 'text-emerald-400' : 'text-emerald-800'}`}>
+                    ${fare.deposit.toFixed(2)} AUD
+                  </span>
                 </button>
               </div>
             </div>
 
             {/* Real-Time Payment Method Selector */}
-            <div className="pt-2 border-t border-slate-800 space-y-3">
+            <div className="pt-2 border-t border-[#E6D8C3] space-y-3">
               <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-300 block">Instant Payment Channel</span>
-                <span className="text-[10px] text-emerald-400 font-mono flex items-center gap-1">
+                <span className="font-black text-[#0A0E1A] block">Instant Payment Channel</span>
+                <span className="text-[10px] text-emerald-800 font-mono font-bold flex items-center gap-1">
                   <ShieldCheck className="w-3.5 h-3.5" /> 256-Bit SSL Auto-Settled
                 </span>
               </div>
@@ -410,88 +418,88 @@ export const QuoteBookingPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setPaymentMethodType('CARD')}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
                     paymentMethodType === 'CARD'
-                      ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+                      ? 'border-[#DFCAA8] bg-[#06090F] text-[#FAF6F0] shadow-md font-black'
+                      : 'border-[#E6D8C3] bg-[#FFFFFF] text-[#0A0E1A] hover:bg-[#FAF6F0] font-bold'
                   }`}
                 >
                   <CreditCard className="w-4 h-4" />
-                  <span className="text-[11px] font-bold">Credit / Debit Card</span>
+                  <span className="text-[11px]">Credit / Debit Card</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethodType('DIGITAL_WALLET')}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
                     paymentMethodType === 'DIGITAL_WALLET'
-                      ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+                      ? 'border-[#DFCAA8] bg-[#06090F] text-[#FAF6F0] shadow-md font-black'
+                      : 'border-[#E6D8C3] bg-[#FFFFFF] text-[#0A0E1A] hover:bg-[#FAF6F0] font-bold'
                   }`}
                 >
-                  <Smartphone className="w-4 h-4 text-cyan-400" />
-                  <span className="text-[11px] font-bold">Apple / Google Pay</span>
+                  <Smartphone className="w-4 h-4" />
+                  <span className="text-[11px]">Apple / Google Pay</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethodType('PAYID_EFT')}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
                     paymentMethodType === 'PAYID_EFT'
-                      ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+                      ? 'border-[#DFCAA8] bg-[#06090F] text-[#FAF6F0] shadow-md font-black'
+                      : 'border-[#E6D8C3] bg-[#FFFFFF] text-[#0A0E1A] hover:bg-[#FAF6F0] font-bold'
                   }`}
                 >
-                  <Zap className="w-4 h-4 text-emerald-400" />
-                  <span className="text-[11px] font-bold">OSKO / PayID (EFT)</span>
+                  <Zap className="w-4 h-4" />
+                  <span className="text-[11px]">OSKO / PayID (EFT)</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setPaymentMethodType('CORPORATE_ACCOUNT')}
-                  className={`p-2.5 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
+                  className={`p-3 rounded-xl border flex flex-col items-center gap-1 text-center transition-all ${
                     paymentMethodType === 'CORPORATE_ACCOUNT'
-                      ? 'border-amber-400 bg-amber-500/15 text-amber-300 shadow-md shadow-amber-500/10'
-                      : 'border-slate-800 bg-slate-950/70 text-slate-400 hover:border-slate-700'
+                      ? 'border-[#DFCAA8] bg-[#06090F] text-[#FAF6F0] shadow-md font-black'
+                      : 'border-[#E6D8C3] bg-[#FFFFFF] text-[#0A0E1A] hover:bg-[#FAF6F0] font-bold'
                   }`}
                 >
-                  <Building2 className="w-4 h-4 text-purple-400" />
-                  <span className="text-[11px] font-bold">Monthly Account</span>
+                  <Building2 className="w-4 h-4" />
+                  <span className="text-[11px]">Monthly Account</span>
                 </button>
               </div>
 
               {/* Dynamic Payment Channel Inputs */}
               {paymentMethodType === 'CARD' && (
-                <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800/90 space-y-3 animate-in fade-in">
-                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
-                    <span className="font-bold text-slate-200 text-[11px]">Enter Card Details (Visa, Mastercard, Amex)</span>
-                    <span className="text-[10px] text-slate-400 font-mono">🔒 SSL Encrypted</span>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-3 animate-in fade-in shadow-sm">
+                  <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-2">
+                    <span className="font-black text-[#0A0E1A] text-[11px]">Enter Card Details (Visa, Mastercard, Amex)</span>
+                    <span className="text-[10px] text-slate-600 font-mono font-bold">🔒 SSL Encrypted</span>
                   </div>
                   <div>
-                    <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Card Number</label>
+                    <label className="text-[10px] text-slate-700 uppercase font-bold block mb-1">Card Number</label>
                     <input
                       type="text"
                       required
                       value={cardNumber}
                       onChange={(e) => setCardNumber(e.target.value)}
                       placeholder="•••• •••• •••• ••••"
-                      className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 font-mono tracking-widest text-xs"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A] font-mono tracking-widest text-xs font-bold"
                     />
                   </div>
                   <div className="grid grid-cols-3 gap-2">
                     <div>
-                      <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Expiry</label>
+                      <label className="text-[10px] text-slate-700 uppercase font-bold block mb-1">Expiry</label>
                       <input
                         type="text"
                         required
                         value={cardExpiry}
                         onChange={(e) => setCardExpiry(e.target.value)}
                         placeholder="MM/YY"
-                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 font-mono text-center text-xs"
+                        className="w-full px-3 py-2 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A] font-mono text-center text-xs font-bold"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">CVV / CVC</label>
+                      <label className="text-[10px] text-slate-700 uppercase font-bold block mb-1">CVV / CVC</label>
                       <input
                         type="password"
                         required
@@ -499,18 +507,18 @@ export const QuoteBookingPage: React.FC = () => {
                         value={cardCvc}
                         onChange={(e) => setCardCvc(e.target.value)}
                         placeholder="•••"
-                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 font-mono text-center text-xs"
+                        className="w-full px-3 py-2 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A] font-mono text-center text-xs font-bold"
                       />
                     </div>
                     <div>
-                      <label className="text-[10px] text-slate-400 uppercase font-bold block mb-1">Cardholder</label>
+                      <label className="text-[10px] text-slate-700 uppercase font-bold block mb-1">Cardholder</label>
                       <input
                         type="text"
                         required
                         value={cardHolder}
                         onChange={(e) => setCardHolder(e.target.value)}
                         placeholder="Name on card"
-                        className="w-full px-3 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-100 text-xs"
+                        className="w-full px-3 py-2 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A] text-xs font-bold"
                       />
                     </div>
                   </div>
@@ -518,46 +526,46 @@ export const QuoteBookingPage: React.FC = () => {
               )}
 
               {paymentMethodType === 'DIGITAL_WALLET' && (
-                <div className="p-4 rounded-2xl bg-cyan-500/10 border border-cyan-500/30 text-cyan-200 text-center space-y-2 animate-in fade-in">
-                  <span className="font-bold block text-sm">🍎 Apple Pay & ⚡ Google Pay Enabled</span>
-                  <p className="text-[11px] text-cyan-300">
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-center space-y-2 animate-in fade-in">
+                  <span className="font-black block text-sm text-[#0A0E1A]">🍎 Apple Pay & ⚡ Google Pay Enabled</span>
+                  <p className="text-xs text-[#0A0E1A] font-bold">
                     Clicking Confirm will trigger 1-Tap Biometric (FaceID / TouchID) checkout for instantaneous booking confirmation.
                   </p>
                 </div>
               )}
 
               {paymentMethodType === 'PAYID_EFT' && (
-                <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200 space-y-2 text-[11px] font-mono animate-in fade-in">
-                  <span className="font-bold font-sans block text-sm text-emerald-300">Instant OSKO / PayID Transfer Details</span>
-                  <div className="flex justify-between border-b border-emerald-500/20 pb-1">
-                    <span className="text-slate-400">PayID / Email:</span>
-                    <strong className="text-emerald-300">accounts@opalchauffeurs.com.au</strong>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] space-y-2 text-xs font-mono animate-in fade-in">
+                  <span className="font-black font-sans block text-sm text-[#0A0E1A]">Instant OSKO / PayID Transfer Details</span>
+                  <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
+                    <span className="text-[#0A0E1A]">PayID / Email:</span>
+                    <strong className="text-[#0A0E1A]">book@opalchauffeurs.com.au</strong>
                   </div>
-                  <div className="flex justify-between border-b border-emerald-500/20 pb-1">
-                    <span className="text-slate-400">Bank:</span>
-                    <span>Commonwealth Bank (BSB: 063-000 • Acc: 1092 8841)</span>
+                  <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
+                    <span className="text-[#0A0E1A]">Bank:</span>
+                    <span className="font-black text-[#0A0E1A]">Commonwealth Bank (BSB: 063-000 • Acc: 1092 8841)</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-slate-400">Payment Reference:</span>
-                    <strong className="text-amber-300">CCM-TRANSFER</strong>
+                    <span className="text-[#0A0E1A]">Payment Reference:</span>
+                    <strong className="text-[#0A0E1A] font-black">OPAL-TRANSFER</strong>
                   </div>
                 </div>
               )}
 
               {paymentMethodType === 'CORPORATE_ACCOUNT' && (
-                <div className="p-4 rounded-2xl bg-purple-500/10 border border-purple-500/30 space-y-2 text-xs animate-in fade-in">
-                  <span className="font-bold text-purple-300 block">Monthly Post-Paid Corporate Account Billing</span>
-                  <label className="text-[10px] text-slate-400 uppercase font-bold block">Select Corporate Account</label>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] space-y-2 text-xs animate-in fade-in text-[#0A0E1A]">
+                  <span className="font-black text-[#0A0E1A] block">Monthly Post-Paid Corporate Account Billing</span>
+                  <label className="text-[10px] text-[#0A0E1A] uppercase font-black block">Select Corporate Account</label>
                   <select
                     value={corporateAccountCode}
                     onChange={(e) => setCorporateAccountCode(e.target.value)}
-                    className="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-slate-100 font-bold"
+                    className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black"
                   >
-                    <option value="CORP-RIO-880">Rio Tinto Mining Executive Account (Net 30)</option>
-                    <option value="CORP-BHP-550">BHP Billiton VIP Corporate Services (Net 30)</option>
-                    <option value="CORP-MQG-102">Macquarie Group Private Wealth (Net 14)</option>
+                    <option value="CORP-RIO-880" className="text-[#0A0E1A]">Rio Tinto Mining Executive Account (Net 30)</option>
+                    <option value="CORP-BHP-550" className="text-[#0A0E1A]">BHP Billiton VIP Corporate Services (Net 30)</option>
+                    <option value="CORP-MQG-102" className="text-[#0A0E1A]">Macquarie Group Private Wealth (Net 14)</option>
                   </select>
-                  <p className="text-[10px] text-slate-400">This booking will be charged to the monthly corporate account credit ledger.</p>
+                  <p className="text-[10px] text-[#0A0E1A] font-bold">This booking will be charged to the monthly corporate account credit ledger.</p>
                 </div>
               )}
             </div>
@@ -566,9 +574,9 @@ export const QuoteBookingPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-4 rounded-2xl glow-gold-btn text-slate-950 font-black text-sm flex items-center justify-center gap-2 shadow-xl shadow-amber-500/25 transition-all"
+              className="w-full py-4 rounded-2xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-sm flex items-center justify-center gap-2 shadow-xl hover:scale-[1.01] transition-all"
             >
-              <Lock className="w-4 h-4" />
+              <Lock className="w-4 h-4 text-white" />
               <span>
                 {isSubmitting
                   ? 'Authorizing & Dispatching Master Booking...'
@@ -582,38 +590,38 @@ export const QuoteBookingPage: React.FC = () => {
       {/* Confirmation & Printable Tax Invoice Modal */}
       {createdBookingNumber && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
-          <div className="glass-panel-gold max-w-lg w-full p-8 rounded-3xl text-center space-y-5 shadow-2xl">
-            <div className="w-16 h-16 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center mx-auto shadow-lg shadow-emerald-500/30">
-              <CheckCircle2 className="w-8 h-8" />
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-lg w-full p-8 rounded-3xl text-center space-y-5 shadow-2xl text-[#0A0E1A]">
+            <div className="w-16 h-16 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center mx-auto shadow-md">
+              <CheckCircle2 className="w-8 h-8 text-[#0A0E1A]" />
             </div>
 
             <div>
-              <h3 className="text-2xl font-black text-slate-100">Payment Authorized & Booking Locked!</h3>
-              <p className="text-xs text-slate-400 mt-1">
-                Your journey is locked in the Master Booking Engine as <strong className="text-amber-400 font-mono text-sm">{createdBookingNumber}</strong>
+              <h3 className="text-2xl font-black text-[#0A0E1A]">Payment Authorized & Booking Locked!</h3>
+              <p className="text-xs text-[#0A0E1A] font-bold mt-1">
+                Your journey is locked in the Master Booking Engine as <strong className="text-[#0A0E1A] font-mono text-sm">{createdBookingNumber}</strong>
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-950/90 border border-slate-800 text-left space-y-2 text-xs">
+            <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] text-left space-y-2 text-xs text-[#0A0E1A]">
               <div className="flex justify-between">
-                <span className="text-slate-400">Tax Invoice Number:</span>
-                <span className="font-mono font-bold text-amber-400">{createdInvoiceNumber}</span>
+                <span className="text-[#0A0E1A] font-bold">Tax Invoice Number:</span>
+                <span className="font-mono font-black text-[#0A0E1A]">{createdInvoiceNumber}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Passenger:</span>
-                <span className="font-bold text-slate-100">{passengerName}</span>
+                <span className="text-[#0A0E1A] font-bold">Passenger:</span>
+                <span className="font-black text-[#0A0E1A]">{passengerName}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Vehicle Category:</span>
-                <span className="text-amber-400 font-semibold">{selectedCategory}</span>
+                <span className="text-[#0A0E1A] font-bold">Vehicle Category:</span>
+                <span className="text-[#0A0E1A] font-black">{selectedCategory}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-slate-400">Total Invoiced:</span>
-                <span className="font-mono font-bold text-slate-100">${fare.gross.toFixed(2)} AUD</span>
+                <span className="text-[#0A0E1A] font-bold">Total Invoiced:</span>
+                <span className="font-mono font-black text-[#0A0E1A]">${fare.gross.toFixed(2)} AUD</span>
               </div>
-              <div className="flex justify-between text-emerald-400">
+              <div className="flex justify-between text-[#0A0E1A] font-bold">
                 <span>Payment Settlement Status:</span>
-                <span className="font-bold font-mono">
+                <span className="font-black font-mono text-[#0A0E1A]">
                   ● {paymentOption === 'FULL' ? `PAID IN FULL ($${fare.gross.toFixed(2)})` : `25% DEPOSIT PAID ($${fare.deposit.toFixed(2)})`}
                 </span>
               </div>
@@ -643,9 +651,9 @@ export const QuoteBookingPage: React.FC = () => {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-3 px-4 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-500/25 transition-all"
+                className="py-3 px-4 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white font-black text-xs flex items-center justify-center gap-1.5 border border-[#DFCAA8] shadow-lg transition-all"
               >
-                <MessageSquare className="w-4 h-4" />
+                <MessageSquare className="w-4 h-4 text-white" />
                 <span>📱 WhatsApp Voucher</span>
               </a>
 
@@ -666,16 +674,16 @@ export const QuoteBookingPage: React.FC = () => {
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="py-3 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-black text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-cyan-500/25 transition-all"
+                className="py-3 px-4 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center justify-center gap-1.5 shadow-md transition-all"
               >
-                <Mail className="w-4 h-4" />
+                <Mail className="w-4 h-4 text-white" />
                 <span>✉️ Email Voucher</span>
               </a>
             </div>
 
             <button
               onClick={() => setCreatedBookingNumber(null)}
-              className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-colors"
+              className="w-full py-3 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] font-black text-xs transition-colors shadow-sm"
             >
               Done & Return to Dispatch Hub
             </button>

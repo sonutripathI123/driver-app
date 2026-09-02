@@ -9,12 +9,12 @@
     --card-white: #FFFFFF;
     --border-beige: #E6D8C3;
     --text-black: #0A0E1A;
-    --text-muted: #4B5563;
+    --text-white: #FFFFFF;
   }
 
   html, body {
     background-color: #06090F;
-    color: #0A0E1A;
+    color: #FFFFFF;
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     margin: 0;
     padding: 0;
@@ -45,59 +45,144 @@
   }
 }
 
-/* Luxury Beige Cards on Black Canvas with Black Text */
+/* =========================================================================
+   UNIVERSAL STRICT BINARY CONTRAST ENGINE:
+   1. ANY White / Beige / Cream Background => 100% Solid JET BLACK text (#0A0E1A)
+   2. ANY Black / Dark / Slate Background => 100% Solid PURE WHITE text (#FFFFFF)
+   ========================================================================= */
+
+/* 1. LIGHT SURFACES (Cards, Tables, Panels, Dropdowns, Modals) */
+.glass-panel,
+.glass-panel-beige,
+.glass-panel-gold,
+.glass-panel-cyan,
+[class*="bg-[#FAF6F0]"],
+[class*="bg-[#FAF8F5]"],
+[class*="bg-[#FFFFFF]"],
+[class*="bg-[#F5EDE0]"],
+[class*="bg-[#F5EFE6]"],
+[class*="bg-white"] {
+  color: #0A0E1A !important;
+  background-color: #FAF6F0;
+}
+
+/* Deep Child Text Override for Light Surfaces */
+.glass-panel *,
+.glass-panel-beige *,
+.glass-panel-gold *,
+.glass-panel-cyan *,
+[class*="bg-[#FAF6F0]"] *,
+[class*="bg-[#FAF8F5]"] *,
+[class*="bg-[#FFFFFF]"] *,
+[class*="bg-[#F5EDE0]"] *,
+[class*="bg-[#F5EFE6]"] *,
+[class*="bg-white"] * {
+  color: #0A0E1A;
+}
+
+/* Exceptions: Dark buttons or badges inside light containers */
+.glass-panel button[class*="bg-[#06090F]"],
+.glass-panel button[class*="bg-[#06090F]"] *,
+.glass-panel button[class*="bg-[#1A2233]"],
+.glass-panel button[class*="bg-[#1A2233]"] *,
+[class*="bg-[#FAF6F0]"] button[class*="bg-[#06090F]"],
+[class*="bg-[#FAF6F0]"] button[class*="bg-[#06090F]"] *,
+[class*="bg-[#FAF6F0]"] div[class*="bg-[#06090F]"],
+[class*="bg-[#FAF6F0]"] div[class*="bg-[#06090F]"] *,
+[class*="bg-[#FFFFFF]"] button[class*="bg-[#06090F]"],
+[class*="bg-[#FFFFFF]"] button[class*="bg-[#06090F]"] *,
+[class*="bg-[#FFFFFF]"] div[class*="bg-[#06090F]"],
+[class*="bg-[#FFFFFF]"] div[class*="bg-[#06090F]"] * {
+  color: #FFFFFF !important;
+}
+
+/* Light Card Panels Border and Shadow */
 .glass-panel {
   background: #FAF6F0;
-  color: #0A0E1A;
   border: 1px solid #E6D8C3;
   box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
 }
 
 .glass-panel-gold, .glass-panel-beige {
   background: #FAF6F0;
-  color: #0A0E1A;
   border: 1px solid #DFCAA8;
   box-shadow: 0 10px 35px -5px rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel-cyan {
   background: #FFFFFF;
-  color: #0A0E1A;
   border: 1px solid #E6D8C3;
   box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
 }
 
-.gold-gradient-text, .beige-gradient-text {
-  color: #0A0E1A;
-  font-weight: 900;
-}
-
-.cyan-gradient-text, .emerald-gradient-text {
-  color: #0A0E1A;
-  font-weight: 900;
-}
-
-/* Buttons */
-.glow-gold-btn, .glow-beige-btn {
-  background: linear-gradient(135deg, #0A0E1A 0%, #1A2233 100%);
-  color: #FAF6F0 !important;
+/* 2. DARK SURFACES (Canvas, Sidebar, Top Header, Dark Buttons) */
+header[class*="bg-[#06090F]"],
+header[class*="bg-[#06090F]"] span,
+header[class*="bg-[#06090F]"] a,
+header[class*="bg-[#06090F]"] p,
+aside[class*="bg-[#06090F]"],
+aside[class*="bg-[#06090F]"] span,
+aside[class*="bg-[#06090F]"] a,
+aside[class*="bg-[#06090F]"] p,
+button[class*="bg-[#06090F]"],
+button[class*="bg-[#0D1322]"],
+button[class*="bg-[#121824]"],
+button[class*="bg-[#1A2233]"],
+button[class*="bg-[#121A2D]"],
+button[class*="bg-slate-900"],
+button[class*="bg-slate-950"],
+button[class*="bg-black"],
+a[class*="bg-[#06090F]"],
+.glow-gold-btn, .glow-beige-btn, .glow-cyan-btn {
+  background: #06090F;
+  color: #FFFFFF !important;
   border: 1px solid #DFCAA8;
-  font-weight: 800;
-  box-shadow: 0 4px 15px -2px rgba(223, 202, 168, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.glow-gold-btn:hover, .glow-beige-btn:hover {
-  background: linear-gradient(135deg, #1A2233 0%, #0A0E1A 100%);
-  border-color: #FAF6F0;
-  box-shadow: 0 6px 20px 0px rgba(223, 202, 168, 0.4);
-  transform: translateY(-2px);
 }
 
-.glow-cyan-btn {
-  background: linear-gradient(135deg, #0A0E1A 0%, #1E293B 100%);
-  color: #FAF6F0 !important;
-  border: 1px solid #DFCAA8;
-  font-weight: 800;
-  box-shadow: 0 4px 15px -2px rgba(223, 202, 168, 0.25);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+button[class*="bg-[#06090F]"] *,
+button[class*="bg-[#0D1322]"] *,
+button[class*="bg-[#121824]"] *,
+button[class*="bg-[#1A2233]"] *,
+button[class*="bg-[#121A2D]"] *,
+button[class*="bg-slate-900"] *,
+button[class*="bg-slate-950"] *,
+button[class*="bg-black"] *,
+a[class*="bg-[#06090F]"] * {
+  color: #FFFFFF !important;
+}
+
+button[class*="bg-[#06090F]"]:hover,
+button[class*="bg-[#0D1322]"]:hover,
+button[class*="bg-[#121824]"]:hover,
+button[class*="bg-[#1A2233]"]:hover,
+button[class*="bg-[#121A2D]"]:hover {
+  background: #1A2233;
+  color: #FFFFFF !important;
+}
+
+/* Light Pills / Badges inside Dark Headers: Force Black Text */
+header .badge,
+header div[class*="bg-[#FAF6F0]"],
+header div[class*="bg-[#FAF6F0]"] *,
+header div[class*="bg-[#DFCAA8]"],
+header div[class*="bg-[#DFCAA8]"] *,
+header button[class*="bg-[#FAF6F0]"],
+header button[class*="bg-[#FAF6F0]"] * {
+  color: #0A0E1A !important;
+}
+
+/* Inputs & selects inside light containers */
+.glass-panel input, .glass-panel select, .glass-panel textarea,
+[class*="bg-[#FAF6F0]"] input, [class*="bg-[#FAF6F0]"] select, [class*="bg-[#FAF6F0]"] textarea,
+[class*="bg-[#FFFFFF]"] input, [class*="bg-[#FFFFFF]"] select, [class*="bg-[#FFFFFF]"] textarea {
+  color: #0A0E1A !important;
+  background-color: #FFFFFF !important;
+}
+
+/* Gradients neutralisation */
+.gold-gradient-text, .beige-gradient-text, .cyan-gradient-text, .emerald-gradient-text {
+  color: #0A0E1A !important;
+  font-weight: 900 !important;
+  background: none !important;
+  -webkit-text-fill-color: initial !important;
 }
