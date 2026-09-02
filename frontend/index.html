@@ -2,21 +2,41 @@
 <html lang="en" class="dark">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Opal Chauffeurs — VIP Operations & Dispatch Platform</title>
+    <link rel="icon" type="image/png" href="/pwa-icon-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <title>Opal Chauffeurs — VIP Fleet Operations & Dispatch Platform</title>
+
+    <!-- PWA Web App Meta Tags -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#06090F" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Opal Chauffeurs" />
+    <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
+
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
     <style>
       body {
-        background-color: #090C15;
+        background-color: #06090F;
       }
     </style>
   </head>
-  <body class="bg-[#090C15] text-slate-100 antialiased selection:bg-amber-500 selection:text-slate-950">
+  <body class="bg-[#06090F] text-[#0A0E1A] antialiased selection:bg-[#DFCAA8] selection:text-[#06090F]">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.log('ServiceWorker registration error: ', err);
+          });
+        });
+      }
+    </script>
   </body>
 </html>

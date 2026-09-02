@@ -1,0 +1,48 @@
+{
+  "short_name": "Opal Chauffeurs",
+  "name": "Opal Chauffeurs Australia — VIP Fleet Operations & Dispatch",
+  "description": "Executive VIP chauffeur fleet management, real-time dispatch, driver mobile PWA, and ATO tax invoicing platform.",
+  "icons": [
+    {
+      "src": "/pwa-icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/pwa-icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#06090F",
+  "theme_color": "#06090F",
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["business", "travel", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Live Operate Board",
+      "short_name": "Operate",
+      "description": "Open live dispatch board",
+      "url": "/?tab=operate",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Driver Mobile PWA",
+      "short_name": "Driver App",
+      "description": "Open driver mobile terminal",
+      "url": "/driver",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Client Directory",
+      "short_name": "Clients",
+      "description": "Open VIP client directory",
+      "url": "/?tab=clients",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}
