@@ -463,29 +463,29 @@ export const BookingsOperatePage: React.FC = () => {
           {/* Onboard New Driver Button */}
           <button
             onClick={() => setIsAddDriverOpen(true)}
-            className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
+            className="px-4 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
             title="Onboard and add a new chauffeur"
           >
-            <UserPlus className="w-3.5 h-3.5 text-white" />
-            <span className="text-white font-black">+ Onboard Driver</span>
+            <UserPlus className="w-3.5 h-3.5" />
+            <span className="font-black">+ Onboard Driver</span>
           </button>
 
           {/* Reset Test Trip Button */}
           <button
             onClick={handleResetTripStatus}
-            className="px-3.5 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-sm"
+            className="px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-yellow border border-[#DFCAA8] text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-sm"
             title="Reset Sahil Tripathi trip to EN_ROUTE"
           >
-            <RefreshCw className="w-3.5 h-3.5 text-white" />
-            <span className="text-white font-black">Reset Test to EN_ROUTE</span>
+            <RefreshCw className="w-3.5 h-3.5" />
+            <span className="font-black">Reset Test to EN_ROUTE</span>
           </button>
 
           {/* Refresh Button */}
           <button
             onClick={loadData}
-            className="p-2.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white hover:bg-[#1A2233] transition-colors shadow-sm"
+            className="p-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white transition-colors shadow-sm"
           >
-            <RefreshCw className={`w-4 h-4 text-white ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
 
           {/* Table / Kanban View Toggle */}
@@ -493,7 +493,7 @@ export const BookingsOperatePage: React.FC = () => {
             <button
               onClick={() => setViewMode('table')}
               className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
-                viewMode === 'table' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover:text-white font-bold'
+                viewMode === 'table' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover-yellow font-bold'
               }`}
             >
               Table View
@@ -501,7 +501,7 @@ export const BookingsOperatePage: React.FC = () => {
             <button
               onClick={() => setViewMode('kanban')}
               className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
-                viewMode === 'kanban' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover:text-white font-bold'
+                viewMode === 'kanban' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover-sky font-bold'
               }`}
             >
               Kanban Board
@@ -552,7 +552,7 @@ export const BookingsOperatePage: React.FC = () => {
                     const marginPct = (margin / Math.max(1, netExGst)) * 100;
 
                     return (
-                      <tr key={leg.id} className="bg-[#FFFFFF] hover:bg-[#FAF6F0] transition-colors">
+                      <tr key={leg.id} className="clickable-row bg-[#FFFFFF] transition-colors cursor-pointer">
                         <td className="py-4 px-4 font-mono font-black text-[#0A0E1A]">
                           {b.booking_number}
                           <span className="block text-[10px] text-[#0A0E1A] font-bold font-sans">Leg #{leg.leg_number}</span>
@@ -615,7 +615,7 @@ export const BookingsOperatePage: React.FC = () => {
                         <td className="py-4 px-4 text-right">
                           <button
                             onClick={() => handleOpenAllocation(b, leg)}
-                            className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
+                            className="px-3.5 py-2 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
                           >
                             Dispatch / Offload
                           </button>

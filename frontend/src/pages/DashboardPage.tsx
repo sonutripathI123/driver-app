@@ -523,7 +523,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 1: Gross Revenue */}
         <div
           onClick={() => setActiveModal('REVENUE')}
-          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="card-clickable-sky rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -538,7 +538,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">Ex GST: ${netRev.toLocaleString('en-AU', { minimumFractionDigits: 2 })}</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-sky">
               Details ➔
             </span>
           </div>
@@ -547,7 +547,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 2: Net Operating Profit */}
         <div
           onClick={() => setActiveModal('PROFIT')}
-          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="card-clickable-yellow rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -562,7 +562,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">{profitMargin.toFixed(1)}% Operating Margin</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-yellow">
               Margins ➔
             </span>
           </div>
@@ -571,7 +571,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 3: Bookings & Trips Queue */}
         <div
           onClick={() => setActiveModal('BOOKINGS')}
-          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="card-clickable-sky rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -587,7 +587,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <span className="w-1.5 h-1.5 rounded-full bg-[#0A0E1A] animate-ping shrink-0" />
               <span className="truncate">{completedRides} Completed • 2 Pending</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-sky">
               View All ➔
             </span>
           </div>
@@ -596,7 +596,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Card 4: Active Drivers & Availability */}
         <div
           onClick={() => setActiveModal('FLEET')}
-          className="luxury-card-hover rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
+          className="card-clickable-yellow rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-5 space-y-2.5 min-w-0 cursor-pointer relative overflow-hidden shadow-md text-[#0A0E1A]"
         >
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase font-black text-[#0A0E1A] tracking-wider truncate">
@@ -611,7 +611,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="truncate">● 4 Available • 3 On Trip</span>
             </div>
-            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0">
+            <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-yellow">
               Driver Status ➔
             </span>
           </div>
@@ -652,7 +652,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
           <button
             onClick={() => onNavigate('operate')}
-            className="text-xs font-black text-[#0A0E1A] hover:underline flex items-center gap-1 shrink-0 ml-auto"
+            className="text-xs font-black text-[#0A0E1A] hover-yellow flex items-center gap-1 shrink-0 ml-auto px-2.5 py-1 rounded-lg transition-all"
           >
             <span>View full queue</span>
             <ArrowRight className="w-3.5 h-3.5" />
@@ -664,7 +664,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           {pendingBookings.map((b) => (
             <div
               key={b.id}
-              className="luxury-row-hover p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm text-[#0A0E1A]"
+              className="clickable-row p-3.5 sm:p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs w-full min-w-0 overflow-hidden shadow-sm text-[#0A0E1A] cursor-pointer transition-all"
             >
               <div className="space-y-1.5 min-w-0 w-full md:flex-1">
                 <div className="flex flex-wrap items-center gap-2 min-w-0">

@@ -10,6 +10,8 @@
     --border-beige: #E6D8C3;
     --text-black: #0A0E1A;
     --text-white: #FFFFFF;
+    --hover-sky: #E0F2FE;
+    --hover-yellow: #FEF9C3;
   }
 
   html, body {
@@ -47,8 +49,8 @@
 
 /* =========================================================================
    UNIVERSAL STRICT BINARY CONTRAST ENGINE:
-   1. ANY White / Beige / Cream Background => 100% Solid JET BLACK text (#0A0E1A)
-   2. ANY Black / Dark / Slate Background => 100% Solid PURE WHITE text (#FFFFFF)
+   1. Static Light/Beige/White Background => 100% Solid JET BLACK text (#0A0E1A)
+   2. Static Black/Dark Background => 100% Solid PURE WHITE text (#FFFFFF)
    ========================================================================= */
 
 /* 1. LIGHT SURFACES (Cards, Tables, Panels, Dropdowns, Modals) */
@@ -65,8 +67,7 @@
   color: #0A0E1A !important;
 }
 
-/* Deep Child Text Override for Light Surfaces */
-.glass-panel *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *):not(.badge-dark *),
+.glass-panel *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
 .glass-panel-beige *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
 .glass-panel-gold *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
 .glass-panel-cyan *:not(button[class*="bg-[#06090F]"] *):not(div[class*="bg-[#06090F]"] *),
@@ -79,18 +80,9 @@
   color: #0A0E1A;
 }
 
-/* Exceptions: Dark buttons or dark initial badges inside light containers */
-.glass-panel button[class*="bg-[#06090F]"],
-.glass-panel button[class*="bg-[#06090F]"] *,
-.glass-panel button[class*="bg-[#1A2233]"],
-.glass-panel button[class*="bg-[#1A2233]"] *,
-[class*="bg-[#FAF6F0]"] button[class*="bg-[#06090F]"],
-[class*="bg-[#FAF6F0]"] button[class*="bg-[#06090F]"] *,
-[class*="bg-[#FAF6F0]"] div[class*="bg-[#06090F]"],
+/* Dark initial badges inside light containers */
+.glass-panel div[class*="bg-[#06090F]"] *,
 [class*="bg-[#FAF6F0]"] div[class*="bg-[#06090F]"] *,
-[class*="bg-[#FFFFFF]"] button[class*="bg-[#06090F]"],
-[class*="bg-[#FFFFFF]"] button[class*="bg-[#06090F]"] *,
-[class*="bg-[#FFFFFF]"] div[class*="bg-[#06090F]"],
 [class*="bg-[#FFFFFF]"] div[class*="bg-[#06090F]"] * {
   color: #FFFFFF !important;
 }
@@ -114,92 +106,112 @@
   box-shadow: 0 8px 30px -4px rgba(0, 0, 0, 0.45);
 }
 
-/* 2. DARK SURFACES (Canvas, Sidebar, Top Header, Dark Buttons) */
+/* 2. DARK SURFACES */
 header[class*="bg-[#06090F]"],
-aside[class*="bg-[#06090F]"],
-button[class*="bg-[#06090F]"],
-button[class*="bg-[#0D1322]"],
-button[class*="bg-[#121824]"],
-button[class*="bg-[#1A2233]"],
-button[class*="bg-[#121A2D]"],
-button[class*="bg-slate-900"],
-button[class*="bg-slate-950"],
-button[class*="bg-black"],
-a[class*="bg-[#06090F]"],
-.glow-gold-btn, .glow-beige-btn, .glow-cyan-btn {
+aside[class*="bg-[#06090F]"] {
   background: #06090F;
-  color: #FFFFFF !important;
-  border: 1px solid #DFCAA8;
-}
-
-button[class*="bg-[#06090F]"] *,
-button[class*="bg-[#0D1322]"] *,
-button[class*="bg-[#121824]"] *,
-button[class*="bg-[#1A2233]"] *,
-button[class*="bg-[#121A2D]"] *,
-button[class*="bg-slate-900"] *,
-button[class*="bg-slate-950"] *,
-button[class*="bg-black"] *,
-a[class*="bg-[#06090F]"] * {
   color: #FFFFFF !important;
 }
 
 /* =========================================================================
-   👑 LUXURY TACTILE HOVER MICRO-INTERACTIONS (FEEL / TACTILE FEEDBACK)
+   🎯 USER DIRECTIVE: TWO EXCLUSIVE HOVER COLORS ONLY ON CLICKABLE LINKS
+   1. Light Sky Blue (#E0F2FE)
+   2. Light Soft Yellow (#FEF9C3)
+   👉 Text ON HOVER is 100% PURE BOLD BLACK (#0A0E1A) across the entire system!
    ========================================================================= */
 
-/* 1. Interactive Metric Cards Hover (Dashboard, Analytics, Client Cards) */
-.luxury-card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+/* Clickable Links & Action Buttons with Light Sky Blue Hover */
+.hover-sky,
+a:hover,
+button.hover-sky:hover,
+.clickable-sky:hover {
+  background-color: #E0F2FE !important;
+  border-color: #7DD3FC !important;
+  color: #0A0E1A !important;
+  box-shadow: 0 4px 14px rgba(125, 211, 252, 0.35) !important;
 }
-.luxury-card-hover:hover {
-  background-color: #F3E9D9 !important;
-  border-color: #C2A16B !important;
-  transform: translateY(-3px);
-  box-shadow: 0 14px 35px -5px rgba(194, 161, 107, 0.28), 0 4px 10px rgba(0, 0, 0, 0.1) !important;
-}
-
-/* 2. Table Rows Hover (Live Operate, Invoicing, Clients) */
-tr.luxury-row-hover,
-div.luxury-row-hover {
-  transition: all 0.15s ease-in-out;
-}
-tr.luxury-row-hover:hover,
-div.luxury-row-hover:hover {
-  background-color: #F2E8D8 !important;
-  border-color: #C2A16B !important;
-  box-shadow: inset 4px 0 0 #C2A16B, 0 4px 12px rgba(194, 161, 107, 0.12) !important;
+.hover-sky:hover *,
+a:hover *,
+button.hover-sky:hover *,
+.clickable-sky:hover * {
+  color: #0A0E1A !important;
 }
 
-/* 3. Dark Action Button Hover */
-button[class*="bg-[#06090F]"]:hover,
-button[class*="bg-[#0D1322]"]:hover,
-button[class*="bg-[#121824]"]:hover,
-button[class*="bg-[#1A2233]"]:hover,
-button[class*="bg-[#121A2D]"]:hover,
-.luxury-btn-dark:hover {
-  background-color: #162032 !important;
-  border-color: #F0D5AC !important;
-  color: #FFFFFF !important;
+/* Clickable Links & Action Buttons with Light Yellow Hover */
+.hover-yellow,
+button.hover-yellow:hover,
+.clickable-yellow:hover {
+  background-color: #FEF9C3 !important;
+  border-color: #FACC15 !important;
+  color: #0A0E1A !important;
+  box-shadow: 0 4px 14px rgba(250, 204, 21, 0.35) !important;
+}
+.hover-yellow:hover *,
+button.hover-yellow:hover *,
+.clickable-yellow:hover * {
+  color: #0A0E1A !important;
+}
+
+/* Universal Clickable Button Hover (Alternating Sky & Yellow) */
+button:hover:not(.no-hover-effect) {
+  background-color: #E0F2FE !important;
+  border-color: #7DD3FC !important;
+  color: #0A0E1A !important;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(223, 202, 168, 0.35) !important;
+}
+button:hover:not(.no-hover-effect) * {
+  color: #0A0E1A !important;
 }
 
-/* 4. Light Badges / Category Pills Hover */
-.luxury-pill-hover {
-  transition: all 0.15s ease-in-out;
+/* Clickable Metric Cards Hover (Sky / Yellow with Black Text) */
+.card-clickable-sky {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.luxury-pill-hover:hover {
-  background-color: #EBDDC8 !important;
-  border-color: #C2A16B !important;
-  transform: scale(1.02);
+.card-clickable-sky:hover {
+  background-color: #E0F2FE !important;
+  border-color: #7DD3FC !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(125, 211, 252, 0.3) !important;
+}
+.card-clickable-sky:hover * {
+  color: #0A0E1A !important;
 }
 
-/* 5. Inputs & Selects Focus / Hover */
-input:hover, select:hover, textarea:hover {
-  border-color: #C2A16B !important;
+.card-clickable-yellow {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-input:focus, select:focus, textarea:focus {
-  border-color: #0A0E1A !important;
-  box-shadow: 0 0 0 2px rgba(194, 161, 107, 0.3) !important;
+.card-clickable-yellow:hover {
+  background-color: #FEF9C3 !important;
+  border-color: #FACC15 !important;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(250, 204, 21, 0.3) !important;
+}
+.card-clickable-yellow:hover * {
+  color: #0A0E1A !important;
+}
+
+/* Clickable Table Rows Hover (Light Sky Blue with Black text) */
+tr.clickable-row:hover,
+div.clickable-row:hover {
+  background-color: #E0F2FE !important;
+  border-color: #7DD3FC !important;
+  box-shadow: inset 4px 0 0 #38BDF8 !important;
+}
+tr.clickable-row:hover *,
+div.clickable-row:hover * {
+  color: #0A0E1A !important;
+}
+
+/* Clickable Text Links (e.g. Details ➔, View full queue) */
+.link-hover-yellow:hover {
+  background-color: #FEF9C3 !important;
+  color: #0A0E1A !important;
+  border-radius: 6px;
+  padding: 2px 6px;
+}
+.link-hover-sky:hover {
+  background-color: #E0F2FE !important;
+  color: #0A0E1A !important;
+  border-radius: 6px;
+  padding: 2px 6px;
 }
