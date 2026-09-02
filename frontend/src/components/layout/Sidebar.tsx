@@ -96,10 +96,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div>
             <h1 className="font-extrabold text-sm tracking-wider text-white uppercase">
-              OPAL CHAUFFEURS
+              ADMIN DASHBOARD
             </h1>
             <p className="text-[10px] text-[#DFCAA8] font-mono tracking-widest uppercase font-bold">
-              OPERATIONS PLATFORM
+              OPAL CHAUFFEURS AUSTRALIA
             </p>
           </div>
         </div>

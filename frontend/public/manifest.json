@@ -1,6 +1,6 @@
 {
-  "short_name": "Opal Chauffeurs",
-  "name": "Opal Chauffeurs Australia — VIP Fleet Operations & Dispatch",
+  "short_name": "Admin Dashboard",
+  "name": "Admin Dashboard — Opal Chauffeurs Australia",
   "description": "Executive VIP chauffeur fleet management, real-time dispatch, driver mobile PWA, and ATO tax invoicing platform.",
   "icons": [
     {
@@ -23,6 +23,13 @@
   "orientation": "any",
   "categories": ["business", "travel", "productivity"],
   "shortcuts": [
+    {
+      "name": "Admin Overview",
+      "short_name": "Overview",
+      "description": "Open Admin Dashboard overview",
+      "url": "/?tab=dashboard",
+      "icons": [{ "src": "/pwa-icon-192.png", "sizes": "192x192" }]
+    },
     {
       "name": "Live Operate Board",
       "short_name": "Operate",

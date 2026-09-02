@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/pwa-icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <title>Opal Chauffeurs — VIP Fleet Operations & Dispatch Platform</title>
+    <title>Admin Dashboard — Opal Chauffeurs Operations Platform</title>
 
     <!-- PWA Web App Meta Tags -->
     <link rel="manifest" href="/manifest.json" />
@@ -12,7 +12,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Opal Chauffeurs" />
+    <meta name="apple-mobile-web-app-title" content="Admin Dashboard" />
     <link rel="apple-touch-icon" href="/pwa-icon-192.png" />
 
     <!-- Google Fonts -->
@@ -32,8 +32,31 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').catch(err => {
+          navigator.serviceWorker.register('/sw.js').then((registration) => {
+            console.log('ServiceWorker registered with scope:', registration.scope);
+
+            // Check for updates periodically (every 5 mins)
+            setInterval(() => {
+              registration.update();
+            }, 5 * 60 * 1000);
+
+            // Check for updates when user brings app to foreground
+            document.addEventListener('visibilitychange', () => {
+              if (document.visibilityState === 'visible') {
+                registration.update();
+              }
+            });
+          }).catch(err => {
             console.log('ServiceWorker registration error: ', err);
+          });
+
+          // Reload page when new service worker takes control (seamless auto-update)
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) {
+              refreshing = true;
+              window.location.reload();
+            }
           });
         });
       }

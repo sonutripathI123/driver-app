@@ -492,11 +492,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         <div className="relative z-10 max-w-2xl space-y-2 min-w-0">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black shadow-sm">
             <Sparkles className="w-3.5 h-3.5 text-[#7B6035] shrink-0" />
-            <span className="truncate">Opal Chauffeurs Intelligence Active</span>
+            <span className="truncate">Admin Dashboard Intelligence Active</span>
           </div>
 
           <h1 className="text-xl sm:text-2xl md:text-3xl font-black tracking-tight text-[#0A0E1A] break-words">
-            Chauffeur Operations & Dispatch Command Center
+            Admin Dashboard — Operations & Dispatch Command Center
           </h1>
 
           <p className="text-xs md:text-sm text-slate-700 leading-relaxed font-semibold">
