@@ -706,74 +706,74 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 1: REVENUE BREAKDOWN */}
       {activeModal === 'REVENUE' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-white border border-[#DFCAA8] rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] rounded-3xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl text-[#0A0E1A]">
             {/* Modal Header */}
-            <div className="p-6 border-b border-slate-200 flex items-center justify-between bg-[#FAF8F5]">
+            <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-[#DFCAA8]/30 text-[#7B6035] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
                   <DollarSign className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-900">Gross Revenue & Tax Breakdown</h2>
-                  <p className="text-xs text-slate-500">ATO 1/11th Australian GST & Settlement Ledger</p>
+                  <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Gross Revenue & Tax Breakdown</h2>
+                  <p className="text-xs text-slate-700 font-medium">ATO 1/11th Australian GST & Settlement Ledger</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
               {/* 3 Metric Pills */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Total Collected (Inc GST)</span>
-                  <div className="text-xl font-black font-mono text-slate-100">${grossRev.toFixed(2)} AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">Total Collected (Inc GST)</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">${grossRev.toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-amber-400">10% ATO GST Portion</span>
-                  <div className="text-xl font-black font-mono text-amber-300">${(grossRev / 11).toFixed(2)} AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">10% ATO GST Portion</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">${(grossRev / 11).toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-emerald-400">Net Revenue Ex-GST</span>
-                  <div className="text-xl font-black font-mono text-emerald-400">${netRev.toFixed(2)} AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Revenue Ex-GST</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">${netRev.toFixed(2)} AUD</div>
                 </div>
               </div>
 
               {/* Inflow Channels */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Revenue By Booking Channel</h3>
+                <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Revenue By Booking Channel</h3>
                 <div className="space-y-2 text-xs">
-                  <div className="p-3 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
-                    <span className="text-slate-300 font-semibold">🌐 Online Passenger Website Bookings (28 trips)</span>
-                    <span className="font-mono font-bold text-slate-100">$11,240.00 AUD (60.9%)</span>
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                    <span className="text-[#0A0E1A] font-bold">🌐 Online Passenger Website Bookings (28 trips)</span>
+                    <span className="font-mono font-black text-[#0A0E1A]">$11,240.00 AUD (60.9%)</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
-                    <span className="text-slate-300 font-semibold">🏢 Corporate Invoiced Accounts (B2B Multi-Leg)</span>
-                    <span className="font-mono font-bold text-slate-100">$5,480.00 AUD (29.7%)</span>
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                    <span className="text-[#0A0E1A] font-bold">🏢 Corporate Invoiced Accounts (B2B Multi-Leg)</span>
+                    <span className="font-mono font-black text-[#0A0E1A]">$5,480.00 AUD (29.7%)</span>
                   </div>
-                  <div className="p-3 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
-                    <span className="text-slate-300 font-semibold">📞 Concierge Phone Quotes & Custom Charters</span>
-                    <span className="font-mono font-bold text-slate-100">$1,730.00 AUD (9.4%)</span>
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
+                    <span className="text-[#0A0E1A] font-bold">📞 Concierge Phone Quotes & Custom Charters</span>
+                    <span className="font-mono font-black text-[#0A0E1A]">$1,730.00 AUD (9.4%)</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
-              <span className="text-xs text-slate-400">Australian Taxation Office (ATO) Compliant</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
+              <span className="text-xs text-slate-700 font-semibold">Australian Taxation Office (ATO) Compliant</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('invoicing');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Go To GST Invoicing Hub ➔</span>
               </button>
@@ -784,82 +784,82 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 2: NET PROFIT & OPERATING MARGIN */}
       {activeModal === 'PROFIT' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121A2D] border border-emerald-500/40 rounded-3xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] rounded-3xl w-full max-w-3xl max-h-[88vh] overflow-hidden flex flex-col shadow-2xl text-[#0A0E1A]">
             {/* Modal Header */}
-            <div className="p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+            <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
                   <TrendingUp className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">Net Profit & Operating Margins</h2>
-                  <p className="text-xs text-slate-400">Direct Fleet Costs vs Gross Profit Analytics</p>
+                  <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Net Profit & Operating Margins</h2>
+                  <p className="text-xs text-slate-700 font-medium">Direct Fleet Costs vs Gross Profit Analytics</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 space-y-6 overflow-y-auto">
+            <div className="p-4 sm:p-6 space-y-6 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-slate-400">Net Revenue (Ex GST)</span>
-                  <div className="text-xl font-black font-mono text-slate-100">${netRev.toFixed(2)} AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Revenue (Ex GST)</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">${netRev.toFixed(2)} AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-rose-400">Total Direct Fleet Costs</span>
-                  <div className="text-xl font-black font-mono text-rose-400">-$8,970.00 AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">Total Direct Fleet Costs</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">-$8,970.00 AUD</div>
                 </div>
-                <div className="p-4 rounded-2xl bg-[#0D1322] border border-emerald-500/30 bg-emerald-500/5 space-y-1">
-                  <span className="text-[10px] uppercase font-bold text-emerald-400">Net Profit (+{profitMargin.toFixed(1)}%)</span>
-                  <div className="text-xl font-black font-mono text-emerald-400">+${netProfit.toFixed(2)} AUD</div>
+                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm">
+                  <span className="text-[10px] uppercase font-bold text-slate-600">Net Profit (+{profitMargin.toFixed(1)}%)</span>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">+${netProfit.toFixed(2)} AUD</div>
                 </div>
               </div>
 
               {/* Profit by Vehicle Class */}
               <div className="space-y-2">
-                <h3 className="text-xs font-bold text-slate-300 uppercase tracking-wider">Profit Margin By Vehicle Class</h3>
+                <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Profit Margin By Vehicle Class</h3>
                 <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
                     <div>
-                      <span className="font-bold text-slate-200 block">Executive Sedan (BMW 7 / Mercedes E)</span>
-                      <span className="text-[10px] text-slate-400">Revenue: $4,210 • Driver Payouts: $1,800</span>
+                      <span className="font-black text-[#0A0E1A] block">Executive Sedan (BMW 7 / Mercedes E)</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $4,210 • Driver Payouts: $1,800</span>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400 text-sm">+$2,027.27 (52.9% Margin)</span>
+                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,027.27 (52.9% Margin)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
                     <div>
-                      <span className="font-bold text-slate-200 block">Premium Sedan (Mercedes S-Class S450)</span>
-                      <span className="text-[10px] text-slate-400">Revenue: $6,800 • Driver Payouts: $3,100</span>
+                      <span className="font-black text-[#0A0E1A] block">Premium Sedan (Mercedes S-Class S450)</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $6,800 • Driver Payouts: $3,100</span>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400 text-sm">+$3,081.82 (49.8% Margin)</span>
+                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$3,081.82 (49.8% Margin)</span>
                   </div>
-                  <div className="p-3.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] flex justify-between items-center">
+                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm">
                     <div>
-                      <span className="font-bold text-slate-200 block">Luxury SUV & Minibus (V-Class / Sprinter)</span>
-                      <span className="text-[10px] text-slate-400">Revenue: $7,440 • Driver Payouts: $4,070</span>
+                      <span className="font-black text-[#0A0E1A] block">Luxury SUV & Minibus (V-Class / Sprinter)</span>
+                      <span className="text-[10px] text-slate-600 font-semibold">Revenue: $7,440 • Driver Payouts: $4,070</span>
                     </div>
-                    <span className="font-mono font-bold text-emerald-400 text-sm">+$2,693.64 (39.8% Margin)</span>
+                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,693.64 (39.8% Margin)</span>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
-              <span className="text-xs text-slate-400">Target Margin: &gt; 45%</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
+              <span className="text-xs text-slate-700 font-semibold">Target Margin: &gt; 45%</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('analytics');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>View Full Profit Reports ➔</span>
               </button>
@@ -870,39 +870,39 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 3: BOOKINGS & TRIPS QUEUE AUDIT */}
       {activeModal === 'BOOKINGS' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121A2D] border border-cyan-500/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-[#0A0E1A]">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+            <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">All Bookings, Passengers & Driver Payouts</h2>
-                  <p className="text-xs text-slate-400">Itemized ledger of who booked, fare paid, assigned driver and payout amount</p>
+                  <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">All Bookings, Passengers & Driver Payouts</h2>
+                  <p className="text-xs text-slate-700 font-medium">Itemized ledger of who booked, fare paid, assigned driver and payout amount</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="p-4 bg-[#0E1526] border-b border-[#1F2E4D] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3">
               {/* Filter Tabs */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 {(['ALL', 'COMPLETED', 'IN_PROGRESS', 'PENDING'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setBookingFilter(tab)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                       bookingFilter === tab
-                        ? 'bg-cyan-500 text-slate-950 shadow-md'
-                        : 'bg-[#162036] text-slate-400 hover:text-slate-200'
+                        ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md'
+                        : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FAF6F0]'
                     }`}
                   >
                     {tab === 'ALL'
@@ -918,13 +918,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search passenger or driver..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#121A2D] border border-[#1F2E4D] rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-cyan-400"
+                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
@@ -934,25 +934,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               {filteredBookings.map((b) => (
                 <div
                   key={b.id}
-                  className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] hover:border-cyan-500/40 transition-all space-y-3"
+                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm"
                 >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#E6D8C3] pb-2.5">
                     <div className="flex items-center gap-2.5">
-                      <span className="font-mono font-black text-cyan-400 text-sm">{b.bookingNumber}</span>
-                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase bg-slate-800 text-slate-300">
+                      <span className="font-mono font-black text-[#0A0E1A] text-sm">{b.bookingNumber}</span>
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A]">
                         {b.vehicleCategory}
                       </span>
                     </div>
 
                     <div className="flex items-center gap-2">
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          b.status === 'COMPLETED'
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : b.status === 'IN_PROGRESS' || b.status === 'ALLOCATED'
-                            ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20'
-                            : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                        }`}
+                        className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]"
                       >
                         ● {b.status}
                       </span>
@@ -964,37 +958,37 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     {/* Left: Passenger & Route */}
                     <div className="space-y-1.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-bold text-slate-100">{b.passengerName}</span>
-                        <span className="text-slate-400 text-[11px]">({b.passengerPhone})</span>
+                        <span className="font-black text-[#0A0E1A]">{b.passengerName}</span>
+                        <span className="text-slate-600 text-[11px] font-bold">({b.passengerPhone})</span>
                       </div>
-                      <p className="text-slate-300 leading-relaxed">
+                      <p className="text-slate-700 leading-relaxed font-medium">
                         📍 <strong>Pickup:</strong> {b.pickupAddress}<br />
                         🏁 <strong>Dropoff:</strong> {b.dropoffAddress}
                       </p>
-                      <span className="text-[10px] text-slate-400 font-mono block">⏰ Scheduled: {b.pickupTime}</span>
+                      <span className="text-[10px] text-slate-600 font-mono font-bold block">⏰ Scheduled: {b.pickupTime}</span>
                     </div>
 
                     {/* Right: Assigned Driver & Financials */}
-                    <div className="p-3 rounded-xl bg-[#121A2D] border border-slate-800/80 space-y-1 text-xs">
+                    <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-1 text-xs">
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400 font-medium">Assigned Chauffeur:</span>
-                        <span className="font-bold text-slate-200">{b.driverName}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="text-slate-400 font-medium">Vehicle & Plate:</span>
-                        <span className="font-mono text-cyan-300 text-[11px]">{b.vehiclePlate}</span>
-                      </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-800">
-                        <span className="text-slate-400">Total Customer Fare:</span>
-                        <span className="font-mono font-bold text-slate-100">${b.totalFare.toFixed(2)} AUD</span>
+                        <span className="text-slate-600 font-bold">Assigned Chauffeur:</span>
+                        <span className="font-black text-[#0A0E1A]">{b.driverName}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-slate-400">Driver Payout:</span>
-                        <span className="font-mono font-bold text-amber-400">-${b.driverPayout.toFixed(2)} AUD</span>
+                        <span className="text-slate-600 font-bold">Vehicle & Plate:</span>
+                        <span className="font-mono font-black text-[#0A0E1A] text-[11px]">{b.vehiclePlate}</span>
                       </div>
-                      <div className="flex justify-between items-center pt-1 border-t border-slate-800">
-                        <span className="text-emerald-400 font-bold">Net Platform Profit:</span>
-                        <span className="font-mono font-black text-emerald-400">+${b.netProfit.toFixed(2)} AUD</span>
+                      <div className="flex justify-between items-center pt-1 border-t border-[#E6D8C3]">
+                        <span className="text-slate-600 font-bold">Total Customer Fare:</span>
+                        <span className="font-mono font-black text-[#0A0E1A]">${b.totalFare.toFixed(2)} AUD</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-slate-600 font-bold">Driver Payout:</span>
+                        <span className="font-mono font-black text-[#0A0E1A]">-${b.driverPayout.toFixed(2)} AUD</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-[#E6D8C3]">
+                        <span className="text-[#0A0E1A] font-black">Net Platform Profit:</span>
+                        <span className="font-mono font-black text-[#0A0E1A]">+${b.netProfit.toFixed(2)} AUD</span>
                       </div>
                     </div>
                   </div>
@@ -1003,14 +997,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
-              <span className="text-xs text-slate-400">{filteredBookings.length} Bookings Evaluated</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
+              <span className="text-xs text-slate-700 font-semibold">{filteredBookings.length} Bookings Evaluated</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('operate');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Open Live Dispatch Board ➔</span>
               </button>
@@ -1021,39 +1015,39 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 4: ACTIVE DRIVERS & LIVE AVAILABILITY STATUS */}
       {activeModal === 'FLEET' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121A2D] border border-purple-500/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-[#0A0E1A]">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+            <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
                   <Users className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">Active Drivers & Live Availability Status</h2>
-                  <p className="text-xs text-slate-400">Driver Roster & Shift Tracking — Check who is free (Khali) or on active trip to allot upcoming bookings</p>
+                  <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Active Drivers & Live Availability Status</h2>
+                  <p className="text-xs text-slate-700 font-medium">Driver Roster & Shift Tracking — Check who is free (Khali) or on active trip to allot upcoming bookings</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Filter and Search Bar */}
-            <div className="p-4 bg-[#0E1526] border-b border-[#1F2E4D] flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div className="p-4 bg-[#FAF6F0] border-b border-[#E6D8C3] flex flex-col sm:flex-row items-center justify-between gap-3">
               {/* Filter Tabs */}
               <div className="flex items-center gap-1.5 w-full sm:w-auto overflow-x-auto">
                 {(['ALL', 'AVAILABLE', 'ON_TRIP', 'OFF_DUTY'] as const).map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setDriverFilter(tab)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                    className={`px-3 py-1.5 rounded-xl text-xs font-black transition-all ${
                       driverFilter === tab
-                        ? 'bg-purple-500 text-slate-950 shadow-md'
-                        : 'bg-[#162036] text-slate-400 hover:text-slate-200'
+                        ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md'
+                        : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FAF6F0]'
                     }`}
                   >
                     {tab === 'ALL'
@@ -1069,13 +1063,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
               {/* Search Bar */}
               <div className="relative w-full sm:w-64">
-                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-400" />
+                <Search className="w-3.5 h-3.5 absolute left-3 top-3 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Search driver or car plate..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-[#121A2D] border border-[#1F2E4D] rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-purple-400"
+                  className="w-full bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl pl-9 pr-3 py-1.5 text-xs text-[#0A0E1A] placeholder-slate-400 font-bold focus:outline-none focus:border-[#0A0E1A]"
                 />
               </div>
             </div>
@@ -1085,40 +1079,34 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               {filteredDrivers.map((d) => (
                 <div
                   key={d.id}
-                  className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] hover:border-purple-500/40 transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+                  className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-sm"
                 >
                   <div className="space-y-1.5 min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-bold text-slate-100 text-sm">{d.name}</span>
-                      <span className="text-slate-400 text-xs">({d.phone})</span>
+                      <span className="font-black text-[#0A0E1A] text-sm">{d.name}</span>
+                      <span className="text-slate-600 text-xs font-bold">({d.phone})</span>
                       <span
-                        className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
-                          d.status === 'AVAILABLE'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                            : d.status === 'ON_TRIP'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                            : 'bg-slate-700 text-slate-300'
-                        }`}
+                        className="px-2.5 py-0.5 rounded-full text-[10px] font-black bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]"
                       >
                         {d.status === 'AVAILABLE' ? '🟢 READY / KHALI' : d.status === 'ON_TRIP' ? '🟡 ON TRIP' : '⚪ OFF DUTY'}
                       </span>
                     </div>
 
-                    <p className="text-xs text-purple-300 font-mono">
+                    <p className="text-xs text-slate-700 font-mono font-bold">
                       🚘 {d.vehicle} • Plate: <strong>{d.plate}</strong>
                     </p>
 
                     {d.status === 'ON_TRIP' && d.currentRoute && (
-                      <p className="text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 p-2 rounded-lg">
+                      <p className="text-[11px] text-[#0A0E1A] bg-[#FAF6F0] border border-[#DFCAA8] p-2 rounded-lg font-medium">
                         <strong>Current Ride #{d.currentBookingNumber}:</strong> {d.currentRoute}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-slate-800">
+                  <div className="flex items-center justify-between md:justify-end gap-4 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E6D8C3]">
                     <div className="text-left md:text-right font-mono text-xs">
-                      <span className="text-slate-300 block">Today: {d.todayCompletedTrips} Trips (${d.todayEarnings.toFixed(2)})</span>
-                      <span className="text-[10px] text-amber-400 font-bold">⭐ {d.rating} Rating • {d.onTimeRate}% On-Time</span>
+                      <span className="text-slate-700 block font-bold">Today: {d.todayCompletedTrips} Trips (${d.todayEarnings.toFixed(2)})</span>
+                      <span className="text-[10px] text-[#0A0E1A] font-black">⭐ {d.rating} Rating • {d.onTimeRate}% On-Time</span>
                     </div>
 
                     {d.status === 'AVAILABLE' ? (
@@ -1127,7 +1115,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           setActiveModal(null);
                           onNavigate('operate');
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-md transition-all"
+                        className="px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all"
                       >
                         Allot Next Booking ➔
                       </button>
@@ -1137,7 +1125,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           setActiveModal(null);
                           onNavigate('operate');
                         }}
-                        className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs transition-all"
+                        className="px-3.5 py-2 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] font-black text-xs transition-all shadow-sm"
                       >
                         View Trip Status
                       </button>
@@ -1148,14 +1136,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
-              <span className="text-xs text-slate-400">4 Drivers Available for Immediate Dispatch</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
+              <span className="text-xs text-slate-700 font-semibold">4 Drivers Available for Immediate Dispatch</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('partners-fleet');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-purple-500 hover:bg-purple-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
                 <span>Manage Fleet & Partners ➔</span>
               </button>
@@ -1166,22 +1154,22 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
       {/* MODAL 5: AIRPORT FLIGHT RADAR & CUSTOMER DELAYS MONITOR */}
       {activeModal === 'FLIGHTS' && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#121A2D] border border-cyan-500/40 rounded-3xl w-full max-w-5xl max-h-[92vh] overflow-hidden flex flex-col shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/75 backdrop-blur-md animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] rounded-3xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl text-[#0A0E1A]">
             {/* Modal Header */}
-            <div className="p-5 sm:p-6 border-b border-[#1F2E4D] flex items-center justify-between bg-[#0D1322]">
+            <div className="p-5 sm:p-6 border-b border-[#E6D8C3] flex items-center justify-between bg-[#FAF6F0]">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] flex items-center justify-center shadow-sm">
                   <Plane className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-black text-slate-100">Live Airport Flight Radar & Customer Delays</h2>
-                  <p className="text-xs text-slate-400">Real-time FlightAware radar tracking with customer delay compensation</p>
+                  <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Live Airport Flight Radar & Customer Delays</h2>
+                  <p className="text-xs text-slate-700 font-medium">Real-time FlightAware radar tracking with customer delay compensation</p>
                 </div>
               </div>
               <button
                 onClick={() => setActiveModal(null)}
-                className="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-100 flex items-center justify-center transition-colors"
+                className="w-8 h-8 rounded-full bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1344,28 +1332,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 .map((f) => (
                   <div
                     key={f.id}
-                    className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] hover:border-cyan-500/40 transition-all space-y-3"
+                    className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm"
                   >
                     {/* Header Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800/80 pb-2.5">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-[#E6D8C3] pb-2.5">
                       <div className="flex flex-wrap items-center gap-2.5">
-                        <span className="font-mono font-black text-cyan-400 text-sm">✈️ {f.flightNumber}</span>
-                        <span className="text-slate-400 text-xs font-semibold">({f.airline})</span>
-                        <span className="text-slate-500">•</span>
-                        <span className="font-mono font-bold text-amber-400 text-xs">{f.bookingNumber}</span>
+                        <span className="font-mono font-black text-[#0A0E1A] text-sm">✈️ {f.flightNumber}</span>
+                        <span className="text-slate-600 text-xs font-semibold">({f.airline})</span>
+                        <span className="text-slate-400">•</span>
+                        <span className="font-mono font-black text-[#0A0E1A] text-xs">{f.bookingNumber}</span>
                       </div>
 
                       <div className="flex items-center gap-2">
                         {f.delayMinutes > 0 ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-rose-500/20 text-rose-300 border border-rose-500/30 animate-pulse">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8]">
                             🚨 LATE (+{f.delayMinutes} MIN DELAY)
                           </span>
                         ) : f.delayMinutes < 0 ? (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8]">
                             🟢 EARLY (-10 MIN)
                           </span>
                         ) : (
-                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                          <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8]">
                             🟢 ON TIME (0 MIN DELAY)
                           </span>
                         )}
@@ -1377,40 +1365,40 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                       {/* Left: Customer & Flight Schedule */}
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
-                          <span className="font-bold text-slate-100 text-sm">{f.passengerName}</span>
-                          <span className="text-slate-400 text-xs">({f.passengerPhone})</span>
+                          <span className="font-black text-[#0A0E1A] text-sm">{f.passengerName}</span>
+                          <span className="text-slate-600 text-xs font-bold">({f.passengerPhone})</span>
                         </div>
-                        <p className="text-slate-300">
+                        <p className="text-slate-700 font-medium">
                           🛫 <strong>Route:</strong> {f.origin} ➔ {f.destination}
                         </p>
-                        <p className="text-slate-300">
+                        <p className="text-slate-700 font-medium">
                           📍 <strong>Meeting Bay / Gate:</strong> {f.gate}
                         </p>
                         <div className="pt-1 font-mono text-xs">
-                          <span className="text-slate-400">Scheduled Time: {f.scheduledTime}</span>
+                          <span className="text-slate-600 font-medium">Scheduled Time: {f.scheduledTime}</span>
                           <br />
-                          <span className={f.delayMinutes > 0 ? 'text-amber-300 font-bold' : 'text-emerald-400 font-bold'}>
+                          <span className="text-[#0A0E1A] font-black">
                             Updated Real-Time Landing: {f.estimatedLanding}
                           </span>
                         </div>
                       </div>
 
                       {/* Right: Assigned Chauffeur & Buffer Action */}
-                      <div className="p-3 rounded-xl bg-[#121A2D] border border-slate-800/80 space-y-2 text-xs">
+                      <div className="p-3 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] space-y-2 text-xs">
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400">Assigned Chauffeur:</span>
-                          <span className="font-bold text-slate-100">{f.assignedDriver}</span>
+                          <span className="text-slate-600 font-bold">Assigned Chauffeur:</span>
+                          <span className="font-black text-[#0A0E1A]">{f.assignedDriver}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400">Driver Phone:</span>
-                          <span className="font-mono text-slate-300">{f.driverPhone}</span>
+                          <span className="text-slate-600 font-bold">Driver Phone:</span>
+                          <span className="font-mono text-[#0A0E1A] font-black">{f.driverPhone}</span>
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="text-slate-400">Vehicle Plate:</span>
-                          <span className="font-mono text-cyan-300">{f.vehiclePlate}</span>
+                          <span className="text-slate-600 font-bold">Vehicle Plate:</span>
+                          <span className="font-mono font-black text-[#0A0E1A]">{f.vehiclePlate}</span>
                         </div>
-                        <div className="pt-1.5 border-t border-slate-800">
-                          <p className="text-[11px] text-emerald-300 font-medium leading-relaxed bg-emerald-500/10 p-2 rounded-lg border border-emerald-500/20">
+                        <div className="pt-1.5 border-t border-[#E6D8C3]">
+                          <p className="text-[11px] text-[#0A0E1A] font-bold leading-relaxed bg-[#FFFFFF] p-2 rounded-lg border border-[#DFCAA8]">
                             🛡️ {f.bufferNote}
                           </p>
                         </div>
@@ -1421,16 +1409,16 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-[#1F2E4D] bg-[#0D1322] flex justify-between items-center">
-              <span className="text-xs text-slate-400">Automated Flight Delay Compensation Active</span>
+            <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center">
+              <span className="text-xs text-slate-700 font-semibold">Automated Flight Delay Compensation Active</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
                   onNavigate('flights');
                 }}
-                className="px-4 py-2.5 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs shadow-md transition-all flex items-center gap-1.5"
+                className="px-4 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#121824] text-[#FAF6F0] border border-[#DFCAA8] font-black text-xs shadow-md transition-all flex items-center gap-1.5"
               >
-                <Plane className="w-4 h-4" />
+                <Plane className="w-4 h-4 text-[#DFCAA8]" />
                 <span>Open Full Flight Radar Page ➔</span>
               </button>
             </div>
