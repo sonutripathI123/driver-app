@@ -2,7 +2,16 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, Eye, Users, Briefcase } from 'lucide-react';
 import { VehicleCategory } from '../../types';
 
-export type FleetCarKey = 'V_CLASS_CPS711' | 'V_CLASS_2DC7AY' | 'SPRINTER_BS14OK' | 'V_CLASS_2DZ8YJ' | 'AUDI_Q7_HC0687';
+export type FleetCarKey =
+  | 'S_CLASS_GTS783'
+  | 'V_CLASS_CGL646'
+  | 'V_CLASS_CPS711'
+  | 'V_CLASS_2DC7AY'
+  | 'V_CLASS_2DZ8YJ'
+  | 'SPRINTER_BZZ931'
+  | 'SPRINTER_BS14OK'
+  | 'AUDI_Q7_AMJ506'
+  | 'AUDI_Q7_HC0687';
 
 interface LuxuryCarProps {
   initialKey?: FleetCarKey;
@@ -27,7 +36,7 @@ interface VehicleFleetDetail {
 }
 
 export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
-  initialKey = 'V_CLASS_CPS711',
+  initialKey = 'S_CLASS_GTS783',
   category,
   onVehicleChange,
   onCategoryChange,
@@ -37,6 +46,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
     if (category === 'MINIBUS') return 'SPRINTER_BS14OK';
     if (category === 'SUV_PREMIUM') return 'AUDI_Q7_HC0687';
     if (category === 'PEOPLE_MOVER') return 'V_CLASS_CPS711';
+    if (category === 'SEDAN_PREMIUM' || category === 'FIRST_CLASS') return 'S_CLASS_GTS783';
     return initialKey;
   });
 
@@ -44,6 +54,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
     if (category === 'MINIBUS') setActiveCar('SPRINTER_BS14OK');
     else if (category === 'SUV_PREMIUM') setActiveCar('AUDI_Q7_HC0687');
     else if (category === 'PEOPLE_MOVER') setActiveCar('V_CLASS_CPS711');
+    else if (category === 'SEDAN_PREMIUM' || category === 'FIRST_CLASS') setActiveCar('S_CLASS_GTS783');
   }, [category]);
 
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,35 +62,87 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const fleetData: Record<FleetCarKey, VehicleFleetDetail> = {
+    S_CLASS_GTS783: {
+      id: 'S_CLASS_GTS783',
+      name: 'Mercedes-Benz S-Class LWB',
+      modelFullName: 'Mercedes-Benz S-Class S450 Long Wheelbase',
+      regoPlate: 'GTS783',
+      category: 'FIRST_CLASS',
+      pax: 4,
+      bags: 3,
+      image: '/images/fleet/mercedes_s_class_gts783.jpg',
+      tagline: 'Flagship VIP First-Class Chauffeur Transport',
+      badge: 'FIRST CLASS VIP',
+      features: ['Reclining Nappa Leather', 'Burmester 3D Sound', 'Complimentary Fiji Water', 'Active Air Suspension'],
+    },
+    V_CLASS_CGL646: {
+      id: 'V_CLASS_CGL646',
+      name: 'Mercedes-Benz Mini Van (V-Class)',
+      modelFullName: 'Mercedes-Benz Valente / V-Class Luxury Van',
+      regoPlate: 'CGL646',
+      category: 'PEOPLE_MOVER',
+      pax: 7,
+      bags: 6,
+      image: '/images/fleet/mercedes_vclass_cgl646.jpg',
+      tagline: 'VIP Delegations, Family & Airport Group Luxury Transfer',
+      badge: '7-SEATER LUXURY',
+      features: ['Conference Seating Mode', 'Electric Sliding Doors', 'Extra Large Luggage Bay', 'Rear AC Controls'],
+    },
     V_CLASS_CPS711: {
       id: 'V_CLASS_CPS711',
-      name: 'Mercedes-Benz V-Class',
+      name: 'Mercedes-Benz V-Class VIP',
       modelFullName: 'Mercedes-Benz V-Class VIP People Mover',
       regoPlate: 'CPS711',
       category: 'PEOPLE_MOVER',
       pax: 7,
       bags: 7,
       image: '/images/fleet/mercedes_vclass_cps711.jpg',
-      tagline: 'VIP Delegations, Family & Corporate Luxury Transfer',
-      badge: '7-SEATER LUXURY',
-      features: ['Executive Face-to-Face Seating', 'Electric Sliding Doors', 'Extra Large Luggage Capacity', 'Rear Individual AC'],
+      tagline: 'VIP Delegations, Corporate Group & Family Chauffeur',
+      badge: '7-SEATER VIP',
+      features: ['Face-to-Face Executive Layout', 'Dual Sliding Doors', 'Full Leather Seating', 'Rear Climate Control'],
     },
     V_CLASS_2DC7AY: {
       id: 'V_CLASS_2DC7AY',
-      name: 'Mercedes-Benz V-Class (Exclusive)',
+      name: 'Mercedes-Benz V-Class Exclusive',
       modelFullName: 'Mercedes-Benz V-Class Exclusive Line',
       regoPlate: '2DC7AY',
       category: 'PEOPLE_MOVER',
       pax: 7,
       bags: 7,
       image: '/images/fleet/mercedes_vclass_2dc7ay.jpg',
-      tagline: 'First-Class Chauffeur People Mover for VIP Group Transfers',
+      tagline: 'First-Class Chauffeur People Mover for VIP Delegations',
       badge: '7-SEATER EXCLUSIVE',
-      features: ['Nappa Leather Interior', 'Burmester Surround Sound', 'High-Speed Onboard Wi-Fi', 'Tinted Privacy Glass'],
+      features: ['Nappa Leather Interior', 'Burmester Surround Sound', 'High-Speed Wi-Fi', 'Privacy Glass'],
+    },
+    V_CLASS_2DZ8YJ: {
+      id: 'V_CLASS_2DZ8YJ',
+      name: 'Mercedes-Benz V-Class Urban',
+      modelFullName: 'Mercedes-Benz V-Class City Chauffeur Edition',
+      regoPlate: '2DZ8YJ',
+      category: 'PEOPLE_MOVER',
+      pax: 7,
+      bags: 7,
+      image: '/images/fleet/mercedes_vclass_2dz8yj.jpg',
+      tagline: 'Premium City & Airport Group Chauffeur Service',
+      badge: '7-SEATER VIP',
+      features: ['Acoustic Comfort Package', 'Ambient Lighting', 'Luggage Compartment Divider', 'Rear USB Ports'],
+    },
+    SPRINTER_BZZ931: {
+      id: 'SPRINTER_BZZ931',
+      name: 'Mercedes-Benz Sprinter Luxury',
+      modelFullName: 'Mercedes-Benz Sprinter Luxury Minibus',
+      regoPlate: 'BZZ931',
+      category: 'MINIBUS',
+      pax: 11,
+      bags: 10,
+      image: '/images/fleet/mercedes_sprinter_bzz931.jpg',
+      tagline: 'High-Capacity Executive Group Transfer & Corporate Charters',
+      badge: '11-SEATER MINIBUS',
+      features: ['High Standing Roof', 'Executive Reclining Seats', 'Overhead Luggage Racks', 'PA & Tour System'],
     },
     SPRINTER_BS14OK: {
       id: 'SPRINTER_BS14OK',
-      name: 'Mercedes-Benz Sprinter',
+      name: 'Mercedes-Benz Sprinter Executive',
       modelFullName: 'Mercedes-Benz Sprinter Executive Group Shuttle',
       regoPlate: 'BS14OK',
       category: 'MINIBUS',
@@ -90,18 +153,18 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
       badge: '11-SEATER SHUTTLE',
       features: ['High Standing Headroom', 'Massive Luggage Capacity', 'Tour Microphone & PA', 'Reclining Comfort Seats'],
     },
-    V_CLASS_2DZ8YJ: {
-      id: 'V_CLASS_2DZ8YJ',
-      name: 'Mercedes-Benz V-Class (Urban)',
-      modelFullName: 'Mercedes-Benz V-Class City Chauffeur Edition',
-      regoPlate: '2DZ8YJ',
-      category: 'PEOPLE_MOVER',
-      pax: 7,
-      bags: 7,
-      image: '/images/fleet/mercedes_vclass_2dz8yj.jpg',
-      tagline: 'Premium City & Airport Group Chauffeur Service',
-      badge: '7-SEATER VIP',
-      features: ['Acoustic Comfort Package', 'Ambient Lighting', 'Luggage Compartment Divider', 'Rear USB Ports'],
+    AUDI_Q7_AMJ506: {
+      id: 'AUDI_Q7_AMJ506',
+      name: 'Audi Q7 Black Edition',
+      modelFullName: 'Audi Q7 Black Edition Quattro SUV',
+      regoPlate: 'AMJ506',
+      category: 'SUV_PREMIUM',
+      pax: 4,
+      bags: 4,
+      image: '/images/fleet/audi_q7_amj506.jpg',
+      tagline: 'Luxury Quattro All-Weather VIP Escort & Corporate SUV',
+      badge: 'QUATTRO SUV',
+      features: ['Quattro All-Wheel Drive', 'Panoramic Sunroof', 'Air Suspension Comfort', 'Extended Boot Space'],
     },
     AUDI_Q7_HC0687: {
       id: 'AUDI_Q7_HC0687',
@@ -118,7 +181,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
     },
   };
 
-  const currentVehicle: VehicleFleetDetail = fleetData[activeCar] || fleetData.V_CLASS_CPS711;
+  const currentVehicle: VehicleFleetDetail = fleetData[activeCar] || fleetData.S_CLASS_GTS783;
 
   // Interactive 3D Mouse Parallax Tilt Handler
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -260,15 +323,19 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
       </div>
 
       {/* ─────────────────────────────────────────────────────────────
-          5 REAL CAR SELECTOR TABS
+          9 REAL CAR SELECTOR TABS
       ───────────────────────────────────────────────────────────── */}
       {showControls && (
         <div className="relative z-20 bg-[#FAF6F0] border-t border-[#E6D8C3] p-2 flex items-center justify-between gap-1.5 overflow-x-auto">
           {([
+            { id: 'S_CLASS_GTS783', label: 'S-Class (GTS783)' },
+            { id: 'V_CLASS_CGL646', label: 'V-Class (CGL646)' },
             { id: 'V_CLASS_CPS711', label: 'V-Class (CPS711)' },
             { id: 'V_CLASS_2DC7AY', label: 'V-Class (2DC7AY)' },
-            { id: 'SPRINTER_BS14OK', label: 'Sprinter (BS14OK)' },
             { id: 'V_CLASS_2DZ8YJ', label: 'V-Class (2DZ8YJ)' },
+            { id: 'SPRINTER_BZZ931', label: 'Sprinter (BZZ931)' },
+            { id: 'SPRINTER_BS14OK', label: 'Sprinter (BS14OK)' },
+            { id: 'AUDI_Q7_AMJ506', label: 'Audi Q7 (AMJ506)' },
             { id: 'AUDI_Q7_HC0687', label: 'Audi Q7 (HC 0687)' },
           ] as const).map((tab) => {
             const isSelected = activeCar === tab.id;
@@ -277,7 +344,7 @@ export const LuxuryCarCanvas: React.FC<LuxuryCarProps> = ({
                 key={tab.id}
                 type="button"
                 onClick={() => handleSelectCar(tab.id as FleetCarKey)}
-                className={`px-3 py-2 text-xs font-bold rounded-xl transition-all flex-1 whitespace-nowrap text-center flex flex-col items-center justify-center shadow-sm active:scale-95 ${
+                className={`px-2.5 py-1.5 text-[11px] font-bold rounded-xl transition-all whitespace-nowrap text-center flex items-center justify-center shadow-sm active:scale-95 shrink-0 ${
                   isSelected
                     ? 'bg-[#06090F] text-[#FAF6F0] border border-[#DFCAA8] shadow-md scale-100 font-black'
                     : 'bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#E0F2FE] hover:border-[#7DD3FC]'
