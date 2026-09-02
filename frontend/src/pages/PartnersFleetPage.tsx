@@ -67,19 +67,14 @@ interface ColorShader {
 }
 
 // Model-Specific Authentic Base Photos
+// Model-Specific Authentic Base Photos (User's Exact 5 Fleet Cars)
 const MODEL_AUTHENTIC_BASE_PHOTOS = {
-  // Mercedes-Benz S-Class Long-Wheelbase Luxury Sedan
-  S_CLASS: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1000&q=80',
-  // Mercedes-Benz E-Class Executive Sedan
-  E_CLASS: 'https://images.unsplash.com/photo-1563720223185-11003d516935?auto=format&fit=crop&w=1000&q=80',
-  // Mercedes-Benz V-Class / Valente VIP Van
-  V_CLASS: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80',
-  // Mercedes-Benz Sprinter Executive Minibus
-  SPRINTER: 'https://images.unsplash.com/photo-1549399542-7e3f8b79c341?auto=format&fit=crop&w=1000&q=80',
-  // Audi Q7 Quattro SUV
-  AUDI_Q7: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?auto=format&fit=crop&w=1000&q=80',
-  // Default Luxury Sedan
-  DEFAULT: 'https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=1000&q=80',
+  V_CLASS_CPS711: '/images/fleet/mercedes_vclass_cps711.jpg',
+  V_CLASS_2DC7AY: '/images/fleet/mercedes_vclass_2dc7ay.jpg',
+  SPRINTER_BS14OK: '/images/fleet/mercedes_sprinter_bs14ok.jpg',
+  V_CLASS_2DZ8YJ: '/images/fleet/mercedes_vclass_2dz8yj.jpg',
+  AUDI_Q7_HC0687: '/images/fleet/audi_q7_hc0687.jpg',
+  DEFAULT: '/images/fleet/mercedes_vclass_cps711.jpg',
 };
 
 // Real-Time Automotive Color Shaders (Applied to the SAME car body!)
@@ -92,15 +87,19 @@ const COLOR_SHADERS: ColorShader[] = [
   { name: 'Emerald Forest Green', colorHex: '#064e3b', filter: 'brightness(0.88) contrast(1.2) hue-rotate(85deg) saturate(1.3)' },
 ];
 
-const getModelBasePhoto = (vehicle: ExtendedVehicle | { make: string; model: string; category: string } | null): string => {
+const getModelBasePhoto = (vehicle: ExtendedVehicle | { make: string; model: string; category: string; registration_plate?: string } | null): string => {
   if (!vehicle) return MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT;
+  const plate = (vehicle.registration_plate || '').toUpperCase();
+  if (plate.includes('CPS711')) return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS_CPS711;
+  if (plate.includes('2DC7AY')) return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS_2DC7AY;
+  if (plate.includes('BS14OK')) return MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER_BS14OK;
+  if (plate.includes('2DZ8YJ')) return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS_2DZ8YJ;
+  if (plate.includes('0687') || plate.includes('HC')) return MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7_HC0687;
+  
   const name = `${vehicle.make} ${vehicle.model} ${vehicle.category}`.toUpperCase();
-  if (name.includes('SPRINTER')) return MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER;
-  if (name.includes('V-CLASS') || name.includes('VALENTE') || name.includes('VAN')) return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS;
-  if (name.includes('S-CLASS') || name.includes('S450') || name.includes('S580') || name.includes('FIRST_CLASS')) return MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS;
-  if (name.includes('E-CLASS') || name.includes('E300') || name.includes('SEDAN')) return MODEL_AUTHENTIC_BASE_PHOTOS.E_CLASS;
-  if (name.includes('Q7') || name.includes('AUDI') || name.includes('SUV')) return MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7;
-  return MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT;
+  if (name.includes('SPRINTER')) return MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER_BS14OK;
+  if (name.includes('Q7') || name.includes('AUDI')) return MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7_HC0687;
+  return MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS_CPS711;
 };
 
 export const PartnersFleetPage: React.FC = () => {
@@ -146,7 +145,7 @@ export const PartnersFleetPage: React.FC = () => {
     registration_plate: '',
     passenger_capacity: 4,
     luggage_capacity: 3,
-    image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+    image_url: MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT,
     color_name: 'Obsidian Jet Black',
     color_hex: '#0a0a0a',
     color_filter: COLOR_SHADERS[0].filter,
@@ -191,64 +190,64 @@ export const PartnersFleetPage: React.FC = () => {
       },
     ];
 
-    // User's Full 10 Fleet Cars with Authentic Base Photos & Default Black Finish
+    // User's Exact 5 Fleet Cars with Authentic High-Resolution Photos & Color Shaders
     let initialVehicles: ExtendedVehicle[] = [
       {
         id: 'v-01',
-        category: 'FIRST_CLASS' as any,
+        category: 'PEOPLE_MOVER',
         make: 'Mercedes-Benz',
-        model: 'S-Class S450 LWB',
+        model: 'V-Class VIP People Mover',
         year: 2024,
-        registration_plate: 'GTS783',
-        passenger_capacity: 4,
-        luggage_capacity: 3,
+        registration_plate: 'CPS711',
+        passenger_capacity: 7,
+        luggage_capacity: 7,
         is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+        image_url: '/images/fleet/mercedes_vclass_cps711.jpg',
         color_name: 'Obsidian Jet Black',
         color_hex: '#0a0a0a',
         color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-02',
-        category: 'SEDAN_EXECUTIVE',
+        category: 'PEOPLE_MOVER',
         make: 'Mercedes-Benz',
-        model: 'E-Class E300',
+        model: 'V-Class Exclusive Line',
         year: 2024,
-        registration_plate: 'BYY499',
-        passenger_capacity: 4,
-        luggage_capacity: 3,
+        registration_plate: '2DC7AY',
+        passenger_capacity: 7,
+        luggage_capacity: 7,
         is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.E_CLASS,
+        image_url: '/images/fleet/mercedes_vclass_2dc7ay.jpg',
         color_name: 'Obsidian Jet Black',
         color_hex: '#0a0a0a',
         color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-03',
-        category: 'PEOPLE_MOVER',
+        category: 'MINIBUS' as any,
         make: 'Mercedes-Benz',
-        model: 'Valente Mini Van',
-        year: 2023,
-        registration_plate: 'CGL646',
-        passenger_capacity: 7,
-        luggage_capacity: 6,
+        model: 'Sprinter Executive Shuttle',
+        year: 2024,
+        registration_plate: 'BS14OK',
+        passenger_capacity: 11,
+        luggage_capacity: 12,
         is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
+        image_url: '/images/fleet/mercedes_sprinter_bs14ok.jpg',
         color_name: 'Obsidian Jet Black',
         color_hex: '#0a0a0a',
         color_filter: COLOR_SHADERS[0].filter,
       },
       {
         id: 'v-04',
-        category: 'MINIBUS' as any,
+        category: 'PEOPLE_MOVER',
         make: 'Mercedes-Benz',
-        model: 'Sprinter Luxury Minibus',
+        model: 'V-Class City VIP Van',
         year: 2024,
-        registration_plate: 'BZZ931',
-        passenger_capacity: 11,
-        luggage_capacity: 10,
+        registration_plate: '2DZ8YJ',
+        passenger_capacity: 7,
+        luggage_capacity: 7,
         is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER,
+        image_url: '/images/fleet/mercedes_vclass_2dz8yj.jpg',
         color_name: 'Obsidian Jet Black',
         color_hex: '#0a0a0a',
         color_filter: COLOR_SHADERS[0].filter,
@@ -257,89 +256,14 @@ export const PartnersFleetPage: React.FC = () => {
         id: 'v-05',
         category: 'SUV_PREMIUM',
         make: 'Audi',
-        model: 'Q7 Quattro',
-        year: 2024,
-        registration_plate: 'AMJ506',
-        passenger_capacity: 4,
-        luggage_capacity: 4,
-        is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7,
-        color_name: 'Mythos Jet Black',
-        color_hex: '#0a0a0a',
-        color_filter: COLOR_SHADERS[0].filter,
-      },
-      {
-        id: 'v-06',
-        category: 'PEOPLE_MOVER',
-        make: 'Mercedes-Benz',
-        model: 'V-Class V300 (Black)',
-        year: 2024,
-        registration_plate: 'CPS711',
-        passenger_capacity: 7,
-        luggage_capacity: 7,
-        is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
-        color_name: 'Obsidian Jet Black',
-        color_hex: '#0a0a0a',
-        color_filter: COLOR_SHADERS[0].filter,
-      },
-      {
-        id: 'v-07',
-        category: 'PEOPLE_MOVER',
-        make: 'Mercedes-Benz',
-        model: 'V-Class V300 (Black Exclusive)',
-        year: 2025,
-        registration_plate: '2DC7AY',
-        passenger_capacity: 7,
-        luggage_capacity: 7,
-        is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
-        color_name: 'Obsidian Jet Black',
-        color_hex: '#0a0a0a',
-        color_filter: COLOR_SHADERS[0].filter,
-      },
-      {
-        id: 'v-08',
-        category: 'MINIBUS' as any,
-        make: 'Mercedes-Benz',
-        model: 'Sprinter Executive 12-Seater (Black)',
-        year: 2024,
-        registration_plate: 'BS14OK',
-        passenger_capacity: 12,
-        luggage_capacity: 12,
-        is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.SPRINTER,
-        color_name: 'Obsidian Jet Black',
-        color_hex: '#0a0a0a',
-        color_filter: COLOR_SHADERS[0].filter,
-      },
-      {
-        id: 'v-09',
-        category: 'SUV_PREMIUM',
-        make: 'Audi',
-        model: 'Q7 Black Edition Quattro',
+        model: 'Q7 50 TDI Quattro SUV',
         year: 2024,
         registration_plate: 'HC 0687',
-        passenger_capacity: 4,
+        passenger_capacity: 5,
         luggage_capacity: 4,
         is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.AUDI_Q7,
+        image_url: '/images/fleet/audi_q7_hc0687.jpg',
         color_name: 'Mythos Jet Black',
-        color_hex: '#0a0a0a',
-        color_filter: COLOR_SHADERS[0].filter,
-      },
-      {
-        id: 'v-10',
-        category: 'PEOPLE_MOVER',
-        make: 'Mercedes-Benz',
-        model: 'V-Class Executive Van',
-        year: 2024,
-        registration_plate: '2DZ8YJ',
-        passenger_capacity: 7,
-        luggage_capacity: 7,
-        is_active: true,
-        image_url: MODEL_AUTHENTIC_BASE_PHOTOS.V_CLASS,
-        color_name: 'Obsidian Jet Black',
         color_hex: '#0a0a0a',
         color_filter: COLOR_SHADERS[0].filter,
       },
@@ -351,12 +275,6 @@ export const PartnersFleetPage: React.FC = () => {
       if (savedPartners) {
         const parsed = JSON.parse(savedPartners);
         initialPartners = [...initialPartners, ...parsed];
-      }
-
-      const savedVehicles = localStorage.getItem('crown_custom_vehicles');
-      if (savedVehicles) {
-        const parsedV = JSON.parse(savedVehicles);
-        initialVehicles = [...initialVehicles, ...parsedV];
       }
 
       // Check saved custom image overrides & color shaders
@@ -378,7 +296,7 @@ export const PartnersFleetPage: React.FC = () => {
         });
       }
     } catch (e) {
-      console.error(e);
+      console.warn('Error loading custom fleet data', e);
     }
 
     setPartners(initialPartners);
@@ -468,7 +386,7 @@ export const PartnersFleetPage: React.FC = () => {
       registration_plate: '',
       passenger_capacity: 4,
       luggage_capacity: 3,
-      image_url: MODEL_AUTHENTIC_BASE_PHOTOS.S_CLASS,
+      image_url: MODEL_AUTHENTIC_BASE_PHOTOS.DEFAULT,
       color_name: 'Obsidian Jet Black',
       color_hex: '#0a0a0a',
       color_filter: COLOR_SHADERS[0].filter,

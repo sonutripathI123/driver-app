@@ -335,8 +335,11 @@ export const BookingsOperatePage: React.FC = () => {
     }
 
     const demoVehicles: Vehicle[] = [
-      { id: 'v-01', category: 'SEDAN_PREMIUM', make: 'Mercedes-Benz', model: 'S-Class', year: 2024, registration_plate: 'GTS783', passenger_capacity: 4, luggage_capacity: 3, is_active: true },
-      { id: 'v-02', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class', year: 2024, registration_plate: 'CPS711', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
+      { id: 'v-01', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class (CPS711)', year: 2024, registration_plate: 'CPS711', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
+      { id: 'v-02', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class Exclusive (2DC7AY)', year: 2024, registration_plate: '2DC7AY', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
+      { id: 'v-03', category: 'MINIBUS', make: 'Mercedes-Benz', model: 'Sprinter Shuttle (BS14OK)', year: 2024, registration_plate: 'BS14OK', passenger_capacity: 11, luggage_capacity: 12, is_active: true },
+      { id: 'v-04', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class City VIP (2DZ8YJ)', year: 2024, registration_plate: '2DZ8YJ', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
+      { id: 'v-05', category: 'SUV_PREMIUM', make: 'Audi', model: 'Q7 Quattro SUV (HC 0687)', year: 2024, registration_plate: 'HC 0687', passenger_capacity: 5, luggage_capacity: 4, is_active: true },
     ];
 
     setBookings(demoBookings);
