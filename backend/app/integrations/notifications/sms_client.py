@@ -39,6 +39,7 @@ class SMSGateway:
             clean_phone = f"+{clean_phone}"
 
         msg_id = f"SM_{uuid.uuid4().hex[:16]}"
+        failure_reason: Optional[str] = None
 
         # If live Twilio credentials configured
         if self.twilio_account_sid and self.twilio_auth_token and self.twilio_phone:
@@ -62,9 +63,13 @@ class SMSGateway:
                             "provider": "TWILIO_LIVE"
                         }
                     else:
-                        logger.error(f"[TWILIO SMS ERROR] Status {resp.status_code}: {resp.text}")
+                        failure_reason = f"Twilio SMS HTTP {resp.status_code}: {resp.text[:300]}"
+                        logger.error(f"[TWILIO SMS ERROR] {failure_reason}")
             except Exception as ex:
-                logger.error(f"[TWILIO EXCEPTION] {str(ex)}")
+                failure_reason = f"Twilio SMS request failed: {ex}"
+                logger.error(f"[TWILIO EXCEPTION] {failure_reason}")
+        else:
+            failure_reason = "Twilio SMS credentials are not configured."
 
         # Dev/Sandbox recording
         record = {
@@ -80,6 +85,7 @@ class SMSGateway:
             "status": "SANDBOX_SIMULATED",
             "message_id": msg_id,
             "recipient": clean_phone,
+            "failure_reason": failure_reason,
             "provider": "SANDBOX_GATEWAY"
         }
 
@@ -99,6 +105,7 @@ class SMSGateway:
         whatsapp_url = f"https://api.whatsapp.com/send?phone={clean_phone}&text={urllib.parse.quote(message)}"
 
         # If live Twilio WhatsApp configured
+        failure_reason: Optional[str] = None
         if self.twilio_account_sid and self.twilio_auth_token:
             try:
                 url = f"https://api.twilio.com/2010-04-01/Accounts/{self.twilio_account_sid}/Messages.json"
@@ -120,13 +127,21 @@ class SMSGateway:
                             "whatsapp_url": whatsapp_url,
                             "provider": "TWILIO_WHATSAPP_LIVE"
                         }
+                    # A rejection here used to fall straight through, leaving
+                    # a SANDBOX_SIMULATED result with no way to learn why.
+                    failure_reason = f"Twilio WhatsApp HTTP {resp.status_code}: {resp.text[:300]}"
+                    logger.error(f"[TWILIO WHATSAPP ERROR] {failure_reason}")
             except Exception as ex:
-                logger.error(f"[WHATSAPP DISPATCH ERROR] {str(ex)}")
+                failure_reason = f"Twilio WhatsApp request failed: {ex}"
+                logger.error(f"[WHATSAPP DISPATCH ERROR] {failure_reason}")
+        else:
+            failure_reason = "Twilio credentials are not configured."
 
         return {
             "status": "SANDBOX_SIMULATED",
             "message_id": msg_id,
             "recipient": formatted_phone,
+            "failure_reason": failure_reason,
             "whatsapp_url": whatsapp_url,
             "provider": "SANDBOX_GATEWAY"
         }

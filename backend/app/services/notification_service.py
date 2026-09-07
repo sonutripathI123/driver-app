@@ -129,6 +129,9 @@ class NotificationService:
             subject=None,
             content=message,
             status=dispatch_res.get("status", "SENT").upper(),
+            # Without this, a message the gateway refused was indistinguishable
+            # from one it delivered apart from the status string.
+            error_message=dispatch_res.get("failure_reason"),
             external_message_id=dispatch_res.get("message_id")
         )
         db.add(notif)
