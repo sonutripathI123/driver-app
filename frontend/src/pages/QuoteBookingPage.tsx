@@ -23,7 +23,8 @@ import {
   Building2,
   Smartphone,
   FileText,
-  Mail
+  Mail,
+  AlertTriangle,
 } from 'lucide-react';
 
 export const QuoteBookingPage: React.FC = () => {
@@ -50,6 +51,7 @@ export const QuoteBookingPage: React.FC = () => {
 
   // Booking Result Modal
   const [createdBookingNumber, setCreatedBookingNumber] = useState<string | null>(null);
+  const [bookingError, setBookingError] = useState<string | null>(null);
   const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -80,13 +82,14 @@ export const QuoteBookingPage: React.FC = () => {
   const handleConfirmBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setBookingError(null);
 
     const paidAmount = paymentOption === 'DEPOSIT_25' ? fare.deposit : fare.gross;
     const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
     try {
       const payload = {
-        source: 'WEBSITE_PAYMENT_GATEWAY',
+        source: 'WEBSITE',
         currency: 'AUD',
         customer_email: passengerEmail,
         customer_name: passengerName,
@@ -94,8 +97,8 @@ export const QuoteBookingPage: React.FC = () => {
         total_fare: fare.gross,
         deposit_required: paymentOption === 'DEPOSIT_25' ? fare.deposit : fare.gross,
         paid_amount: paidAmount,
-        payment_status: paymentOption === 'FULL' ? 'PAID' : 'PARTIALLY_PAID',
-        payment_method: paymentMethodType === 'CARD' ? 'Visa/Mastercard 256-Bit SSL' : paymentMethodType === 'DIGITAL_WALLET' ? 'Apple Pay / Google Pay' : paymentMethodType === 'PAYID_EFT' ? 'OSKO / PayID Direct Bank Transfer' : 'Corporate Account (Net 30)',
+        payment_status: paymentOption === 'FULL' ? 'PAID_IN_FULL' : 'PARTIAL_DEPOSIT',
+        internal_notes: `Paid via ${paymentMethodType === 'CARD' ? 'Visa/Mastercard' : paymentMethodType === 'DIGITAL_WALLET' ? 'Apple Pay / Google Pay' : paymentMethodType === 'PAYID_EFT' ? 'OSKO / PayID' : 'Corporate Account (Net 30)'}`,
         legs: [
           {
             leg_number: 1,
@@ -110,7 +113,9 @@ export const QuoteBookingPage: React.FC = () => {
       };
 
       const res = await bookingsApi.create(payload);
-      const bNumber = res?.booking_number || `CCM-${Math.floor(10000 + Math.random() * 90000)}`;
+      // The reference must be the one the server stored. Inventing one here
+      // would hand the client a number that matches no booking.
+      const bNumber = res.booking_number;
       setCreatedBookingNumber(bNumber);
       setCreatedInvoiceNumber(invoiceNum);
 
@@ -126,23 +131,21 @@ export const QuoteBookingPage: React.FC = () => {
         origin: { y: 0.6 },
         colors: ['#D4AF37', '#06B6D4', '#10B981'],
       });
-    } catch (err) {
-      // Mock generation for offline demo
-      const fakeNumber = `CCM-${Math.floor(10000 + Math.random() * 90000)}`;
-      setCreatedBookingNumber(fakeNumber);
-      setCreatedInvoiceNumber(invoiceNum);
-
-      await triggerNativeNotification(
-        `🚨 [PAYMENT RECEIVED & BOOKING CONFIRMED] #${fakeNumber}`,
-        `${passengerName} • $${paidAmount.toFixed(2)} AUD Paid via ${paymentMethodType} • Auto-Reconciled`
-      );
-
-      confetti({
-        particleCount: 120,
-        spread: 80,
-        origin: { y: 0.6 },
-        colors: ['#D4AF37', '#06B6D4', '#10B981'],
-      });
+    } catch (err: any) {
+      // A failure here used to fabricate a booking number, chime, and fire
+      // confetti reading "PAYMENT RECEIVED & BOOKING CONFIRMED" — so a booking
+      // the API had rejected was confirmed to the client and no car was ever
+      // dispatched. Report it instead.
+      const detail = err?.response?.data?.detail;
+      const message = Array.isArray(detail)
+        ? detail.map((d: any) => `${d.loc?.slice(1).join('.')}: ${d.msg}`).join('; ')
+        : typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Booking failed (HTTP ${err.response.status}).`
+            : 'Booking failed: cannot reach the Opal Cloud Engine.';
+      setCreatedBookingNumber(null);
+      setBookingError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -588,6 +591,26 @@ export const QuoteBookingPage: React.FC = () => {
       </div>
 
       {/* Confirmation & Printable Tax Invoice Modal */}
+      {bookingError && (
+        <div
+          role="alert"
+          className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-5 shadow-lg flex items-start gap-3"
+        >
+          <AlertTriangle className="w-6 h-6 text-[#EF4444] shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <p className="text-sm font-black text-[#0A0E1A]">
+              Booking was NOT created — no car has been dispatched
+            </p>
+            <p className="text-xs font-bold text-[#0A0E1A] opacity-80 mt-1 break-words">
+              {bookingError}
+            </p>
+            <p className="text-xs font-bold text-[#0A0E1A] opacity-80 mt-2">
+              Do not confirm this journey to the client. Correct the details and submit again.
+            </p>
+          </div>
+        </div>
+      )}
+
       {createdBookingNumber && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4 animate-in fade-in">
           <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-lg w-full p-8 rounded-3xl text-center space-y-5 shadow-2xl text-[#0A0E1A]">
