@@ -219,10 +219,13 @@ const DRIVER_STEP_ENDPOINTS: Record<string, string> = {
 
 export interface DriverAvailabilityItem {
   driver_id: string;
-  full_name: string;
+  driver_name: string;
   status: string;
+  rating: number;
   is_available: boolean;
   conflict_reason?: string | null;
+  assigned_vehicle_id?: string | null;
+  assigned_vehicle_plate?: string | null;
 }
 
 export const driverPortalApi = {

@@ -151,8 +151,9 @@ export interface BookingLeg {
   partner_id?: string;
   partner_name?: string;
   allocation_cost: number;
-  partner_payout_amount: number;
-  fare_share?: number;
+  /** Omitted by the API when no partner is involved. */
+  partner_payout_amount?: number | null;
+  fare_share?: number | null;
   pickup_notes?: string;
   passenger_notes?: string;
 }

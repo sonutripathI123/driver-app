@@ -424,7 +424,9 @@ export const BookingsOperatePage: React.FC = () => {
                     const assignedDriver = drivers.find((d) => d.id === leg.driver_id);
                     const grossFare = leg.fare_share || b.total_fare / Math.max(1, b.legs.length);
                     const netExGst = grossFare / 1.1;
-                    const directCost = leg.allocation_cost + leg.partner_payout_amount;
+                    // The API omits partner_payout_amount when there is no
+                    // partner, which turned the whole margin column into NaN.
+                    const directCost = (leg.allocation_cost ?? 0) + (leg.partner_payout_amount ?? 0);
                     const margin = netExGst - directCost;
                     const marginPct = (margin / Math.max(1, netExGst)) * 100;
 
@@ -475,7 +477,7 @@ export const BookingsOperatePage: React.FC = () => {
                           ) : leg.partner_id ? (
                             <div className="text-[#0A0E1A] font-black">
                               Subcontractor Offload
-                              <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Payout: ${leg.partner_payout_amount.toFixed(2)} AUD</span>
+                              <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Payout: ${(leg.partner_payout_amount ?? 0).toFixed(2)} AUD</span>
                             </div>
                           ) : (
                             <span className="inline-flex px-2.5 py-1 rounded-full bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-black text-[11px]">
