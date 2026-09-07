@@ -1,92 +1,139 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { User, UserRole } from '../types';
+import { authApi } from '../services/api';
 
 interface AuthContextType {
-  user: User;
+  user: User | null;
   token: string | null;
-  currentRole: UserRole;
-  switchRole: (role: UserRole) => void;
-  login: (token: string, user: User) => void;
+  currentRole: UserRole | null;
+  isAuthenticated: boolean;
+  /** True while the stored token is being validated against the API on boot. */
+  isBootstrapping: boolean;
+  isLoggingIn: boolean;
+  loginError: string | null;
+  login: (email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
-const defaultAdminUser: User = {
-  id: 'admin-seed-01',
-  email: 'book@opalchauffeurs.com.au',
-  full_name: 'Harps Randhawa (Director)',
-  role: 'ADMIN',
-  phone: '+61 432 000 718',
-  is_active: true,
+const TOKEN_KEY = 'chauffeur_access_token';
+const REFRESH_KEY = 'chauffeur_refresh_token';
+const USER_KEY = 'chauffeur_user';
+
+const clearSession = () => {
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(REFRESH_KEY);
+  localStorage.removeItem(USER_KEY);
+};
+
+const readStoredUser = (): User | null => {
+  try {
+    const saved = localStorage.getItem(USER_KEY);
+    return saved ? (JSON.parse(saved) as User) : null;
+  } catch {
+    return null;
+  }
+};
+
+/** Turns an axios failure into something worth showing a dispatcher. */
+const describeLoginError = (error: any): string => {
+  const status = error?.response?.status;
+  if (status === 401) return 'Incorrect email or password.';
+  if (status === 403) return 'This account is not permitted to sign in.';
+  if (status === 422) return 'Please enter a valid email address.';
+  const detail = error?.response?.data?.detail;
+  if (typeof detail === 'string') return detail;
+  if (!error?.response) {
+    return 'Cannot reach the Opal Cloud Engine. Check your connection and try again.';
+  }
+  return 'Sign-in failed. Please try again.';
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User>(() => {
-    try {
-      const saved = localStorage.getItem('chauffeur_user');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.email && parsed.email.includes('opalchauffeurs.com.au')) {
-          return {
-            ...parsed,
-            full_name: 'Harps Randhawa (Director)',
-            email: 'book@opalchauffeurs.com.au'
-          };
-        }
-      }
-    } catch (e) {}
-    localStorage.setItem('chauffeur_user', JSON.stringify(defaultAdminUser));
-    return defaultAdminUser;
-  });
+  const [user, setUser] = useState<User | null>(() => readStoredUser());
+  const [token, setToken] = useState<string | null>(() => localStorage.getItem(TOKEN_KEY));
+  const [isBootstrapping, setIsBootstrapping] = useState<boolean>(() => !!localStorage.getItem(TOKEN_KEY));
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
 
-  const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('chauffeur_access_token') || 'mock-admin-token';
-  });
-
-  const [currentRole, setCurrentRole] = useState<UserRole>(user.role);
-
-  useEffect(() => {
-    setCurrentRole(user.role);
-  }, [user]);
-
-  const switchRole = (role: UserRole) => {
-    const roleNames: Record<UserRole, string> = {
-      ADMIN: 'Harps Randhawa (Director)',
-      OPERATIONS_MANAGER: 'Marcus Sterling (Ops Lead)',
-      DISPATCHER: 'Olivia Vance (Lead Dispatcher)',
-      ACCOUNTANT: 'Gregory Finch (CFO & Tax)',
-      DRIVER: 'Sonu Tripathi (Lead VIP Chauffeur)',
-      CUSTOMER: 'Rio Tinto Mining (Corporate VIP)',
-    };
-
-    const updated: User = {
-      ...user,
-      role,
-      full_name: roleNames[role],
-      email: `${role.toLowerCase()}@opalchauffeurs.com.au`,
-    };
-
-    setUser(updated);
-    localStorage.setItem('chauffeur_user', JSON.stringify(updated));
-  };
-
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken);
-    setUser(newUser);
-    localStorage.setItem('chauffeur_access_token', newToken);
-    localStorage.setItem('chauffeur_user', JSON.stringify(newUser));
-  };
-
-  const logout = () => {
+  const logout = useCallback(() => {
+    clearSession();
     setToken(null);
-    setUser(defaultAdminUser);
-    localStorage.removeItem('chauffeur_access_token');
-    localStorage.removeItem('chauffeur_user');
-  };
+    setUser(null);
+    setLoginError(null);
+  }, []);
+
+  // A stored token may be expired or issued by an older deployment, so confirm
+  // it with the API before trusting the cached user.
+  useEffect(() => {
+    if (!token) {
+      setIsBootstrapping(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const fresh = await authApi.me();
+        if (cancelled) return;
+        setUser(fresh);
+        localStorage.setItem(USER_KEY, JSON.stringify(fresh));
+      } catch {
+        if (!cancelled) logout();
+      } finally {
+        if (!cancelled) setIsBootstrapping(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // Runs once per token value; re-validating on every render would loop.
+  }, [token, logout]);
+
+  // The API layer emits this when any call comes back 401/403.
+  useEffect(() => {
+    const onUnauthorized = () => logout();
+    window.addEventListener('chauffeur:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('chauffeur:unauthorized', onUnauthorized);
+  }, [logout]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    setIsLoggingIn(true);
+    setLoginError(null);
+    try {
+      const res = await authApi.login(email.trim(), password);
+      localStorage.setItem(TOKEN_KEY, res.access_token);
+      localStorage.setItem(REFRESH_KEY, res.refresh_token);
+      localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+      setUser(res.user);
+      setToken(res.access_token);
+      setIsBootstrapping(false);
+    } catch (error) {
+      clearSession();
+      setToken(null);
+      setUser(null);
+      const message = describeLoginError(error);
+      setLoginError(message);
+      throw new Error(message);
+    } finally {
+      setIsLoggingIn(false);
+    }
+  }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, currentRole, switchRole, login, logout }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        currentRole: user?.role ?? null,
+        isAuthenticated: !!token && !!user,
+        isBootstrapping,
+        isLoggingIn,
+        loginError,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

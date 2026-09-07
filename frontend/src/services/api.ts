@@ -11,6 +11,7 @@ import {
   PartnerJobOffer,
   TaxSummaryBASReport,
   TripProfitabilityReport,
+  User,
   Vehicle,
   VehicleUtilizationReport,
   ManagerNotificationSettings,
@@ -37,11 +38,58 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// On an expired/invalid token, clear the session so the app falls back to the
+// login screen instead of silently rendering empty data.
+apiClient.interceptors.response.use(
+  (res) => res,
+  (error) => {
+    const status = error?.response?.status;
+    const url: string = error?.config?.url || '';
+    if ((status === 401 || status === 403) && !url.includes('/auth/login')) {
+      localStorage.removeItem('chauffeur_access_token');
+      localStorage.removeItem('chauffeur_refresh_token');
+      localStorage.removeItem('chauffeur_user');
+      window.dispatchEvent(new Event('chauffeur:unauthorized'));
+    }
+    return Promise.reject(error);
+  }
+);
+
 // --- API Service Methods ---
+
+export interface LoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  expires_in: number;
+  user: User;
+}
+
+export const authApi = {
+  login: async (email: string, password: string) => {
+    const res = await apiClient.post<LoginResponse>(`/auth/login`, { email, password });
+    return res.data;
+  },
+  me: async () => {
+    const res = await apiClient.get<User>(`/auth/me`);
+    return res.data;
+  },
+  refresh: async (refreshToken: string) => {
+    const res = await apiClient.post<LoginResponse>(`/auth/refresh`, { refresh_token: refreshToken });
+    return res.data;
+  },
+  changePassword: async (currentPassword: string, newPassword: string) => {
+    const res = await apiClient.post(`/auth/change-password`, {
+      current_password: currentPassword,
+      new_password: newPassword,
+    });
+    return res.data;
+  },
+};
 
 export const bookingsApi = {
   list: async (status?: string) => {
-    const res = await apiClient.get<{ bookings: Booking[]; total_count: number }>(`/bookings/`, {
+    const res = await apiClient.get<{ bookings: Booking[]; total: number; page_count: number }>(`/bookings/`, {
       params: { status },
     });
     return res.data;
@@ -55,7 +103,7 @@ export const bookingsApi = {
     return res.data;
   },
   updateLegStatus: async (bookingId: string, legId: string, status: LegStatus) => {
-    const res = await apiClient.post<Booking>(`/bookings/${bookingId}/legs/${legId}/status`, {
+    const res = await apiClient.patch<Booking>(`/bookings/${bookingId}/legs/${legId}/status`, {
       status,
     });
     return res.data;
@@ -76,18 +124,18 @@ export const bookingsApi = {
 
 export const dispatchApi = {
   getOperateBoard: async (date?: string) => {
-    const res = await apiClient.get(`/dispatch/operate-board`, { params: { target_date: date } });
+    const res = await apiClient.get(`/dispatch/board`, { params: { target_date: date } });
     return res.data;
   },
   getDriverAvailability: async (pickupTime: string, durationMinutes = 90) => {
-    const res = await apiClient.get<{ available_drivers: Driver[]; busy_drivers: any[] }>(
-      `/dispatch/driver-availability`,
+    const res = await apiClient.get<DriverAvailabilityItem[]>(
+      `/dispatch/available-drivers`,
       { params: { pickup_datetime: pickupTime, duration_minutes: durationMinutes } }
     );
     return res.data;
   },
   allocateDriver: async (legId: string, driverId: string, vehicleId: string, allocationCost: number) => {
-    const res = await apiClient.post(`/dispatch/legs/${legId}/allocate-driver`, {
+    const res = await apiClient.post(`/dispatch/legs/${legId}/allocate`, {
       driver_id: driverId,
       vehicle_id: vehicleId,
       allocation_cost: allocationCost,
@@ -95,7 +143,7 @@ export const dispatchApi = {
     return res.data;
   },
   offloadPartner: async (legId: string, partnerId: string, partnerPayout: number, partnerRef?: string) => {
-    const res = await apiClient.post(`/dispatch/legs/${legId}/offload-partner`, {
+    const res = await apiClient.post(`/dispatch/legs/${legId}/offload`, {
       partner_id: partnerId,
       partner_payout_amount: partnerPayout,
       partner_reference: partnerRef,
@@ -106,18 +154,39 @@ export const dispatchApi = {
 
 export const pricingApi = {
   calculateQuote: async (payload: any) => {
-    const res = await apiClient.post(`/quotes/calculate`, payload);
+    const res = await apiClient.post(`/quotes/instant`, payload);
     return res.data;
   },
 };
 
+// The backend exposes one endpoint per trip milestone rather than a generic
+// status setter, so map the app's status names onto those routes.
+const DRIVER_STEP_ENDPOINTS: Record<string, string> = {
+  EN_ROUTE: 'en-route',
+  ARRIVED: 'arrived',
+  PICKED_UP: 'picked-up',
+  COMPLETED: 'complete',
+};
+
+export interface DriverAvailabilityItem {
+  driver_id: string;
+  full_name: string;
+  status: string;
+  is_available: boolean;
+  conflict_reason?: string | null;
+}
+
 export const driverPortalApi = {
-  getManifest: async () => {
-    const res = await apiClient.get(`/driver-portal/manifest`);
+  getProfile: async () => {
+    const res = await apiClient.get(`/driver-portal/me`);
+    return res.data;
+  },
+  getManifest: async (filterMode: 'TODAY' | 'UPCOMING' | 'COMPLETED' | 'ALL' = 'ALL') => {
+    const res = await apiClient.get(`/driver-portal/jobs`, { params: { filter: filterMode } });
     return res.data;
   },
   updateShiftStatus: async (status: string) => {
-    const res = await apiClient.post(`/driver-portal/shift-status`, { status });
+    const res = await apiClient.patch(`/driver-portal/status`, { status });
     return res.data;
   },
   updateLocation: async (lat: number, lng: number, heading?: number, speed?: number) => {
@@ -130,9 +199,9 @@ export const driverPortalApi = {
     return res.data;
   },
   stepLegStatus: async (legId: string, status: string) => {
-    const res = await apiClient.post(`/driver-portal/legs/${legId}/step-status`, {
-      target_status: status,
-    });
+    const step = DRIVER_STEP_ENDPOINTS[status];
+    if (!step) throw new Error(`Unsupported driver trip step: ${status}`);
+    const res = await apiClient.post(`/driver-portal/jobs/${legId}/${step}`);
     return res.data;
   },
   getEarnings: async () => {
@@ -142,12 +211,14 @@ export const driverPortalApi = {
 };
 
 export const flightsApi = {
-  lookup: async (flightNumber: string, date?: string) => {
-    const res = await apiClient.get(`/flights/lookup/${flightNumber}`, { params: { date } });
+  lookup: async (flightNumber: string, flightDate?: string) => {
+    const res = await apiClient.get(`/flights/lookup`, {
+      params: { flight_number: flightNumber, flight_date: flightDate },
+    });
     return res.data;
   },
   syncLeg: async (legId: string) => {
-    const res = await apiClient.post(`/flights/sync-leg/${legId}`);
+    const res = await apiClient.post(`/flights/legs/${legId}/sync`);
     return res.data;
   },
   calculateWaitTime: async (payload: any) => {

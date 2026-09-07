@@ -12,6 +12,7 @@ import {
   Bell,
   Mail,
   UserCheck,
+  LogOut,
   X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -42,7 +43,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isOpenMobile = false,
   onCloseMobile
 }) => {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+
+  const initials = (user?.full_name || '')
+    .split(' ')
+    .filter((part) => /^[A-Za-z]/.test(part))
+    .slice(0, 2)
+    .map((part) => part[0].toUpperCase())
+    .join('') || '—';
 
   const sections: {
     title: string;
@@ -170,17 +178,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* User Profile Footer */}
       <div className="p-4 border-t border-[#1E2738] bg-[#06090F]">
         <div className="flex items-center gap-3 p-2.5 rounded-xl bg-[#FAF6F0] border border-[#E6D8C3] shadow-md">
-          <div className="w-8 h-8 rounded-lg bg-[#06090F] border border-[#DFCAA8] flex items-center justify-center text-white font-black text-xs">
-            HR
+          <div className="w-8 h-8 rounded-lg bg-[#06090F] border border-[#DFCAA8] flex items-center justify-center text-white font-black text-xs shrink-0">
+            {initials}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-black text-[#0A0E1A] truncate">
-              Harps Randhawa (Director)
+              {user?.full_name || 'Signed out'}
             </p>
             <p className="text-[10px] text-[#0A0E1A] font-mono truncate font-bold">
-              book@opalchauffeurs.com.au
+              {user?.email || '—'}
             </p>
           </div>
+          <button
+            onClick={logout}
+            title="Sign out"
+            aria-label="Sign out"
+            className="p-1.5 rounded-lg border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors shrink-0"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
     </div>

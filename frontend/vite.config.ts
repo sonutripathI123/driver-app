@@ -11,7 +11,9 @@ export default defineConfig({
     host: '0.0.0.0',
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:8000',
+        // Defaults to a locally running backend; set VITE_DEV_API_PROXY to test
+        // the dev server against a deployed environment instead.
+        target: process.env.VITE_DEV_API_PROXY || 'http://127.0.0.1:8000',
         changeOrigin: true,
         secure: false,
       }

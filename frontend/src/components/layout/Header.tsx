@@ -17,6 +17,17 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
   const { user } = useAuth();
+
+  const ROLE_LABELS: Record<string, { label: string; access: string }> = {
+    ADMIN: { label: 'Admin', access: 'FULL ACCESS' },
+    OPERATIONS_MANAGER: { label: 'Ops Manager', access: 'OPERATIONS' },
+    DISPATCHER: { label: 'Dispatcher', access: 'DISPATCH' },
+    ACCOUNTANT: { label: 'Accountant', access: 'FINANCE' },
+    DRIVER: { label: 'Chauffeur', access: 'DRIVER' },
+    CUSTOMER: { label: 'Client', access: 'PORTAL' },
+  };
+  const { label: roleLabel, access: accessLabel } =
+    ROLE_LABELS[user?.role ?? ''] ?? { label: 'Signed out', access: 'NO ACCESS' };
   const [timeStr, setTimeStr] = useState('');
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstallBtn, setShowInstallBtn] = useState(false);
@@ -129,12 +140,12 @@ export const Header: React.FC<HeaderProps> = ({ onOpenMobileMenu }) => {
             <span className="px-1.5 py-0.2 rounded bg-[#06090F] text-[#FAF6F0] text-[10px] font-mono font-black">LIVE</span>
           </div>
 
-          {/* Permanent Master Admin Locked Indicator */}
+          {/* Signed-in role indicator (driven by the JWT, not hardcoded) */}
           <div className="flex items-center gap-1.5 md:gap-2 px-3 py-1.5 rounded-xl border border-[#DFCAA8] text-[#0A0E1A] bg-[#DFCAA8] text-xs font-black shadow-sm">
             <Shield className="w-3.5 h-3.5 text-[#0A0E1A] shrink-0" />
-            <span>Admin</span>
+            <span>{roleLabel}</span>
             <span className="hidden md:inline px-1.5 py-0.2 rounded bg-[#06090F] text-[#FAF6F0] text-[10px] font-mono font-black">
-              FULL ACCESS
+              {accessLabel}
             </span>
           </div>
 
