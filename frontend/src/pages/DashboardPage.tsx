@@ -72,6 +72,7 @@ interface DriverRosterItem {
 
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [summary, setSummary] = useState<ExecutiveDashboardSummary | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
   const [drivers, setDrivers] = useState<Driver[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,271 +83,117 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [searchQuery, setSearchQuery] = useState('');
 
   // Sample detailed booking audit records
-  const sampleBookings: DetailedBookingItem[] = [
-    {
-      id: 'b-sahil',
-      bookingNumber: 'CCM-2026-9901',
-      passengerName: 'Sahil Tripathi',
-      passengerPhone: '+91 6386154107',
-      passengerEmail: 'sahil.tripathi@gmail.com',
-      pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
-      dropoffAddress: 'Melbourne Airport Terminal 2 (Tullamarine)',
-      pickupTime: 'Today, 18:30 AEST',
-      vehicleCategory: 'Executive Sedan',
-      totalFare: 460.0,
-      paymentStatus: 'PAID_IN_FULL',
-      driverName: 'Sonu Tripathi (Live Driver)',
-      driverPhone: '+61 432 000 718',
-      vehiclePlate: 'ST-9305-VIC (Mercedes S450)',
-      driverPayout: 170.0,
-      netProfit: 248.18,
-      status: 'ALLOCATED',
-    },
-    {
-      id: 'b-01',
-      bookingNumber: 'CCM-2026-0881',
-      passengerName: 'David Warner',
-      passengerPhone: '+61 411 222 333',
-      passengerEmail: 'david.warner@cricket.com.au',
-      pickupAddress: '120 Collins St, Melbourne CBD',
-      dropoffAddress: 'Melbourne Airport Terminal 2 (Tullamarine)',
-      pickupTime: 'Today, 14:30 AEST',
-      vehicleCategory: 'Sedan Premium',
-      totalFare: 440.0,
-      paymentStatus: 'PAID_IN_FULL',
-      driverName: 'Fernando Alonso',
-      driverPhone: '+61 433 778 899',
-      vehiclePlate: 'FA-14-VIC (Mercedes S450)',
-      driverPayout: 160.0,
-      netProfit: 240.0,
-      status: 'ALLOCATED',
-    },
-    {
-      id: 'b-02',
-      bookingNumber: 'CCM-2026-0882',
-      passengerName: 'Rio Tinto Mining Delegation (4 Pax)',
-      passengerPhone: '+61 499 888 777',
-      passengerEmail: 'corporate.travel@riotinto.com',
-      pickupAddress: 'Crown Towers, Southbank',
-      dropoffAddress: 'Yarra Valley Estate, Coldstream',
-      pickupTime: 'Today, 17:00 AEST',
-      vehicleCategory: 'Luxury SUV / Minibus',
-      totalFare: 680.0,
-      paymentStatus: 'PARTIAL_DEPOSIT',
-      driverName: 'Lewis Hamilton',
-      driverPhone: '+61 499 001 122',
-      vehiclePlate: 'LH-44-VIC (Mercedes V-Class)',
-      driverPayout: 210.0,
-      netProfit: 408.18,
-      status: 'ALLOCATED',
-    },
-    {
-      id: 'b-03',
-      bookingNumber: 'CCM-2026-0879',
-      passengerName: 'Dr. Sophia Sterling',
-      passengerPhone: '+61 422 334 455',
-      passengerEmail: 'sophia.sterling@monash.edu',
-      pickupAddress: 'Grand Hyatt Melbourne',
-      dropoffAddress: 'Essendon Airport Jet Base',
-      pickupTime: 'Today, 11:15 AEST',
-      vehicleCategory: 'Sedan Executive',
-      totalFare: 320.0,
-      paymentStatus: 'PAID_IN_FULL',
-      driverName: 'Daniel Ricciardo',
-      driverPhone: '+61 411 998 877',
-      vehiclePlate: 'DR-03-VIC (BMW 740i)',
-      driverPayout: 140.0,
-      netProfit: 150.91,
-      status: 'COMPLETED',
-    },
-    {
-      id: 'b-04',
-      bookingNumber: 'CCM-2026-0878',
-      passengerName: 'Marcus Aurelius Vance',
-      passengerPhone: '+61 418 555 666',
-      passengerEmail: 'vance@vanceholdings.com.au',
-      pickupAddress: 'Park Hyatt, 1 Parliament Square',
-      dropoffAddress: 'Melbourne Airport Terminal 4',
-      pickupTime: 'Today, 08:45 AEST',
-      vehicleCategory: 'Sedan Executive',
-      totalFare: 280.0,
-      paymentStatus: 'PAID_IN_FULL',
-      driverName: 'Charles Leclerc',
-      driverPhone: '+61 455 123 456',
-      vehiclePlate: 'CL-16-VIC (Mercedes E300)',
-      driverPayout: 130.0,
-      netProfit: 124.55,
-      status: 'COMPLETED',
-    },
-    {
-      id: 'b-05',
-      bookingNumber: 'CCM-2026-0883',
-      passengerName: 'BHP Executive Board Transfer',
-      passengerPhone: '+61 423 777 999',
-      passengerEmail: 'events@bhp.com',
-      pickupAddress: '171 Collins St, Melbourne',
-      dropoffAddress: 'Portsea Coastal Estate',
-      pickupTime: 'Tomorrow, 09:00 AEST',
-      vehicleCategory: 'Executive Sprinter',
-      totalFare: 1150.0,
-      paymentStatus: 'INVOICED',
-      driverName: 'Pending Allocation',
-      driverPhone: 'N/A',
-      vehiclePlate: 'Unassigned',
-      driverPayout: 380.0,
-      netPayoutExpected: 665.45,
-      netProfit: 665.45,
-      status: 'PENDING',
-    } as any,
-    {
-      id: 'b-06',
-      bookingNumber: 'CCM-2026-0880',
-      passengerName: 'Elena Rostova (VIP)',
-      passengerPhone: '+61 488 444 222',
-      passengerEmail: 'elena@rostovafinance.com',
-      pickupAddress: 'Melbourne Airport T2 International Arrival',
-      dropoffAddress: 'The Ritz-Carlton, 650 Lonsdale St',
-      pickupTime: 'Today, 13:00 AEST',
-      vehicleCategory: 'Sedan Premium',
-      totalFare: 360.0,
-      paymentStatus: 'PAID_IN_FULL',
-      driverName: 'Max Verstappen',
-      driverPhone: '+61 400 999 111',
-      vehiclePlate: 'MV-01-VIC (Mercedes S450)',
-      driverPayout: 155.0,
-      netProfit: 172.27,
-      status: 'IN_PROGRESS',
-    },
-  ];
+  // Both tables below are derived from the bookings and driver roster already
+  // loaded from the API. They were previously ~265 lines of invented rows —
+  // David Warner, a Rio Tinto delegation, and six chauffeurs who do not exist.
 
-  // Sample live driver roster
-  const sampleDrivers: DriverRosterItem[] = [
-    {
-      id: 'drv-sonu',
-      name: 'Sonu Tripathi (Live Driver)',
-      phone: '+91 9305365420',
-      email: 'sonu@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)',
-      plate: 'ST-9305-VIC',
-      status: 'ON_TRIP',
-      currentBookingNumber: 'CCM-2026-9901',
-      currentRoute: 'Crown Towers, Southbank ➔ Melbourne Airport T2',
-      todayCompletedTrips: 2,
-      todayEarnings: 340.0,
-      rating: 5.0,
-      onTimeRate: 100,
-    },
-    {
-      id: 'drv-01',
-      name: 'Daniel Ricciardo',
-      phone: '+61 411 998 877',
-      email: 'daniel@crownchauffeurs.com.au',
-      vehicle: 'BMW 7-Series 740i (Black)',
-      plate: 'DR-03-VIC',
-      status: 'AVAILABLE', // KHALI
-      todayCompletedTrips: 3,
-      todayEarnings: 420.0,
-      rating: 4.98,
-      onTimeRate: 100,
-    },
-    {
-      id: 'drv-02',
-      name: 'Charles Leclerc',
-      phone: '+61 455 123 456',
-      email: 'charles@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz E-Class E300 (Obsidian Black)',
-      plate: 'CL-16-VIC',
-      status: 'AVAILABLE', // KHALI
-      todayCompletedTrips: 2,
-      todayEarnings: 270.0,
-      rating: 4.95,
-      onTimeRate: 98,
-    },
-    {
-      id: 'drv-03',
-      name: 'George Russell',
-      phone: '+61 477 333 111',
-      email: 'george@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz S-Class S450 (Silver)',
-      plate: 'GR-63-VIC',
-      status: 'AVAILABLE', // KHALI
-      todayCompletedTrips: 1,
-      todayEarnings: 165.0,
-      rating: 4.96,
-      onTimeRate: 100,
-    },
-    {
-      id: 'drv-04',
-      name: 'Oscar Piastri',
-      phone: '+61 466 222 888',
-      email: 'oscar@crownchauffeurs.com.au',
-      vehicle: 'Audi A8 L (Mythos Black)',
-      plate: 'OP-81-VIC',
-      status: 'AVAILABLE', // KHALI
-      todayCompletedTrips: 2,
-      todayEarnings: 310.0,
-      rating: 4.99,
-      onTimeRate: 100,
-    },
-    {
-      id: 'drv-05',
-      name: 'Max Verstappen',
-      phone: '+61 400 999 111',
-      email: 'max@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)',
-      plate: 'MV-01-VIC',
-      status: 'ON_TRIP',
-      currentBookingNumber: 'CCM-2026-0880',
-      currentRoute: 'Melbourne Airport T2 ➔ The Ritz-Carlton (ETA 25m)',
-      todayCompletedTrips: 2,
-      todayEarnings: 315.0,
-      rating: 4.97,
-      onTimeRate: 99,
-    },
-    {
-      id: 'drv-06',
-      name: 'Fernando Alonso',
-      phone: '+61 433 778 899',
-      email: 'fernando@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz S-Class S450 (Designo Selenite Grey)',
-      plate: 'FA-14-VIC',
-      status: 'ON_TRIP',
-      currentBookingNumber: 'CCM-2026-0881',
-      currentRoute: '120 Collins St ➔ Melbourne Airport T2 (En Route)',
-      todayCompletedTrips: 2,
-      todayEarnings: 320.0,
-      rating: 4.96,
-      onTimeRate: 97,
-    },
-    {
-      id: 'drv-07',
-      name: 'Lewis Hamilton',
-      phone: '+61 499 001 122',
-      email: 'lewis@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz V-Class V250d (Executive Luxury Van)',
-      plate: 'LH-44-VIC',
-      status: 'ON_TRIP',
-      currentBookingNumber: 'CCM-2026-0882',
-      currentRoute: 'Crown Towers ➔ Yarra Valley Estate',
-      todayCompletedTrips: 1,
-      todayEarnings: 210.0,
-      rating: 4.99,
-      onTimeRate: 100,
-    },
-    {
-      id: 'drv-08',
-      name: 'Carlos Sainz',
-      phone: '+61 488 111 555',
-      email: 'carlos@crownchauffeurs.com.au',
-      vehicle: 'Mercedes-Benz Sprinter Executive Minibus',
-      plate: 'CS-55-VIC',
-      status: 'OFF_DUTY',
-      todayCompletedTrips: 0,
-      todayEarnings: 0.0,
-      rating: 4.94,
-      onTimeRate: 96,
-    },
-  ];
+  const AEST = 'Australia/Melbourne';
+  const fmtWhen = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat('en-AU', {
+          timeZone: AEST, day: '2-digit', month: 'short',
+          hour: '2-digit', minute: '2-digit', hour12: false,
+        }).format(new Date(iso))
+      : '—';
+
+  const LEG_TO_ROW_STATUS: Record<string, DetailedBookingItem['status']> = {
+    PENDING: 'PENDING',
+    ALLOCATED: 'ALLOCATED',
+    DISPATCHED: 'ALLOCATED',
+    EN_ROUTE: 'IN_PROGRESS',
+    ARRIVED: 'IN_PROGRESS',
+    PICKED_UP: 'IN_PROGRESS',
+    COMPLETED: 'COMPLETED',
+  };
+
+  const sampleBookings: DetailedBookingItem[] = bookings.flatMap((b) =>
+    (b.legs ?? []).map((leg) => {
+      const payout = (leg.allocation_cost ?? 0) + (leg.partner_payout_amount ?? 0);
+      const netExGst = (leg.fare_share ?? b.total_fare / Math.max(1, b.legs?.length || 1)) / 1.1;
+      return {
+        id: leg.id,
+        bookingNumber: b.booking_number,
+        passengerName: b.passenger_name || 'VIP Passenger',
+        passengerPhone: b.passenger_phone || '—',
+        passengerEmail: b.passenger_email || '—',
+        pickupAddress: leg.pickup_address,
+        dropoffAddress: leg.dropoff_address,
+        pickupTime: fmtWhen(leg.pickup_datetime),
+        vehicleCategory: String(leg.vehicle_category || '').replace(/_/g, ' '),
+        totalFare: b.total_fare,
+        paymentStatus: (b.payment_status === 'PAID_IN_FULL'
+          ? 'PAID_IN_FULL'
+          : b.payment_status === 'PARTIAL_DEPOSIT'
+            ? 'PARTIAL_DEPOSIT'
+            : 'INVOICED') as DetailedBookingItem['paymentStatus'],
+        driverName: leg.driver_name || 'Unallocated',
+        driverPhone: '—',
+        vehiclePlate: leg.vehicle_plate || '—',
+        driverPayout: payout,
+        netProfit: netExGst - payout,
+        status: LEG_TO_ROW_STATUS[leg.status] ?? 'PENDING',
+      };
+    })
+  );
+
+  const IN_PROGRESS_LEG = ['DISPATCHED', 'EN_ROUTE', 'ARRIVED', 'PICKED_UP'];
+
+  // Airport pickups we actually hold, from the bookings themselves. Live status
+  // (airline, gate, estimated landing, delay) needs a flight data provider that
+  // is not connected, so those read "not connected" rather than being invented —
+  // this list used to be four fabricated flights with delay minutes and gates.
+  const airportFlights = bookings.flatMap((b) =>
+    (b.legs ?? [])
+      .filter((leg) => leg.flight_number)
+      .map((leg) => ({
+        id: leg.id,
+        flightNumber: leg.flight_number as string,
+        airline: 'Live status not connected',
+        origin: '—',
+        destination: leg.dropoff_address,
+        passengerName: b.passenger_name || 'VIP Passenger',
+        passengerPhone: b.passenger_phone || '—',
+        bookingNumber: b.booking_number,
+        scheduledTime: fmtWhen(leg.pickup_datetime),
+        estimatedLanding: '—',
+        delayMinutes: leg.flight_delay_minutes ?? 0,
+        status: (leg.flight_delay_minutes ?? 0) > 0 ? 'DELAYED' : 'SCHEDULED',
+        assignedDriver: leg.driver_name || 'Unallocated',
+        driverPhone: '—',
+        vehiclePlate: leg.vehicle_plate || '—',
+        gate: '—',
+        bufferNote:
+          (leg.flight_delay_minutes ?? 0) > 0
+            ? `Recorded delay of ${leg.flight_delay_minutes} minutes on this leg.`
+            : 'No flight data provider is connected, so arrival times are not tracked.',
+      }))
+  );
+
+  const sampleDrivers: DriverRosterItem[] = drivers.map((dr) => {
+    const legs = bookings.flatMap((b) =>
+      (b.legs ?? []).filter((l) => l.driver_id === dr.id).map((l) => ({ booking: b, leg: l }))
+    );
+    const active = legs.find(({ leg }) => IN_PROGRESS_LEG.includes(leg.status));
+    const completed = legs.filter(({ leg }) => leg.status === 'COMPLETED');
+    const vehicle = dr.default_vehicle;
+    return {
+      id: dr.id,
+      name: dr.full_name,
+      phone: dr.phone,
+      email: dr.email,
+      vehicle: vehicle ? `${vehicle.make} ${vehicle.model}` : (active?.leg.vehicle_plate ? 'Assigned per trip' : 'No default vehicle'),
+      plate: vehicle?.registration_plate || active?.leg.vehicle_plate || '—',
+      status: dr.status === 'ON_TRIP' ? 'ON_TRIP' : dr.status === 'OFF_DUTY' ? 'OFF_DUTY' : 'AVAILABLE',
+      currentBookingNumber: active?.booking.booking_number,
+      currentRoute: active ? `${active.leg.pickup_address} ➔ ${active.leg.dropoff_address}` : undefined,
+      todayCompletedTrips: completed.length,
+      todayEarnings: completed.reduce((sum, { leg }) => sum + (leg.allocation_cost ?? 0), 0),
+      rating: dr.rating ?? 0,
+      // Not measured yet: there is no arrival-vs-scheduled comparison in the API.
+      onTimeRate: 0,
+    };
+  });
+
 
   useEffect(() => {
     loadDashboard();
@@ -362,12 +209,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         fleetApi.getDrivers(),
       ]);
       setSummary(sumData);
+      setBookings(bData.bookings || []);
       setPendingBookings(bData.bookings?.slice(0, 3) || []);
       setDrivers(driverData || []);
     } catch (err: any) {
       // Never substitute invented figures here: a dispatcher acting on fake
       // revenue or a fake pending queue is worse than seeing the failure.
       setSummary(null);
+      setBookings([]);
       setPendingBookings([]);
       setDrivers([]);
       setLoadError(
@@ -416,7 +265,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const profitMargin = summary?.gross_profit_margin_pct ?? 0;
   const totalRides = summary?.total_bookings ?? 0;
   const completedRides = summary?.completed_trips_count ?? 0;
-  const pendingRides = Math.max(totalRides - completedRides - (summary?.cancelled_trips_count ?? 0), 0);
+  // Derived from the bookings themselves. Subtracting the summary's counts
+  // mixed two different filters — it counts bookings by created_at but legs by
+  // pickup_datetime — so a cancelled booking scheduled outside the reporting
+  // window was displayed as still pending.
+  const CLOSED_BOOKING_STATUSES = ['COMPLETED', 'CANCELLED', 'REFUNDED', 'FINANCIALLY_CLOSED'];
+  const pendingRides = bookings.filter((b) => !CLOSED_BOOKING_STATUSES.includes(b.status)).length;
   const activeDrivers = drivers.filter((d) => d.is_active).length;
   const availableDrivers = drivers.filter((d) => d.is_active && d.status === 'AVAILABLE').length;
   const onTripDrivers = drivers.filter((d) => d.is_active && d.status === 'ON_TRIP').length;
@@ -1174,122 +1028,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Flights List */}
             <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
-              {[
-                {
-                  id: 'fl-01',
-                  flightNumber: 'QF400',
-                  airline: 'Qantas Airways',
-                  origin: 'Sydney (SYD)',
-                  destination: 'Melbourne (MEL - Terminal 2)',
-                  passengerName: 'David Warner',
-                  passengerPhone: '+61 411 222 333',
-                  bookingNumber: 'CCM-2026-0881',
-                  scheduledTime: 'Today, 14:30 AEST',
-                  estimatedLanding: 'Today, 14:55 AEST',
-                  delayMinutes: 25,
-                  status: 'DELAYED',
-                  assignedDriver: 'Fernando Alonso',
-                  driverPhone: '+61 433 778 899',
-                  vehiclePlate: 'FA-14-VIC (Mercedes S450)',
-                  gate: 'Terminal 2 Int / Bay 14',
-                  bufferNote: 'Pickup buffer auto-extended by +25 mins. Chauffeur notified ✓',
-                },
-                {
-                  id: 'fl-02',
-                  flightNumber: 'EK408',
-                  airline: 'Emirates Airlines',
-                  origin: 'Dubai (DXB)',
-                  destination: 'Melbourne (MEL - Terminal 2)',
-                  passengerName: 'Elena Rostova (VIP)',
-                  passengerPhone: '+61 488 444 222',
-                  bookingNumber: 'CCM-2026-0880',
-                  scheduledTime: 'Today, 13:00 AEST',
-                  estimatedLanding: 'Today, 13:45 AEST',
-                  delayMinutes: 45,
-                  status: 'DELAYED',
-                  assignedDriver: 'Max Verstappen',
-                  driverPhone: '+61 400 999 111',
-                  vehiclePlate: 'MV-01-VIC (Mercedes S450)',
-                  gate: 'Terminal 2 Gate 9',
-                  bufferNote: 'Heavy headwind delay detected. Chauffeur pickup rescheduled to 14:15 AEST ✓',
-                },
-                {
-                  id: 'fl-03',
-                  flightNumber: 'CX135',
-                  airline: 'Cathay Pacific',
-                  origin: 'Hong Kong (HKG)',
-                  destination: 'Melbourne (MEL - Terminal 2)',
-                  passengerName: 'Dr. Arthur Pendelton',
-                  passengerPhone: '+61 499 111 444',
-                  bookingNumber: 'CCM-2026-0885',
-                  scheduledTime: 'Today, 19:20 AEST',
-                  estimatedLanding: 'Today, 19:35 AEST',
-                  delayMinutes: 15,
-                  status: 'DELAYED',
-                  assignedDriver: 'Oscar Piastri',
-                  driverPhone: '+61 466 222 888',
-                  vehiclePlate: 'OP-81-VIC (Audi A8 L)',
-                  gate: 'Terminal 2 Gate 11',
-                  bufferNote: 'Air traffic holding pattern. Chauffeur dispatch delayed by +15 mins to avoid parking fees.',
-                },
-                {
-                  id: 'fl-04',
-                  flightNumber: 'SQ237',
-                  airline: 'Singapore Airlines',
-                  origin: 'Singapore Changi (SIN)',
-                  destination: 'Melbourne (MEL - Terminal 2)',
-                  passengerName: 'Sir James McCauley',
-                  passengerPhone: '+61 412 888 333',
-                  bookingNumber: 'CCM-2026-0884',
-                  scheduledTime: 'Today, 16:15 AEST',
-                  estimatedLanding: 'Today, 16:15 AEST (On Time)',
-                  delayMinutes: 0,
-                  status: 'ON_TIME',
-                  assignedDriver: 'Daniel Ricciardo',
-                  driverPhone: '+61 411 998 877',
-                  vehiclePlate: 'DR-03-VIC (BMW 740i)',
-                  gate: 'Terminal 2 Gate 4',
-                  bufferNote: 'Flight on schedule. Chauffeur meet-and-greet in holding bay.',
-                },
-                {
-                  id: 'fl-05',
-                  flightNumber: 'Bombardier Global 7500 (VH-VHN)',
-                  airline: 'VIP Private Charter Jet',
-                  origin: 'Sydney Kingsford Smith (SYD)',
-                  destination: 'Essendon Airport Jet Base',
-                  passengerName: 'BHP Executive Delegation',
-                  passengerPhone: '+61 423 777 999',
-                  bookingNumber: 'CCM-2026-0883',
-                  scheduledTime: 'Today, 17:30 AEST',
-                  estimatedLanding: 'Today, 17:30 AEST (On Time)',
-                  delayMinutes: 0,
-                  status: 'ON_TIME',
-                  assignedDriver: 'Lewis Hamilton',
-                  driverPhone: '+61 499 001 122',
-                  vehiclePlate: 'LH-44-VIC (Mercedes V-Class)',
-                  gate: 'Essendon Jet Base Tarmac Gate 1',
-                  bufferNote: 'Direct VIP tarmac security clearance approved.',
-                },
-                {
-                  id: 'fl-06',
-                  flightNumber: 'VA820',
-                  airline: 'Virgin Australia',
-                  origin: 'Brisbane (BNE)',
-                  destination: 'Melbourne (MEL - Terminal 4)',
-                  passengerName: 'Marcus Aurelius Vance',
-                  passengerPhone: '+61 418 555 666',
-                  bookingNumber: 'CCM-2026-0878',
-                  scheduledTime: 'Today, 08:45 AEST',
-                  estimatedLanding: 'Today, 08:35 AEST (Early -10m)',
-                  delayMinutes: -10,
-                  status: 'EARLY',
-                  assignedDriver: 'Charles Leclerc',
-                  driverPhone: '+61 455 123 456',
-                  vehiclePlate: 'CL-16-VIC (Mercedes E300)',
-                  gate: 'Terminal 4 Baggage Carousel 2',
-                  bufferNote: 'Early touchdown. Chauffeur positioned at Terminal 4 pickup lane.',
-                },
-              ]
+              {airportFlights
                 .filter(
                   (f) =>
                     searchQuery === '' ||

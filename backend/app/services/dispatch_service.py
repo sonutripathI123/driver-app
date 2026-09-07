@@ -565,6 +565,11 @@ class DispatchService:
             stmt = stmt.where(BookingLeg.vehicle_category == vehicle_category)
         if status_filter:
             stmt = stmt.where(BookingLeg.status == status_filter)
+        else:
+            # A cancelled leg is not work to dispatch. It was previously listed
+            # alongside live jobs, so a cancelled booking still appeared on the
+            # board. Asking for CANCELLED explicitly still returns them.
+            stmt = stmt.where(BookingLeg.status != LegStatus.CANCELLED)
 
         res = await db.execute(stmt)
         legs = list(res.scalars().all())
