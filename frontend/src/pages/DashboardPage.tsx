@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { LuxuryCarCanvas } from '../components/3d/LuxuryCarCanvas';
 import { RadarGlobeCanvas } from '../components/3d/RadarGlobeCanvas';
-import { analyticsApi, bookingsApi } from '../services/api';
-import { Booking, ExecutiveDashboardSummary } from '../types';
+import { analyticsApi, bookingsApi, fleetApi } from '../services/api';
+import { Booking, Driver, ExecutiveDashboardSummary } from '../types';
 import {
   Sparkles,
   Car,
@@ -10,6 +10,7 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
+  LoaderCircle,
   ArrowRight,
   Shield,
   DollarSign,
@@ -72,6 +73,9 @@ interface DriverRosterItem {
 export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [summary, setSummary] = useState<ExecutiveDashboardSummary | null>(null);
   const [pendingBookings, setPendingBookings] = useState<Booking[]>([]);
+  const [drivers, setDrivers] = useState<Driver[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [activeModal, setActiveModal] = useState<'REVENUE' | 'PROFIT' | 'BOOKINGS' | 'FLEET' | 'FLIGHTS' | null>(null);
   const [bookingFilter, setBookingFilter] = useState<'ALL' | 'COMPLETED' | 'IN_PROGRESS' | 'PENDING'>('ALL');
   const [driverFilter, setDriverFilter] = useState<'ALL' | 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY'>('ALL');
@@ -349,101 +353,31 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   }, []);
 
   const loadDashboard = async () => {
+    setIsLoading(true);
+    setLoadError(null);
     try {
-      const [sumData, bData] = await Promise.all([
+      const [sumData, bData, driverData] = await Promise.all([
         analyticsApi.getDashboardSummary(),
         bookingsApi.list(),
+        fleetApi.getDrivers(),
       ]);
       setSummary(sumData);
       setPendingBookings(bData.bookings?.slice(0, 3) || []);
-    } catch (err) {
-      setSummary({
-        date_from: new Date().toISOString(),
-        date_to: new Date().toISOString(),
-        gross_revenue_inc_gst: 18450.0,
-        net_revenue_ex_gst: 16772.73,
-        gst_collected_10pct: 1677.27,
-        total_driver_costs: 7120.0,
-        total_partner_costs: 1850.0,
-        total_direct_costs: 8970.0,
-        gross_profit: 7802.73,
-        gross_profit_margin_pct: 46.52,
-        total_bookings: 38,
-        completed_trips_count: 32,
-        cancelled_trips_count: 2,
-        cancellation_rate_pct: 5.26,
-        average_booking_value: 485.53,
-      });
-
-      setPendingBookings([
-        {
-          id: 'b-01',
-          booking_number: 'CCM-2026-0881',
-          source: 'WEBSITE',
-          status: 'PENDING' as any,
-          payment_status: 'PAID_IN_FULL',
-          currency: 'AUD',
-          total_fare: 440.0,
-          deposit_required: 440.0,
-          paid_amount: 440.0,
-          balance_amount: 0.0,
-          passenger_name: 'David Warner',
-          passenger_phone: '+61 411 222 333',
-          created_at: new Date().toISOString(),
-          legs: [
-            {
-              id: 'l-01',
-              booking_id: 'b-01',
-              leg_number: 1,
-              status: 'PENDING',
-              pickup_address: '120 Collins St, Melbourne CBD',
-              dropoff_address: 'Melbourne Airport Terminal 2 (Tullamarine)',
-              pickup_datetime: new Date(Date.now() + 3600000 * 3).toISOString(),
-              is_airport_pickup: true,
-              flight_number: 'QF400',
-              flight_delay_minutes: 25,
-              wait_time_minutes: 0,
-              wait_time_charge: 0,
-              vehicle_category: 'SEDAN_PREMIUM',
-              allocation_cost: 160.0,
-              partner_payout_amount: 0,
-            },
-          ],
-        },
-        {
-          id: 'b-02',
-          booking_number: 'CCM-2026-0882',
-          source: 'CORPORATE_PORTAL',
-          status: 'PENDING' as any,
-          payment_status: 'PARTIAL_DEPOSIT',
-          currency: 'AUD',
-          total_fare: 680.0,
-          deposit_required: 170.0,
-          paid_amount: 170.0,
-          balance_amount: 510.0,
-          passenger_name: 'Rio Tinto Mining Delegation',
-          passenger_phone: '+61 499 888 777',
-          created_at: new Date().toISOString(),
-          legs: [
-            {
-              id: 'l-02',
-              booking_id: 'b-02',
-              leg_number: 1,
-              status: 'PENDING',
-              pickup_address: 'Crown Towers, Southbank',
-              dropoff_address: 'Yarra Valley Estate',
-              pickup_datetime: new Date(Date.now() + 3600000 * 5).toISOString(),
-              is_airport_pickup: false,
-              flight_delay_minutes: 0,
-              wait_time_minutes: 0,
-              wait_time_charge: 0,
-              vehicle_category: 'PEOPLE_MOVER',
-              allocation_cost: 210.0,
-              partner_payout_amount: 0,
-            },
-          ],
-        },
-      ]);
+      setDrivers(driverData || []);
+    } catch (err: any) {
+      // Never substitute invented figures here: a dispatcher acting on fake
+      // revenue or a fake pending queue is worse than seeing the failure.
+      setSummary(null);
+      setPendingBookings([]);
+      setDrivers([]);
+      setLoadError(
+        err?.response?.data?.detail ||
+          (err?.response
+            ? `Live data unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.')
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -476,15 +410,50 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     return matchesFilter && matchesSearch;
   });
 
-  const grossRev = summary?.gross_revenue_inc_gst ?? 18450.0;
-  const netRev = summary?.net_revenue_ex_gst ?? 16772.73;
-  const netProfit = summary?.gross_profit ?? 7802.73;
-  const profitMargin = summary?.gross_profit_margin_pct ?? 46.52;
-  const totalRides = summary?.total_bookings ?? 38;
-  const completedRides = summary?.completed_trips_count ?? 32;
+  const grossRev = summary?.gross_revenue_inc_gst ?? 0;
+  const netRev = summary?.net_revenue_ex_gst ?? 0;
+  const netProfit = summary?.gross_profit ?? 0;
+  const profitMargin = summary?.gross_profit_margin_pct ?? 0;
+  const totalRides = summary?.total_bookings ?? 0;
+  const completedRides = summary?.completed_trips_count ?? 0;
+  const pendingRides = Math.max(totalRides - completedRides - (summary?.cancelled_trips_count ?? 0), 0);
+  const activeDrivers = drivers.filter((d) => d.is_active).length;
+  const availableDrivers = drivers.filter((d) => d.is_active && d.status === 'AVAILABLE').length;
+  const onTripDrivers = drivers.filter((d) => d.is_active && d.status === 'ON_TRIP').length;
 
   return (
     <div className="space-y-6 w-full max-w-full min-w-0 overflow-hidden relative text-[#0A0E1A]">
+      {/* Live data status: surface failures instead of showing invented figures */}
+      {loadError && (
+        <div
+          role="alert"
+          className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg"
+        >
+          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+            <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-black text-[#0A0E1A]">Live figures could not be loaded</p>
+              <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">
+                {loadError} Revenue and queue figures below are showing zero rather than estimates.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={loadDashboard}
+            className="shrink-0 px-4 py-2 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {isLoading && !loadError && (
+        <div className="flex items-center gap-2.5 rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] px-4 py-3 shadow-sm">
+          <LoaderCircle className="w-4 h-4 text-[#7B6035] animate-spin shrink-0" />
+          <p className="text-xs font-black text-[#0A0E1A]">Loading live figures from Opal Cloud Engine…</p>
+        </div>
+      )}
+
       {/* 1. Hero Command Center Banner */}
       <div className="relative rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-5 sm:p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 overflow-hidden w-full min-w-0 shadow-lg">
         <div className="absolute top-0 right-0 w-64 h-64 bg-[#DFCAA8]/30 rounded-full blur-3xl pointer-events-none" />
@@ -585,7 +554,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
               <span className="w-1.5 h-1.5 rounded-full bg-[#0A0E1A] animate-ping shrink-0" />
-              <span className="truncate">{completedRides} Completed • 2 Pending</span>
+              <span className="truncate">{completedRides} Completed • {pendingRides} Pending</span>
             </div>
             <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-sky">
               View All ➔
@@ -605,11 +574,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <Users className="w-4 h-4 text-[#0A0E1A] shrink-0" />
           </div>
           <div className="text-xl sm:text-2xl font-black font-mono text-[#0A0E1A] truncate">
-            4 <span className="text-xs font-bold text-[#0A0E1A] font-sans">Active Drivers</span>
+            {activeDrivers} <span className="text-xs font-bold text-[#0A0E1A] font-sans">Active Drivers</span>
           </div>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#E6D8C3]">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#E6D8C3] text-[10px] font-black text-[#0A0E1A] max-w-full truncate">
-              <span className="truncate">● 4 Available • 3 On Trip</span>
+              <span className="truncate">● {availableDrivers} Available • {onTripDrivers} On Trip</span>
             </div>
             <span className="text-[10px] text-[#0A0E1A] font-black underline flex items-center gap-0.5 shrink-0 link-hover-yellow">
               Driver Status ➔

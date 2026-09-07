@@ -59,12 +59,19 @@ export interface Customer {
 
 export interface Driver {
   id: string;
+  user_id?: string | null;
   full_name: string;
   email: string;
   phone: string;
   license_number?: string;
+  license_expiry?: string | null;
+  accreditation_number?: string | null;
   status: 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY' | 'SUSPENDED';
   rating: number;
+  default_vehicle_id?: string | null;
+  default_vehicle?: Vehicle | null;
+  is_active: boolean;
+  notes?: string | null;
   completed_trips_count?: number;
   total_trips_completed?: number;
   payout_rate_pct?: number;

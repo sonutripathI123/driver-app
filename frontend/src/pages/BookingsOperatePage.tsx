@@ -72,6 +72,7 @@ export const BookingsOperatePage: React.FC = () => {
       status: 'AVAILABLE',
       rating: 5.0,
       total_trips_completed: 0,
+      is_active: true,
     };
 
     const updatedDrivers = [newDriverObj, ...drivers];
@@ -309,9 +310,9 @@ export const BookingsOperatePage: React.FC = () => {
     ];
 
     let demoDrivers: Driver[] = [
-      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64 },
-      { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142 },
-      { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@opalchauffeurs.com.au', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98 },
+      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64, is_active: true },
+      { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142, is_active: true },
+      { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@opalchauffeurs.com.au', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98, is_active: true },
     ];
 
     const savedCustom = localStorage.getItem('crown_custom_drivers');
@@ -328,6 +329,7 @@ export const BookingsOperatePage: React.FC = () => {
             status: 'AVAILABLE' as const,
             rating: p.rating || 5.0,
             total_trips_completed: 12,
+            is_active: true,
           }));
           demoDrivers = mapped;
         }
