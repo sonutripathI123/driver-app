@@ -26,9 +26,11 @@ import {
   Plane,
   Car,
   Receipt,
-  Download
+  Download,
+  AlertTriangle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { notificationsApi } from '../services/api';
 
 export interface EmailLog {
   id: string;
@@ -39,8 +41,10 @@ export interface EmailLog {
   booking_ref?: string;
   invoice_ref?: string;
   sent_at: string;
-  status: 'DELIVERED' | 'OPENED' | 'CLICKED' | 'FAILED' | 'QUEUED';
-  open_count: number;
+  /** Mirrors the provider outcome. Open/click tracking would need Resend
+   *  webhooks, which are not wired, so it is not claimed here. */
+  status: 'SENT' | 'NOT_DELIVERED';
+  failure_reason?: string | null;
   body_preview: string;
   html_body?: string;
 }
@@ -84,90 +88,71 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   const [autoInvoiceReceipt, setAutoInvoiceReceipt] = useState(true);
   const [autoDriverManifest, setAutoDriverManifest] = useState(true);
 
-  // Email Logs State
-  const [emailLogs, setEmailLogs] = useState<EmailLog[]>(() => {
-    const saved = localStorage.getItem('crown_email_logs_v1');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
+  // Email Logs: the dispatch outbox, read from the API. This used to be
+  // seeded with six invented "delivered" emails in localStorage, which is why
+  // the hub always looked busy even though nothing had ever been sent.
+  const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
+  const [logsError, setLogsError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+  const [isSending, setIsSending] = useState(false);
+
+  const TRIGGER_BY_TEMPLATE: Record<string, EmailLog['trigger_type']> = {
+    BOOKING_CONFIRMATION: 'BOOKING_CONFIRMATION',
+    CHAUFFEUR_DISPATCH: 'CHAUFFEUR_DISPATCH',
+    DRIVER_DISPATCH_DOSSIER: 'CHAUFFEUR_DISPATCH',
+    FLIGHT_DELAY: 'FLIGHT_DELAY',
+    TAX_INVOICE: 'TAX_INVOICE',
+    QUOTE_PROPOSAL: 'QUOTE_PROPOSAL',
+    DIRECT_CUSTOM_EMAIL: 'CUSTOM_COMPOSED',
+  };
+
+  const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+
+  const toEmailLog = (n: any): EmailLog => {
+    const body = n.content || '';
+    return {
+      id: n.id,
+      recipient_name: (n.recipient || '').split('@')[0],
+      recipient_email: n.recipient,
+      trigger_type: TRIGGER_BY_TEMPLATE[n.template_name] || 'CUSTOM_COMPOSED',
+      subject: n.subject || '(no subject)',
+      booking_ref: n.booking_id || undefined,
+      sent_at: new Date(n.created_at).toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }),
+      status: n.status === 'SENT' ? 'SENT' : 'NOT_DELIVERED',
+      failure_reason: n.error_message || null,
+      body_preview: stripHtml(body).slice(0, 160),
+      html_body: body,
+    };
+  };
+
+  const loadEmailLogs = async () => {
+    setLoading(true);
+    try {
+      const items = await notificationsApi.getNotificationLogs(100);
+      setEmailLogs(
+        (Array.isArray(items) ? items : [])
+          .filter((n: any) => (n.channel || '').toUpperCase() === 'EMAIL')
+          .map(toEmailLog)
+      );
+      setLogsError(null);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setEmailLogs([]);
+      setLogsError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Email log unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setLoading(false);
     }
-    return [
-      {
-        id: 'em-01',
-        recipient_name: 'David Sterling',
-        recipient_email: 'david.sterling@riotinto.com',
-        trigger_type: 'BOOKING_CONFIRMATION',
-        subject: 'Confirmed: Opal Chauffeurs VIP Transfer #CCM-2026-9901 [Melbourne Airport ➔ Grand Hyatt]',
-        booking_ref: 'CCM-2026-9901',
-        sent_at: 'Today at 01:15 PM AEST',
-        status: 'OPENED',
-        open_count: 3,
-        body_preview: 'Dear David Sterling, your VIP Mercedes-Benz S-Class reservation for Melbourne Airport Terminal 1 has been confirmed with Lead Chauffeur Sonu Tripathi.',
-      },
-      {
-        id: 'em-02',
-        recipient_name: 'Sahil Tripathi',
-        recipient_email: 'sahil.tripathi@gmail.com',
-        trigger_type: 'CHAUFFEUR_DISPATCH',
-        subject: 'Chauffeur Allocated: Sonu Tripathi (+61 432 000 718) • Mercedes S-Class [ST-9305-VIC]',
-        booking_ref: 'CCM-2026-9901',
-        sent_at: 'Today at 11:30 AM AEST',
-        status: 'CLICKED',
-        open_count: 5,
-        body_preview: 'Your dedicated chauffeur Sonu Tripathi is allocated. Flight QF400 tracking active. Meet & Greet at Melbourne Airport Terminal 2 carousel.',
-      },
-      {
-        id: 'em-03',
-        recipient_name: 'Elena Rostova',
-        recipient_email: 'elena.rostova@prestige.com',
-        trigger_type: 'FLIGHT_DELAY',
-        subject: 'Flight Advisory QF400 (+25m Delay): Your Chauffeur Schedule Updated to 06:55 PM AEST',
-        booking_ref: 'CCM-2026-5520',
-        sent_at: 'Yesterday at 06:20 PM AEST',
-        status: 'OPENED',
-        open_count: 2,
-        body_preview: 'Our Airport Radar Engine detected a 25-minute flight delay on QF400. Your chauffeur has adjusted arrival at Essendon Fields accordingly.',
-      },
-      {
-        id: 'em-04',
-        recipient_name: 'Claire Redfield',
-        recipient_email: 'claire.redfield@bhp.com',
-        trigger_type: 'TAX_INVOICE',
-        subject: 'Tax Invoice & GST Statement #INV-2026-8801 ($680.00 AUD) — BHP Billiton VIP Tour',
-        invoice_ref: 'INV-2026-8801',
-        booking_ref: 'CCM-2026-9940',
-        sent_at: 'Yesterday at 04:45 PM AEST',
-        status: 'DELIVERED',
-        open_count: 1,
-        body_preview: 'Please find attached Tax Invoice #INV-2026-8801 for Mercedes-Benz Sprinter luxury minibus charter to Domaine Chandon Winery (Paid via AMEX).',
-      },
-      {
-        id: 'em-05',
-        recipient_name: 'Alexander Vance',
-        recipient_email: 'a.vance@hsf.com.au',
-        trigger_type: 'QUOTE_PROPOSAL',
-        subject: 'VIP Chauffeur Proposal: Herbert Smith Freehills Crown Towers Delegation Transfer',
-        booking_ref: 'CCM-2026-6641',
-        sent_at: '28 Aug 2026, 09:10 AM AEST',
-        status: 'OPENED',
-        open_count: 4,
-        body_preview: 'Thank you for requesting an executive quote for 7-Seater Mercedes-Benz V-Class. Total fixed fare $240.00 AUD (Inc GST).',
-      },
-      {
-        id: 'em-06',
-        recipient_name: 'Robert Langdon (Sydney Chauffeurs)',
-        recipient_email: 'dispatch@silverservice.com.au',
-        trigger_type: 'CHAUFFEUR_DISPATCH',
-        subject: 'Subcontractor Partner Trip Manifest #CCM-2026-7712 (Sydney Airport ➔ Barangaroo)',
-        booking_ref: 'CCM-2026-7712',
-        sent_at: '27 Aug 2026, 02:20 PM AEST',
-        status: 'DELIVERED',
-        open_count: 2,
-        body_preview: 'Partner allocation offer for Sydney VIP transfer. Subcontractor Payout: $150.00 AUD. Please confirm acceptance in driver portal.',
-      },
-    ];
-  });
+  };
+
+  useEffect(() => {
+    loadEmailLogs();
+  }, []);
 
   // Inbound Replies State
   const [inboundReplies, setInboundReplies] = useState<InboundReply[]>(() => {
@@ -237,110 +222,121 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     ];
   });
 
-  // Save to localStorage
-  useEffect(() => {
-    localStorage.setItem('crown_email_logs_v1', JSON.stringify(emailLogs));
-  }, [emailLogs]);
-
   useEffect(() => {
     localStorage.setItem('crown_inbound_replies_v1', JSON.stringify(inboundReplies));
   }, [inboundReplies]);
 
   // Handle Send Custom Email
-  const handleSendCustomEmail = (e: React.FormEvent) => {
+  const handleSendCustomEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!composeRecipientEmail || !composeSubject) {
-      alert('Please enter recipient email and subject.');
-      return;
+    if (!composeRecipientEmail || !composeSubject || isSending) return;
+
+    setIsSending(true);
+    setSendError(null);
+    try {
+      const notif = await notificationsApi.sendDirect({
+        recipient: composeRecipientEmail.trim(),
+        channel: 'EMAIL',
+        subject: composeSubject,
+        message: composeMessage,
+        booking_id: composeBookingRef.trim() || undefined,
+      });
+
+      // Only celebrate an email the provider actually accepted. This used to
+      // fire confetti and log DELIVERED without contacting anything at all.
+      if (notif?.status === 'SENT') {
+        confetti({
+          particleCount: 90,
+          spread: 60,
+          origin: { y: 0.6 },
+          colors: ['#DFCAA8', '#38BDF8', '#10B981'],
+        });
+        setIsComposeOpen(false);
+        setComposeRecipientName('');
+        setComposeRecipientEmail('');
+        setComposeSubject('');
+        setComposeMessage('');
+        setComposeBookingRef('');
+        setActiveSubTab('sent');
+      } else {
+        setSendError(
+          (notif as any)?.error_message ||
+            'The email was recorded but the provider did not confirm delivery.'
+        );
+      }
+      loadEmailLogs();
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setSendError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Send failed (HTTP ${err.response.status}).`
+            : 'Send failed: cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setIsSending(false);
     }
-
-    const newLog: EmailLog = {
-      id: `em-${Date.now()}`,
-      recipient_name: composeRecipientName || composeRecipientEmail.split('@')[0],
-      recipient_email: composeRecipientEmail,
-      trigger_type: composeTemplate === 'CUSTOM' ? 'CUSTOM_COMPOSED' : (composeTemplate as any),
-      subject: composeSubject,
-      booking_ref: composeBookingRef || undefined,
-      sent_at: 'Just now (AEST)',
-      status: 'DELIVERED',
-      open_count: 0,
-      body_preview: composeMessage.slice(0, 160) + (composeMessage.length > 160 ? '...' : ''),
-      html_body: composeMessage,
-    };
-
-    setEmailLogs([newLog, ...emailLogs]);
-
-    confetti({
-      particleCount: 90,
-      spread: 60,
-      origin: { y: 0.6 },
-      colors: ['#DFCAA8', '#38BDF8', '#10B981'],
-    });
-
-    setIsComposeOpen(false);
-    setComposeRecipientName('');
-    setComposeRecipientEmail('');
-    setComposeSubject('');
-    setComposeMessage('');
-    setComposeBookingRef('');
-    setActiveSubTab('sent');
   };
 
-  // Handle Quick Reply to Inbound Thread
-  const handleSendQuickReply = () => {
-    if (!selectedReplyThread || !quickReplyText.trim()) return;
+  // Handle Quick Reply to Inbound Thread. The thread list itself is not yet
+  // fed by a real mailbox, but the reply is a genuine outbound email.
+  const handleSendQuickReply = async () => {
+    if (!selectedReplyThread || !quickReplyText.trim() || isSending) return;
 
-    const newReplyItem = {
-      sender: 'Harps Randhawa (Director)',
-      timestamp: 'Just now (AEST)',
-      text: quickReplyText.trim(),
-    };
+    setIsSending(true);
+    setSendError(null);
+    try {
+      const notif = await notificationsApi.sendDirect({
+        recipient: selectedReplyThread.sender_email,
+        channel: 'EMAIL',
+        subject: `Re: ${selectedReplyThread.subject}`,
+        message: quickReplyText.trim(),
+      });
 
-    const updatedThreads = inboundReplies.map((thread) => {
-      if (thread.id === selectedReplyThread.id) {
-        return {
-          ...thread,
-          status: 'REPLIED' as const,
-          reply_history: [...(thread.reply_history || []), newReplyItem],
-        };
+      if (notif?.status !== 'SENT') {
+        setSendError(
+          (notif as any)?.error_message ||
+            'The reply was recorded but the provider did not confirm delivery.'
+        );
+        loadEmailLogs();
+        return;
       }
-      return thread;
-    });
 
-    setInboundReplies(updatedThreads);
+      const newReplyItem = {
+        sender: 'Opal Chauffeurs Dispatch',
+        timestamp: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }),
+        text: quickReplyText.trim(),
+      };
 
-    // Also log in sent emails
-    const outgoingLog: EmailLog = {
-      id: `em-${Date.now()}`,
-      recipient_name: selectedReplyThread.sender_name,
-      recipient_email: selectedReplyThread.sender_email,
-      trigger_type: 'CUSTOM_COMPOSED',
-      subject: `Re: ${selectedReplyThread.subject}`,
-      booking_ref: selectedReplyThread.booking_ref,
-      sent_at: 'Just now (AEST)',
-      status: 'DELIVERED',
-      open_count: 0,
-      body_preview: quickReplyText.trim(),
-    };
-    setEmailLogs([outgoingLog, ...emailLogs]);
+      setInboundReplies((prev) =>
+        prev.map((thread) =>
+          thread.id === selectedReplyThread.id
+            ? { ...thread, status: 'REPLIED' as const, reply_history: [...(thread.reply_history || []), newReplyItem] }
+            : thread
+        )
+      );
+      setSelectedReplyThread((prev) =>
+        prev
+          ? { ...prev, status: 'REPLIED', reply_history: [...(prev.reply_history || []), newReplyItem] }
+          : null
+      );
 
-    setSelectedReplyThread((prev) =>
-      prev
-        ? {
-            ...prev,
-            status: 'REPLIED',
-            reply_history: [...(prev.reply_history || []), newReplyItem],
-          }
-        : null
-    );
-
-    setQuickReplyText('');
-    confetti({
-      particleCount: 70,
-      spread: 50,
-      origin: { y: 0.6 },
-      colors: ['#DFCAA8', '#38BDF8'],
-    });
+      setQuickReplyText('');
+      confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 }, colors: ['#DFCAA8', '#38BDF8'] });
+      loadEmailLogs();
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setSendError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Reply failed (HTTP ${err.response.status}).`
+            : 'Reply failed: cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setIsSending(false);
+    }
   };
 
   // Template autofill
@@ -380,6 +376,9 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   });
 
   const unreadCount = inboundReplies.filter((r) => r.status === 'UNREAD').length;
+  const sentCount = emailLogs.filter((l) => l.status === 'SENT').length;
+  const failedCount = emailLogs.length - sentCount;
+  const deliveryRate = emailLogs.length ? (sentCount / emailLogs.length) * 100 : 0;
 
   return (
     <div className="space-y-6 text-[#0A0E1A]">
@@ -408,7 +407,6 @@ export const EmailCommunicationsHubPage: React.FC = () => {
           <div className="px-3 py-1.5 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-xs font-black text-[#0A0E1A] flex items-center gap-1.5 shadow-sm">
             <Shield className="w-3.5 h-3.5 text-[#0A0E1A]" />
             <span>Sender: <strong className="font-mono text-[#0A0E1A]">book@opalchauffeurs.com.au</strong></span>
-            <span className="px-1.5 py-0.2 rounded bg-[#06090F] text-white text-[9px] font-mono font-black">SPF/DKIM ✓</span>
           </div>
 
           {/* Compose Email Button */}
@@ -434,8 +432,8 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             <span>TOTAL EMAILS SENT</span>
             <Send className="w-4 h-4 text-[#0A0E1A]" />
           </div>
-          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">{emailLogs.length} Dispatched</div>
-          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">100% cloud delivery verified</div>
+          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">{sentCount} Sent</div>
+          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">{emailLogs.length} attempts recorded</div>
         </div>
 
         <div className="bg-[#FAF6F0] border border-[#E6D8C3] p-4 rounded-2xl shadow-sm text-[#0A0E1A]">
@@ -443,17 +441,23 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             <span>DELIVERY SUCCESS</span>
             <CheckCircle2 className="w-4 h-4 text-[#0A0E1A]" />
           </div>
-          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">99.8% Success</div>
-          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">0 Bounces • Resend Engine Active</div>
+          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">
+            {emailLogs.length ? `${deliveryRate.toFixed(1)}%` : '—'}
+          </div>
+          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">
+            {emailLogs.length ? `${sentCount} accepted by provider` : 'No sends recorded yet'}
+          </div>
         </div>
 
         <div className="bg-[#FAF6F0] border border-[#E6D8C3] p-4 rounded-2xl shadow-sm text-[#0A0E1A]">
           <div className="flex items-center justify-between text-xs font-black text-[#0A0E1A]">
-            <span>CLIENT OPEN RATE</span>
+            <span>NOT DELIVERED</span>
             <Eye className="w-4 h-4 text-[#0A0E1A]" />
           </div>
-          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">86.4% Opened</div>
-          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">Real-time pixel telemetry</div>
+          <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">{failedCount}</div>
+          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">
+            {failedCount ? 'Open the log for the provider reason' : 'Open tracking needs Resend webhooks'}
+          </div>
         </div>
 
         <div
@@ -475,6 +479,35 @@ export const EmailCommunicationsHubPage: React.FC = () => {
           <div className="text-[10px] font-black text-[#0A0E1A] mt-1 underline">Click to view client replies ➔</div>
         </div>
       </div>
+
+      {(logsError || sendError) && (
+        <div role="alert" className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg space-y-2">
+          {logsError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#0A0E1A]">Dispatch log could not be loaded</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">{logsError}</p>
+              </div>
+              <button
+                onClick={loadEmailLogs}
+                className="ml-auto shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {sendError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#0A0E1A]">Email was not delivered</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">{sendError}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ─────────────────────────────────────────────────────────────
           3. SUB-NAVIGATION TABS
@@ -637,12 +670,20 @@ export const EmailCommunicationsHubPage: React.FC = () => {
 
                       <td className="py-4 px-4">
                         <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 rounded-full bg-emerald-600 shrink-0" />
-                          <span className="font-black text-[11px] text-[#0A0E1A]">{log.status}</span>
+                          <span
+                            className={`w-2 h-2 rounded-full shrink-0 ${
+                              log.status === 'SENT' ? 'bg-emerald-600' : 'bg-red-600'
+                            }`}
+                          />
+                          <span className="font-black text-[11px] text-[#0A0E1A]">
+                            {log.status === 'SENT' ? 'SENT' : 'NOT DELIVERED'}
+                          </span>
                         </div>
-                        <span className="text-[10px] font-mono text-slate-600 block mt-0.5">
-                          👁️ {log.open_count} Opens recorded
-                        </span>
+                        {log.failure_reason && (
+                          <span className="text-[10px] font-mono text-[#B91C1C] block mt-0.5 max-w-[220px] break-words">
+                            {log.failure_reason}
+                          </span>
+                        )}
                       </td>
 
                       <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
@@ -665,6 +706,19 @@ export const EmailCommunicationsHubPage: React.FC = () => {
       {/* ─────────────────────────────────────────────────────────────
           TAB 2: CLIENT INBOX & REPLIES
       ───────────────────────────────────────────────────────────── */}
+      {activeSubTab === 'inbox' && (
+        <div className="rounded-2xl bg-[#FEF9C3] border border-[#DFCAA8] p-4 mb-4 flex items-start gap-2.5 text-[#0A0E1A]">
+          <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
+          <div>
+            <p className="text-sm font-black">No mailbox is connected yet — these threads are sample data</p>
+            <p className="text-xs font-bold opacity-80">
+              Receiving client replies needs an inbound email webhook (Resend inbound or IMAP), which the
+              platform does not have. Replies you send from here <strong>are</strong> real outbound emails.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeSubTab === 'inbox' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Left: Threads List (5 Cols) */}
