@@ -380,6 +380,22 @@ export const notificationsApi = {
     const res = await apiClient.post<NotificationItem>(`/notifications/test-mobile-ping`, payload);
     return res.data;
   },
+  /**
+   * Server-side dispatch of a real SMS / WhatsApp / email. The returned
+   * notification's `status` distinguishes a live send ("SENT") from the
+   * gateway's offline fallback ("SANDBOX_SIMULATED"), so callers can tell the
+   * operator which actually happened.
+   */
+  sendDirect: async (payload: {
+    recipient: string;
+    channel: 'SMS' | 'WHATSAPP' | 'EMAIL';
+    message: string;
+    subject?: string;
+    booking_id?: string;
+  }) => {
+    const res = await apiClient.post<NotificationItem>(`/notifications/send-direct`, payload);
+    return res.data;
+  },
   getNotificationLogs: async (limit = 50) => {
     const res = await apiClient.get<NotificationItem[]>(`/notifications/`, { params: { limit } });
     return res.data;

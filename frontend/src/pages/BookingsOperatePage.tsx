@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { bookingsApi, dispatchApi, fleetApi, partnersApi } from '../services/api';
+import { bookingsApi, dispatchApi, fleetApi, notificationsApi, partnersApi, DriverAvailabilityItem } from '../services/api';
 import { Booking, BookingLeg, Driver, LegStatus, Partner, Vehicle } from '../types';
 import {
   CalendarDays,
@@ -11,6 +11,7 @@ import {
   MapPin,
   Plane,
   RefreshCw,
+  AlertTriangle,
   Search,
   Shield,
   UserCheck,
@@ -29,6 +30,7 @@ export const BookingsOperatePage: React.FC = () => {
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [partners, setPartners] = useState<Partner[]>([]);
   const [loading, setLoading] = useState(true);
+  const [boardError, setBoardError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'table' | 'kanban'>('table');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -48,6 +50,10 @@ export const BookingsOperatePage: React.FC = () => {
   const [allocationCost, setAllocationCost] = useState<number>(120);
   const [allocationError, setAllocationError] = useState<string | null>(null);
   const [allocationSuccess, setAllocationSuccess] = useState<string | null>(null);
+  const [isAllocating, setIsAllocating] = useState(false);
+  const [availability, setAvailability] = useState<DriverAvailabilityItem[] | null>(null);
+  const [availabilityError, setAvailabilityError] = useState<string | null>(null);
+  const [dispatchNotice, setDispatchNotice] = useState<string | null>(null);
 
   // Partner Offload Modal State
   const [offloadModalOpen, setOffloadModalOpen] = useState(false);
@@ -114,70 +120,15 @@ export const BookingsOperatePage: React.FC = () => {
     setNewDriverEmail('');
   };
 
+  // Poll the board so a chauffeur advancing a trip on their phone shows up
+  // here. This used to patch a hardcoded "CCM-2026-9901" booking from the
+  // in-memory live-sync cache, which reflected demo state rather than the
+  // legs actually on the board.
   useEffect(() => {
     loadData();
-
-    // Real-time synchronization with Driver App actions via central backend + localStorage
-    const syncWithDriverApp = async () => {
-      try {
-        const syncData = await bookingsApi.getLiveSync();
-        const liveStatus = syncData?.status || localStorage.getItem('crown_active_trip_status') || 'EN_ROUTE';
-        if (liveStatus) {
-          setBookings((prev) =>
-            prev.map((b) => {
-              if (b.booking_number === 'CCM-2026-9901' || b.id === 'b-sahil') {
-                if (b.status !== liveStatus || b.legs[0]?.status !== liveStatus) {
-                  return {
-                    ...b,
-                    status: liveStatus as any,
-                    legs: [
-                      {
-                        ...b.legs[0],
-                        status: liveStatus as any,
-                      },
-                    ],
-                  };
-                }
-              }
-              return b;
-            })
-          );
-        }
-      } catch (e) {
-        const localStatus = localStorage.getItem('crown_active_trip_status') || 'EN_ROUTE';
-        setBookings((prev) =>
-          prev.map((b) =>
-            b.booking_number === 'CCM-2026-9901'
-              ? { ...b, status: localStatus as any, legs: [{ ...b.legs[0], status: localStatus as any }] }
-              : b
-          )
-        );
-      }
-    };
-
-    window.addEventListener('storage', syncWithDriverApp);
-    const interval = setInterval(syncWithDriverApp, 1500);
-
-    return () => {
-      window.removeEventListener('storage', syncWithDriverApp);
-      clearInterval(interval);
-    };
+    const interval = setInterval(loadData, 15000);
+    return () => clearInterval(interval);
   }, []);
-
-  const handleResetTripStatus = async () => {
-    try {
-      await bookingsApi.resetLiveSync();
-    } catch (e) {}
-    localStorage.setItem('crown_active_trip_status', 'EN_ROUTE');
-    window.dispatchEvent(new Event('storage'));
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.booking_number === 'CCM-2026-9901'
-          ? { ...b, status: 'EN_ROUTE' as any, legs: [{ ...b.legs[0], status: 'EN_ROUTE' as any }] }
-          : b
-      )
-    );
-  };
 
   const loadData = async () => {
     try {
@@ -192,171 +143,56 @@ export const BookingsOperatePage: React.FC = () => {
       setDrivers(dData || []);
       setVehicles(vData || []);
       setPartners(pData || []);
-    } catch (err) {
-      console.warn('Backend loading, using fallback demo data', err);
-      injectDemoData();
+      setBoardError(null);
+    } catch (err: any) {
+      // Demo bookings used to be injected here, which meant a dispatcher could
+      // be looking at invented jobs and never know the board was stale.
+      const detail = err?.response?.data?.detail;
+      setBookings([]);
+      setDrivers([]);
+      setVehicles([]);
+      setPartners([]);
+      setBoardError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Operate board unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const injectDemoData = () => {
-    const savedStatus = (localStorage.getItem('crown_active_trip_status') as any) || 'ALLOCATED';
-
-    const demoBookings: Booking[] = [
-      {
-        id: 'b-sahil',
-        booking_number: 'CCM-2026-9901',
-        source: 'WEBSITE',
-        status: savedStatus,
-        payment_status: 'PAID_IN_FULL',
-        currency: 'AUD',
-        total_fare: 460.0,
-        deposit_required: 460.0,
-        paid_amount: 460.0,
-        balance_amount: 0.0,
-        passenger_name: 'Sahil Tripathi',
-        passenger_phone: '+91 6386154107',
-        created_at: new Date().toISOString(),
-        legs: [
-          {
-            id: 'l-sahil',
-            booking_id: 'b-sahil',
-            leg_number: 1,
-            status: savedStatus,
-            pickup_address: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
-            dropoff_address: 'Melbourne Airport Terminal 2 (Tullamarine)',
-            pickup_datetime: new Date(Date.now() + 3600000 * 2).toISOString(),
-            is_airport_pickup: true,
-            flight_number: 'QF400',
-            flight_delay_minutes: 0,
-            wait_time_minutes: 0,
-            wait_time_charge: 0,
-            vehicle_category: 'SEDAN_EXECUTIVE',
-            driver_id: 'drv-sonu',
-            allocation_cost: 170.0,
-            partner_payout_amount: 0,
-          },
-        ],
-      },
-      {
-        id: 'b-01',
-        booking_number: 'CCM-2026-0881',
-        source: 'WEBSITE',
-        status: 'ALLOCATED',
-        payment_status: 'PAID_IN_FULL',
-        currency: 'AUD',
-        total_fare: 440.0,
-        deposit_required: 440.0,
-        paid_amount: 440.0,
-        balance_amount: 0.0,
-        passenger_name: 'David Warner',
-        passenger_phone: '+61 411 222 333',
-        created_at: new Date().toISOString(),
-        legs: [
-          {
-            id: 'l-01',
-            booking_id: 'b-01',
-            leg_number: 1,
-            status: 'ALLOCATED',
-            pickup_address: '120 Collins St, Melbourne CBD',
-            dropoff_address: 'Melbourne Airport Terminal 2',
-            pickup_datetime: new Date(Date.now() + 3600000 * 3).toISOString(),
-            is_airport_pickup: true,
-            flight_number: 'QF400',
-            flight_delay_minutes: 25,
-            wait_time_minutes: 0,
-            wait_time_charge: 0,
-            vehicle_category: 'SEDAN_PREMIUM',
-            driver_id: 'drv-01',
-            allocation_cost: 160.0,
-            partner_payout_amount: 0,
-          },
-        ],
-      },
-      {
-        id: 'b-02',
-        booking_number: 'CCM-2026-0882',
-        source: 'CORPORATE_PORTAL',
-        status: 'PENDING' as any,
-        payment_status: 'PARTIAL_DEPOSIT',
-        currency: 'AUD',
-        total_fare: 680.0,
-        deposit_required: 170.0,
-        paid_amount: 170.0,
-        balance_amount: 510.0,
-        passenger_name: 'Rio Tinto Executive Delegation',
-        passenger_phone: '+61 499 888 777',
-        created_at: new Date().toISOString(),
-        legs: [
-          {
-            id: 'l-02',
-            booking_id: 'b-02',
-            leg_number: 1,
-            status: 'PENDING',
-            pickup_address: 'Crown Towers, Southbank',
-            dropoff_address: 'Yarra Valley Estate',
-            pickup_datetime: new Date(Date.now() + 3600000 * 5).toISOString(),
-            is_airport_pickup: false,
-            flight_delay_minutes: 0,
-            wait_time_minutes: 0,
-            wait_time_charge: 0,
-            vehicle_category: 'PEOPLE_MOVER',
-            allocation_cost: 0,
-            partner_payout_amount: 0,
-          },
-        ],
-      },
-    ];
-
-    let demoDrivers: Driver[] = [
-      { id: 'drv-sonu', full_name: 'Sonu Tripathi (Live Driver)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license_number: 'VIC-9305', status: 'AVAILABLE', rating: 5.0, total_trips_completed: 64, is_active: true },
-      { id: 'drv-01', full_name: 'Daniel Ricciardo', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license_number: 'LIC-03', status: 'AVAILABLE', rating: 4.98, total_trips_completed: 142, is_active: true },
-      { id: 'drv-02', full_name: 'Sebastian Vettel', phone: '+61 411 000 111', email: 'seb@opalchauffeurs.com.au', license_number: 'LIC-05', status: 'AVAILABLE', rating: 4.95, total_trips_completed: 98, is_active: true },
-    ];
-
-    const savedCustom = localStorage.getItem('crown_custom_drivers');
-    if (savedCustom) {
-      try {
-        const parsed = JSON.parse(savedCustom);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          const mapped = parsed.map((p: any) => ({
-            id: p.id,
-            full_name: p.name,
-            phone: p.phone,
-            email: p.email || `${p.name.toLowerCase().replace(/\s+/g, '.')}@opalchauffeurs.com.au`,
-            license_number: p.license || 'VIC-DA-88',
-            status: 'AVAILABLE' as const,
-            rating: p.rating || 5.0,
-            total_trips_completed: 12,
-            is_active: true,
-          }));
-          demoDrivers = mapped;
-        }
-      } catch (e) {}
-    }
-
-    const demoVehicles: Vehicle[] = [
-      { id: 'v-01', category: 'SEDAN_PREMIUM', make: 'Mercedes-Benz', model: 'S-Class S450 LWB (GTS783)', year: 2024, registration_plate: 'GTS783', passenger_capacity: 4, luggage_capacity: 3, is_active: true },
-      { id: 'v-02', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'Valente / V-Class (CGL646)', year: 2023, registration_plate: 'CGL646', passenger_capacity: 7, luggage_capacity: 6, is_active: true },
-      { id: 'v-03', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class VIP (CPS711)', year: 2024, registration_plate: 'CPS711', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
-      { id: 'v-04', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class Exclusive (2DC7AY)', year: 2024, registration_plate: '2DC7AY', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
-      { id: 'v-05', category: 'PEOPLE_MOVER', make: 'Mercedes-Benz', model: 'V-Class City VIP (2DZ8YJ)', year: 2024, registration_plate: '2DZ8YJ', passenger_capacity: 7, luggage_capacity: 7, is_active: true },
-      { id: 'v-06', category: 'MINIBUS', make: 'Mercedes-Benz', model: 'Sprinter Luxury (BZZ931)', year: 2024, registration_plate: 'BZZ931', passenger_capacity: 11, luggage_capacity: 10, is_active: true },
-      { id: 'v-07', category: 'MINIBUS', make: 'Mercedes-Benz', model: 'Sprinter Shuttle (BS14OK)', year: 2024, registration_plate: 'BS14OK', passenger_capacity: 11, luggage_capacity: 12, is_active: true },
-      { id: 'v-08', category: 'SUV_PREMIUM', make: 'Audi', model: 'Q7 Black Edition (AMJ506)', year: 2024, registration_plate: 'AMJ506', passenger_capacity: 4, luggage_capacity: 4, is_active: true },
-      { id: 'v-09', category: 'SUV_PREMIUM', make: 'Audi', model: 'Q7 Quattro SUV (HC 0687)', year: 2024, registration_plate: 'HC 0687', passenger_capacity: 5, luggage_capacity: 4, is_active: true },
-    ];
-
-    setBookings(demoBookings);
-    setDrivers(demoDrivers);
-    setVehicles(demoVehicles);
-  };
 
   const [allocatedWhatsAppUrl, setAllocatedWhatsAppUrl] = useState<string | null>(null);
 
+  /**
+   * Asks the API which chauffeurs are free for this leg's pickup window. The
+   * backend evaluates real booking conflicts, so the dispatcher no longer has
+   * to eyeball timings against a list.
+   */
+  const loadAvailability = async (leg: BookingLeg) => {
+    setAvailability(null);
+    setAvailabilityError(null);
+    try {
+      const durationMinutes = leg.duration_minutes && leg.duration_minutes > 0 ? leg.duration_minutes : 90;
+      const res = await dispatchApi.getDriverAvailability(leg.pickup_datetime, durationMinutes);
+      setAvailability(Array.isArray(res) ? res : []);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setAvailabilityError(
+        typeof detail === 'string' ? detail : 'Could not check chauffeur availability for this pickup window.'
+      );
+    }
+  };
+
+  const availabilityFor = (driverId: string) => availability?.find((a) => a.driver_id === driverId);
+
   const handleOpenAllocation = (booking: Booking, leg: BookingLeg) => {
     setSelectedLeg({ bookingId: booking.id, leg });
+    setDispatchNotice(null);
+    loadAvailability(leg);
     setAllocationDriverId(leg.driver_id || (drivers[0]?.id || ''));
     setAllocationVehicleId(leg.vehicle_id || (vehicles[0]?.id || ''));
     setAllocationCost(leg.allocation_cost > 0 ? leg.allocation_cost : 140);
@@ -374,7 +210,7 @@ export const BookingsOperatePage: React.FC = () => {
 
     const waText =
       `🚗 *[OPAL CHAUFFEURS - DRIVER TRIP ALLOCATION]* 🧑‍✈️\n\n` +
-      `📋 *Booking Ref:* #${parentBooking?.booking_number || 'CCM-2026-0881'}\n` +
+      `📋 *Booking Ref:* #${parentBooking?.booking_number || selectedLeg.bookingId}\n` +
       `👤 *Passenger:* ${parentBooking?.passenger_name || 'VIP Client'} (${parentBooking?.passenger_phone || '+61 411 222 333'})\n` +
       `📅 *Pickup Time:* ${new Date(selectedLeg.leg.pickup_datetime).toLocaleString('en-AU')}\n` +
       `📍 *Pickup:* ${selectedLeg.leg.pickup_address}\n` +
@@ -388,38 +224,57 @@ export const BookingsOperatePage: React.FC = () => {
 
     try {
       setAllocationError(null);
+      setIsAllocating(true);
       await dispatchApi.allocateDriver(
         selectedLeg.leg.id,
         allocationDriverId,
         allocationVehicleId,
         allocationCost
       );
-      setAllocationSuccess('Chauffeur allocated successfully without schedule conflict!');
+      setAllocationSuccess(`Chauffeur allocated to ${parentBooking?.booking_number || 'this leg'}.`);
+
+      // Send the trip brief to the chauffeur from the server, so allocation and
+      // notification are one action rather than a link someone has to remember
+      // to press Send on.
+      if (assignedDriver?.phone) {
+        try {
+          const notif = await notificationsApi.sendDirect({
+            recipient: assignedDriver.phone,
+            channel: 'WHATSAPP',
+            message: waText,
+            booking_id: selectedLeg.bookingId,
+          });
+          setDispatchNotice(
+            notif?.status === 'SENT'
+              ? `WhatsApp trip brief delivered to ${assignedDriver.full_name} (${assignedDriver.phone}).`
+              : `Trip brief recorded but the gateway did not confirm delivery (${notif?.status || 'unknown'}). Use the manual WhatsApp link below.`
+          );
+        } catch (err: any) {
+          const detail = err?.response?.data?.detail;
+          setDispatchNotice(
+            `Allocation saved, but the WhatsApp brief could not be sent${
+              typeof detail === 'string' ? `: ${detail}` : ''
+            }. Use the manual WhatsApp link below.`
+          );
+        }
+      }
+
+      loadData();
+      loadAvailability(selectedLeg.leg);
     } catch (err: any) {
-      // Graceful fallback for mock/demo IDs or network drops: update state seamlessly
-      setBookings((prev) =>
-        prev.map((b) => {
-          if (b.id === selectedLeg.bookingId) {
-            return {
-              ...b,
-              status: 'ALLOCATED',
-              legs: b.legs.map((l) =>
-                l.id === selectedLeg.leg.id
-                  ? {
-                      ...l,
-                      status: 'ALLOCATED',
-                      driver_id: allocationDriverId,
-                      vehicle_id: allocationVehicleId,
-                      allocation_cost: allocationCost,
-                    }
-                  : l
-              ),
-            };
-          }
-          return b;
-        })
+      // A refusal here is usually the backend's schedule-conflict check, which
+      // is the entire point of allocating through it. Never report success.
+      const detail = err?.response?.data?.detail;
+      setAllocationSuccess(null);
+      setAllocationError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Allocation failed (HTTP ${err.response.status}).`
+            : 'Allocation failed: no connection to the Opal Cloud Engine.'
       );
-      setAllocationSuccess('Chauffeur allocated successfully without schedule conflict!');
+    } finally {
+      setIsAllocating(false);
     }
   };
 
@@ -454,6 +309,29 @@ export const BookingsOperatePage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-[#0A0E1A]">
+      {boardError && (
+        <div
+          role="alert"
+          className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg"
+        >
+          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+            <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <p className="text-sm font-black text-[#0A0E1A]">Operate board could not be loaded</p>
+              <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">
+                {boardError} The board is empty rather than showing stale or sample jobs.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={loadData}
+            className="shrink-0 px-4 py-2 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Top Header & View Controls */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 glass-panel p-6 rounded-2xl shadow-lg bg-[#FAF6F0] border border-[#E6D8C3] text-[#0A0E1A]">
         <div>
@@ -477,16 +355,6 @@ export const BookingsOperatePage: React.FC = () => {
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span className="font-black">+ Onboard Driver</span>
-          </button>
-
-          {/* Reset Test Trip Button */}
-          <button
-            onClick={handleResetTripStatus}
-            className="px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-yellow border border-[#DFCAA8] text-white text-xs font-black flex items-center gap-1.5 transition-all shadow-sm"
-            title="Reset Sahil Tripathi trip to EN_ROUTE"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-            <span className="font-black">Reset Test to EN_ROUTE</span>
           </button>
 
           {/* Refresh Button */}
@@ -707,20 +575,54 @@ export const BookingsOperatePage: React.FC = () => {
               </div>
             )}
 
+            {dispatchNotice && (
+              <div className="mb-3 p-3 rounded-xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-bold flex items-start gap-2">
+                <Send className="w-4 h-4 shrink-0 text-[#0A0E1A] mt-0.5" />
+                <span>{dispatchNotice}</span>
+              </div>
+            )}
+
             <div className="space-y-4 text-xs">
               <div>
-                <label className="block font-black text-[#0A0E1A] mb-1.5">Select Fleet Chauffeur</label>
+                <div className="flex items-center justify-between mb-1.5 gap-2">
+                  <label className="block font-black text-[#0A0E1A]">Select Fleet Chauffeur</label>
+                  {availability === null && !availabilityError ? (
+                    <span className="text-[10px] font-bold text-[#0A0E1A] opacity-60">checking availability…</span>
+                  ) : availability ? (
+                    <span className="text-[10px] font-black text-[#0A0E1A]">
+                      {availability.filter((a) => a.is_available).length} of {availability.length} free at this pickup
+                    </span>
+                  ) : null}
+                </div>
                 <select
                   value={allocationDriverId}
                   onChange={(e) => setAllocationDriverId(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                 >
-                  {drivers.map((d) => (
-                    <option key={d.id} value={d.id} className="text-[#0A0E1A]">
-                      {d.full_name} (⭐ {d.rating.toFixed(2)} • {d.status})
-                    </option>
-                  ))}
+                  {drivers.map((d) => {
+                    const avail = availabilityFor(d.id);
+                    const marker = !avail ? '' : avail.is_available ? ' — FREE' : ' — BUSY';
+                    return (
+                      <option key={d.id} value={d.id} className="text-[#0A0E1A]">
+                        {d.full_name} (⭐ {d.rating.toFixed(2)}){marker}
+                      </option>
+                    );
+                  })}
                 </select>
+
+                {availabilityError && (
+                  <p className="mt-1.5 text-[11px] font-bold text-[#B91C1C]">{availabilityError}</p>
+                )}
+
+                {(() => {
+                  const avail = availabilityFor(allocationDriverId);
+                  if (!avail || avail.is_available) return null;
+                  return (
+                    <p className="mt-1.5 text-[11px] font-black text-[#B91C1C]">
+                      ⚠ Schedule conflict: {avail.conflict_reason || 'already committed during this pickup window.'}
+                    </p>
+                  );
+                })()}
               </div>
 
               <div>

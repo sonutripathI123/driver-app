@@ -136,10 +136,18 @@ export interface BookingLeg {
   wait_time_minutes: number;
   wait_time_charge: number;
   vehicle_category: VehicleCategory;
+  distance_km?: number | null;
+  duration_minutes?: number | null;
   driver_id?: string;
   driver_name?: string;
   vehicle_id?: string;
   vehicle_plate?: string;
+  allocated_at?: string | null;
+  dispatched_at?: string | null;
+  en_route_at?: string | null;
+  arrived_at?: string | null;
+  picked_up_at?: string | null;
+  completed_at?: string | null;
   partner_id?: string;
   partner_name?: string;
   allocation_cost: number;

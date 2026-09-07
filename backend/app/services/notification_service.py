@@ -107,10 +107,19 @@ class NotificationService:
         channel: str = "SMS"
     ) -> Notification:
         """Sends an SMS or WhatsApp message and records it in the notifications outbox."""
-        dispatch_res = await sms_gateway.send_sms(
-            to_phone=recipient_phone,
-            message=message
-        )
+        # The channel has to pick the transport: this previously always called
+        # send_sms(), so a WHATSAPP request went out as an SMS and was then
+        # recorded as WhatsApp.
+        if channel.upper() == "WHATSAPP":
+            dispatch_res = await sms_gateway.send_whatsapp(
+                to_phone=recipient_phone,
+                message=message
+            )
+        else:
+            dispatch_res = await sms_gateway.send_sms(
+                to_phone=recipient_phone,
+                message=message
+            )
         notif = Notification(
             id=str(uuid.uuid4()),
             booking_id=booking_id,
