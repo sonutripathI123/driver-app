@@ -106,6 +106,18 @@ class Settings(BaseSettings):
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
     AEROAPI_KEY: Optional[str] = None
+
+    # Live flight tracking.
+    # FLIGHT_PROVIDER: flightaware | aerodatabox | aviationstack | auto
+    #   auto = whichever has a key, in that order. With none configured the
+    #   flight endpoints answer 503 rather than inventing arrival times.
+    FLIGHT_PROVIDER: str = "auto"
+    AERODATABOX_API_KEY: str = ""
+    AERODATABOX_API_HOST: str = "aerodatabox.p.rapidapi.com"
+    AVIATIONSTACK_API_KEY: str = ""
+    # AviationStack's free plan is HTTP-only; set this to the http:// endpoint
+    # if you are on it. HTTPS by default so the key is not sent in clear text.
+    AVIATIONSTACK_API_URL: str = "https://api.aviationstack.com/v1/flights"
     # Web Push VAPID Keys for Background Chrome/Safari Mobile Push
     VAPID_PUBLIC_KEY: str = "BC83SPc-2FsmI9kDBZWw_JiVvYLhGONl_In6RaUZDwpgWF-JPhjiB9qh3Cn8YgN5VWwVMOFYCGi26mExGvTwyqY"
     VAPID_PRIVATE_KEY: str = "8aVp7hlfMtpQX5W_S14oeoMZLqD7QG4GA0-8G_Q_r6k"

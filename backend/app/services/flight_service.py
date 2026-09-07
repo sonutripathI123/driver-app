@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.integrations.flights import get_flight_provider
+from app.integrations.flights import flight_provider_status, get_flight_provider
 from app.models.audit import AuditLog
 from app.models.booking import Booking
 from app.models.booking_leg import BookingLeg
@@ -47,10 +47,7 @@ class FlightTrackingService:
         if provider is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=(
-                    "No live flight data provider is connected. Set AEROAPI_KEY "
-                    "(FlightAware AeroAPI) to enable flight tracking."
-                )
+                detail=flight_provider_status()
             )
         data = await provider.get_flight_status(flight_number, flight_date)
         if not data:
@@ -105,10 +102,7 @@ class FlightTrackingService:
         if provider is None:
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail=(
-                    "No live flight data provider is connected. Set AEROAPI_KEY "
-                    "(FlightAware AeroAPI) to enable flight tracking."
-                )
+                detail=flight_provider_status()
             )
         flight_data = await provider.get_flight_status(
             leg.flight_number,

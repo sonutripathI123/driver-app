@@ -1,5 +1,6 @@
 from datetime import date, datetime, timezone
 import logging
+import os
 from typing import Optional
 import httpx
 from app.core.config import settings
@@ -63,8 +64,8 @@ class FlightAwareProvider(BaseFlightProvider):
                 return FlightData(
                     flight_number=clean_flight,
                     airline=seg.get("operator", "Commercial Airline"),
-                    origin_airport=seg.get("origin", {}).get("code_iata", "SYD"),
-                    destination_airport=seg.get("destination", {}).get("code_iata", "MEL"),
+                    origin_airport=seg.get("origin", {}).get("code_iata") or "Unknown",
+                    destination_airport=seg.get("destination", {}).get("code_iata") or "Unknown",
                     terminal=seg.get("terminal_destination"),
                     scheduled_arrival=sched_dt,
                     estimated_arrival=est_dt,
