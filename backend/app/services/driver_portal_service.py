@@ -229,7 +229,7 @@ class DriverPortalService:
                 cust_name, _, cust_phone = get_customer_contact(booking)
                 if cust_phone:
                     veh_info = f"{leg.vehicle.color} {leg.vehicle.make} (Plate: {leg.vehicle.registration_plate})" if leg.vehicle else "Chauffeur Vehicle"
-                    msg = f"Crown Chauffeur: Your chauffeur {driver.full_name if driver else ''} has arrived at {leg.pickup_address}. Vehicle: {veh_info}."
+                    msg = f"Opal Chauffeurs: Your chauffeur {driver.full_name if driver else ''} has arrived at {leg.pickup_address}. Vehicle: {veh_info}."
                     await NotificationService.record_and_dispatch_sms(
                         db, cust_phone, "CHAUFFEUR_ARRIVED_SMS", msg, booking.id
                     )
@@ -262,6 +262,9 @@ class DriverPortalService:
                 all_done = all(l.status == LegStatus.COMPLETED for l in booking.legs)
                 if all_done:
                     booking.status = BookingStatus.COMPLETED
+                    # Close the loop with the passenger. Completion used to
+                    # notify only the manager, so the client heard nothing.
+                    await NotificationService.send_trip_completed_receipt(db, booking, leg)
 
         else:
             raise HTTPException(

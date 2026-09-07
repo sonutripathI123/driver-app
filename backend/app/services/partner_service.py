@@ -186,7 +186,7 @@ class PartnerService:
         # Send broadcast notification to Partner
         partner = await db.get(Partner, req.partner_id)
         if partner and partner.email:
-            msg = f"New Job Offer from Crown Chauffeurs: {leg.pickup_address} → {leg.dropoff_address} on {leg.pickup_datetime.strftime('%Y-%m-%d %I:%M %p')}. Payout: ${req.offered_payout:.2f}. Please accept within {req.expiry_minutes} mins."
+            msg = f"New Job Offer from Opal Chauffeurs: {leg.pickup_address} → {leg.dropoff_address} on {leg.pickup_datetime.strftime('%Y-%m-%d %I:%M %p')}. Payout: ${req.offered_payout:.2f}. Please accept within {req.expiry_minutes} mins."
             await NotificationService.record_and_dispatch_email(
                 db, partner.email, "PARTNER_JOB_OFFER_EMAIL", msg, msg, leg.booking_id
             )

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from pydantic import BaseModel, ConfigDict, Field
+from app.core.config import settings
 
 
 class NotificationRead(BaseModel):
@@ -38,8 +39,8 @@ class AutomationRunSummary(BaseModel):
 
 
 class ManagerNotificationSettings(BaseModel):
-    manager_phone: str = "+61400000000"
-    manager_email: str = "owner@chauffeurplatform.com"
+    manager_phone: str = settings.MANAGER_PHONE
+    manager_email: str = settings.MANAGER_EMAIL
     whatsapp_enabled: bool = True
     sms_enabled: bool = True
     telegram_bot_token: Optional[str] = None

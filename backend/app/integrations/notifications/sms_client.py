@@ -75,7 +75,7 @@ class SMSGateway:
         record = {
             "message_id": msg_id,
             "to": clean_phone,
-            "from": from_phone or "CrownChauffeur",
+            "from": from_phone or "OpalChauffeurs",
             "body": message,
             "status": "SANDBOX_SIMULATED"
         }

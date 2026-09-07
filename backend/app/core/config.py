@@ -26,6 +26,18 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Business identity used in automated notifications. These were previously
+    # hardcoded across notification_service.py against three domains this
+    # business does not own (chauffeurplatform.com, crownchauffeurs.com.au),
+    # and the manager alert number was the lead chauffeur's mobile.
+    OPS_EMAIL: str = "book@opalchauffeurs.com.au"
+    MANAGER_EMAIL: str = "book@opalchauffeurs.com.au"
+    MANAGER_PHONE: str = "+61432000718"
+    CONCIERGE_PHONE: str = "+61 432 000 718"
+    COMPANY_NAME: str = "Opal Chauffeurs Australia Pty Ltd"
+    COMPANY_ABN: str = "68 642 908 112"
+    COMPANY_WEBSITE: str = "https://www.opalchauffeurs.com.au"
+
     # Outbound Email.
     # EMAIL_PROVIDER selects the transport: "resend", "brevo" or "smtp". Leave
     # it as "auto" to use whichever one is configured. With nothing configured
@@ -92,7 +104,7 @@ class Settings(BaseSettings):
     # Web Push VAPID Keys for Background Chrome/Safari Mobile Push
     VAPID_PUBLIC_KEY: str = "BC83SPc-2FsmI9kDBZWw_JiVvYLhGONl_In6RaUZDwpgWF-JPhjiB9qh3Cn8YgN5VWwVMOFYCGi26mExGvTwyqY"
     VAPID_PRIVATE_KEY: str = "8aVp7hlfMtpQX5W_S14oeoMZLqD7QG4GA0-8G_Q_r6k"
-    VAPID_CLAIMS_EMAIL: str = "mailto:concierge@crownchauffeurs.com.au"
+    VAPID_CLAIMS_EMAIL: str = "mailto:book@opalchauffeurs.com.au"
 
     # Business Defaults
     DEFAULT_CURRENCY: str = "AUD"

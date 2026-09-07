@@ -56,7 +56,7 @@ async def send_test_mobile_ping(
     """
     settings = NotificationService.get_manager_settings()
     target_phone = payload.target_phone or settings.manager_phone
-    msg_body = payload.custom_message or "🚨 [TEST ALERT] Crown Chauffeurs Mobile Dispatch system is connected! All booking & driver updates will be sent here in real-time."
+    msg_body = payload.custom_message or "🚨 [TEST ALERT] Opal Chauffeurs Mobile Dispatch system is connected! All booking & driver updates will be sent here in real-time."
 
     notif = await NotificationService.record_and_dispatch_sms(
         db=db,

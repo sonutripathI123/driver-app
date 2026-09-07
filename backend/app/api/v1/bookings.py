@@ -21,6 +21,7 @@ from app.schemas.booking import (
     LegStatusUpdateRequest,
 )
 from app.services.booking_service import BookingService
+from app.core.config import settings
 
 router = APIRouter(prefix="/bookings", tags=["Booking Management"])
 
@@ -118,7 +119,7 @@ async def ingest_external_website_webhook(
 
     passenger_name = extract_val(["name", "passenger_name", "customer_name", "your-name", "first_name", "full_name"], "VIP Passenger")
     passenger_phone = extract_val(["phone", "passenger_phone", "customer_phone", "your-tel", "mobile", "contact_number"], "+61 400 000 000")
-    passenger_email = extract_val(["email", "passenger_email", "customer_email", "your-email"], "concierge@crownchauffeurs.com.au")
+    passenger_email = extract_val(["email", "passenger_email", "customer_email", "your-email"], settings.OPS_EMAIL)
     pickup_address = extract_val(["pickup", "pickup_address", "from", "origin", "pickup_location"], "Melbourne CBD")
     dropoff_address = extract_val(["dropoff", "dropoff_address", "to", "destination", "dropoff_location"], "Melbourne Airport Terminal 2")
     pickup_date = extract_val(["date", "pickup_date", "journey_date", "service_date"], datetime.now().strftime("%Y-%m-%d"))

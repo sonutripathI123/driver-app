@@ -129,7 +129,7 @@ class FlightTrackingService:
 
             # Alert Driver via SMS if assigned
             if leg.driver and leg.driver.phone:
-                sms_msg = f"Crown Chauffeur Alert: Flight {leg.flight_number} delayed +{flight_data.delay_minutes}m. New pickup: {new_pickup.strftime('%I:%M %p')} at {leg.flight_terminal or 'Airport'}."
+                sms_msg = f"Opal Chauffeurs Alert: Flight {leg.flight_number} delayed +{flight_data.delay_minutes}m. New pickup: {new_pickup.strftime('%I:%M %p')} at {leg.flight_terminal or 'Airport'}."
                 await NotificationService.record_and_dispatch_sms(
                     db, leg.driver.phone, "FLIGHT_DELAY_DRIVER_SMS", sms_msg, leg.booking_id
                 )
