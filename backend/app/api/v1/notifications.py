@@ -3,8 +3,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.rbac import require_ops, require_staff
+from app.core.rbac import get_current_active_user, require_ops, require_staff
 from app.models.notification import Notification
+from app.models.user import User
 from app.schemas.notification import (
     ManagerNotificationSettings,
     NotificationRead,
@@ -32,18 +33,21 @@ async def register_webpush_subscription(subscription: dict):
 
 
 @router.get("/manager-settings", response_model=ManagerNotificationSettings)
-async def get_manager_notification_settings():
+async def get_manager_notification_settings(
+    db: AsyncSession = Depends(get_db)
+):
     """Get current Business Owner / Manager Mobile Alert Settings."""
-    return NotificationService.get_manager_settings()
+    return await NotificationService.load_manager_settings(db)
 
 
 @router.post("/manager-settings", response_model=ManagerNotificationSettings)
 async def update_manager_notification_settings(
     settings: ManagerNotificationSettings,
+    current_user: User = Depends(get_current_active_user),
     db: AsyncSession = Depends(get_db)
 ):
     """Update Manager Mobile Alert settings (Phone, WhatsApp, Telegram, Event Filters)."""
-    return NotificationService.update_manager_settings(settings)
+    return await NotificationService.save_manager_settings(db, settings, current_user.email)
 
 
 @router.post("/test-mobile-ping", response_model=NotificationRead)
@@ -54,8 +58,8 @@ async def send_test_mobile_ping(
     """
     Sends an immediate test alert to the Manager's mobile phone to verify SMS/WhatsApp connectivity.
     """
-    settings = NotificationService.get_manager_settings()
-    target_phone = payload.target_phone or settings.manager_phone
+    mgr = await NotificationService.load_manager_settings(db)
+    target_phone = payload.target_phone or mgr.manager_phone
     msg_body = payload.custom_message or "🚨 [TEST ALERT] Opal Chauffeurs Mobile Dispatch system is connected! All booking & driver updates will be sent here in real-time."
 
     notif = await NotificationService.record_and_dispatch_sms(

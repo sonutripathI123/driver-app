@@ -9,6 +9,7 @@ from app.core.config import settings
 from app.integrations.notifications.email_client import email_gateway
 from app.integrations.notifications.sms_client import sms_gateway
 from app.integrations.notifications.webpush_client import webpush_gateway
+from app.models.app_setting import AppSetting
 from app.models.booking import Booking
 from app.models.booking_leg import BookingLeg
 from app.models.notification import Notification
@@ -32,21 +33,20 @@ def get_customer_contact(booking: Booking) -> Tuple[str, Optional[str], Optional
     return name, email, phone
 
 
-# In-Memory singleton for Manager Alert settings (can also be saved in database)
-MANAGER_SETTINGS = ManagerNotificationSettings(
-    manager_phone=settings.MANAGER_PHONE,
-    manager_email=settings.MANAGER_EMAIL,
-    whatsapp_enabled=True,
-    sms_enabled=True,
-    browser_push_enabled=True,
-    alert_on_new_booking=True,
-    alert_on_driver_allocation=True,
-    alert_on_driver_rejection=True,
-    alert_on_unassigned_urgent=True,
-    alert_on_trip_milestones=True,
-    alert_on_flight_delay=True,
-    alert_on_payment_received=True
-)
+MANAGER_SETTINGS_KEY = "manager_notifications"
+
+# Process-local cache of the persisted settings. The database is the source of
+# truth; this only avoids re-reading the row within a request. Manager settings
+# used to live solely in a module global, so every change an operator made —
+# including a Telegram bot token — was lost on the next restart.
+_MANAGER_CACHE: Optional[ManagerNotificationSettings] = None
+
+
+def _default_manager_settings() -> ManagerNotificationSettings:
+    return ManagerNotificationSettings(
+        manager_phone=settings.MANAGER_PHONE,
+        manager_email=settings.MANAGER_EMAIL,
+    )
 
 
 class NotificationService:
@@ -61,13 +61,57 @@ class NotificationService:
 
     @staticmethod
     def get_manager_settings() -> ManagerNotificationSettings:
-        return MANAGER_SETTINGS
+        """
+        Last-known settings without touching the database.
+
+        Prefer load_manager_settings(db); this only serves callers that have no
+        session, and falls back to the configured defaults before the first read.
+        """
+        return _MANAGER_CACHE or _default_manager_settings()
 
     @staticmethod
-    def update_manager_settings(new_settings: ManagerNotificationSettings) -> ManagerNotificationSettings:
-        global MANAGER_SETTINGS
-        MANAGER_SETTINGS = new_settings
-        return MANAGER_SETTINGS
+    async def load_manager_settings(db: AsyncSession) -> ManagerNotificationSettings:
+        """Reads the persisted manager alert settings, falling back to defaults."""
+        global _MANAGER_CACHE
+        try:
+            row = await db.get(AppSetting, MANAGER_SETTINGS_KEY)
+        except Exception:
+            # A failed statement aborts the surrounding transaction, which would
+            # then reject the notification inserts that follow. Roll back so the
+            # session stays usable and dispatch continues on defaults.
+            await db.rollback()
+            row = None
+
+        if row and isinstance(row.value, dict):
+            try:
+                _MANAGER_CACHE = ManagerNotificationSettings(**row.value)
+                return _MANAGER_CACHE
+            except Exception:
+                # A stored row from an older schema must not break dispatch;
+                # fall back to defaults rather than raising mid-notification.
+                pass
+
+        _MANAGER_CACHE = _default_manager_settings()
+        return _MANAGER_CACHE
+
+    @staticmethod
+    async def save_manager_settings(
+        db: AsyncSession,
+        new_settings: ManagerNotificationSettings,
+        actor_email: Optional[str] = None
+    ) -> ManagerNotificationSettings:
+        """Persists the manager alert settings so they survive a restart."""
+        global _MANAGER_CACHE
+        payload = new_settings.model_dump()
+        row = await db.get(AppSetting, MANAGER_SETTINGS_KEY)
+        if row:
+            row.value = payload
+            row.updated_by = actor_email
+        else:
+            db.add(AppSetting(key=MANAGER_SETTINGS_KEY, value=payload, updated_by=actor_email))
+        await db.commit()
+        _MANAGER_CACHE = new_settings
+        return new_settings
 
     @staticmethod
     async def record_and_dispatch_email(
@@ -152,7 +196,7 @@ class NotificationService:
         Dispatches real-time alerts directly to the Business Owner / Manager Mobile Phone
         via SMS, WhatsApp, and Web Push whenever bookings, dispatches, or milestones change.
         """
-        mgr = NotificationService.get_manager_settings()
+        mgr = await NotificationService.load_manager_settings(db)
         
         # Check event toggle
         if event_type == "NEW_BOOKING" and not mgr.alert_on_new_booking:

@@ -1,4 +1,5 @@
 from app.core.database import Base
+from app.models.app_setting import AppSetting
 from app.models.audit import AuditLog
 from app.models.booking import Booking
 from app.models.booking_leg import BookingLeg
@@ -29,6 +30,7 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 
 __all__ = [
+    "AppSetting",
     "Base",
     "User",
     "Customer",
