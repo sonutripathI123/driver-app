@@ -200,13 +200,54 @@ class NotificationService:
                 channel="SMS"
             )
 
+        # Email the same alert. Unlike SMS/WhatsApp this needs no telco account,
+        # so it is the one manager channel that works today.
+        if mgr.manager_email_enabled and mgr.manager_email:
+            rows: List[Tuple[str, str]] = []
+            for line in message.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                if ": " in line:
+                    label, _, value = line.partition(": ")
+                    rows.append((label.strip(), value.strip()))
+                else:
+                    rows.append(("", line))
+            rows.append(("Time", utc_now().strftime("%d %b %Y at %H:%M UTC")))
+
+            await NotificationService.record_and_dispatch_email(
+                db,
+                mgr.manager_email,
+                f"MANAGER_{event_type}_EMAIL",
+                f"{'URGENT — ' if urgency == 'HIGH' else ''}{title}",
+                NotificationService.build_branded_email(
+                    heading=title,
+                    intro="Operations alert from the dispatch platform.",
+                    rows=rows,
+                ),
+                booking_id,
+            )
+
         # Dispatch Telegram Bot (if token configured)
         if mgr.telegram_bot_token and mgr.telegram_chat_id:
-            await sms_gateway.send_telegram(
+            tg_res = await sms_gateway.send_telegram(
                 mgr.telegram_bot_token,
                 mgr.telegram_chat_id,
                 f"<b>{prefix} {title}</b>\n\n{message}"
             )
+            # Telegram sends were previously not recorded at all, so a failure
+            # left no trace in the outbox.
+            db.add(Notification(
+                id=str(uuid.uuid4()),
+                booking_id=booking_id,
+                recipient=f"telegram:{mgr.telegram_chat_id}",
+                channel="TELEGRAM",
+                template_name=f"MANAGER_{event_type}",
+                subject=title,
+                content=mobile_msg,
+                status=tg_res.get("status", "SENT").upper(),
+                error_message=tg_res.get("failure_reason"),
+            ))
 
         # Dispatch OS-level Background Web Push (Delivers even when browser is closed)
         if mgr.browser_push_enabled:

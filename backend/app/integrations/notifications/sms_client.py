@@ -155,6 +155,7 @@ class SMSGateway:
         """
         Dispatches 100% Free live instant push alert directly to Telegram app on mobile/desktop.
         """
+        failure_reason: Optional[str] = None
         try:
             url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
             payload = {
@@ -167,11 +168,14 @@ class SMSGateway:
                 if resp.status_code == 200:
                     logger.info(f"[LIVE TELEGRAM ALERT SENT] Chat ID: {chat_id}")
                     return {"status": "SENT", "provider": "TELEGRAM_LIVE"}
-                else:
-                    logger.error(f"[TELEGRAM ERROR] Status {resp.status_code}: {resp.text}")
+                # Telegram is specific about why it refused (bad token, bot not
+                # started by the user, wrong chat id) — pass that back.
+                failure_reason = f"Telegram HTTP {resp.status_code}: {resp.text[:300]}"
+                logger.error(f"[TELEGRAM ERROR] {failure_reason}")
         except Exception as ex:
-            logger.error(f"[TELEGRAM DISPATCH EXCEPTION] {str(ex)}")
-        return {"status": "FAILED", "provider": "TELEGRAM_LIVE"}
+            failure_reason = f"Telegram request failed: {ex}"
+            logger.error(f"[TELEGRAM DISPATCH EXCEPTION] {failure_reason}")
+        return {"status": "FAILED", "failure_reason": failure_reason, "provider": "TELEGRAM_LIVE"}
 
 
 sms_gateway = SMSGateway()

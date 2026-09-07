@@ -46,6 +46,9 @@ class ManagerNotificationSettings(BaseModel):
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     browser_push_enabled: bool = True
+    # Email is the only manager channel that needs no telco account, so it is
+    # on by default.
+    manager_email_enabled: bool = True
     
     # Event Triggers
     alert_on_new_booking: bool = True
