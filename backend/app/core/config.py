@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Shared secret that lets an external scheduler (UptimeRobot, cron-job.org,
+    # a cron job) trigger the automation run over GET. Empty means the cron
+    # route refuses to run rather than running unprotected.
+    AUTOMATIONS_CRON_TOKEN: str = ""
+
     # Business identity used in automated notifications. These were previously
     # hardcoded across notification_service.py against three domains this
     # business does not own (chauffeurplatform.com, crownchauffeurs.com.au),
