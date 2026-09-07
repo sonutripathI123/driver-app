@@ -25,13 +25,12 @@ interface FlaggedTripDetail {
   booking_number: string;
   route: string;
   vehicle: string;
-  chauffeur: string;
+  passenger: string;
   gross_revenue: number;
   direct_cost: number;
   net_profit: number;
   margin_pct: number;
-  spike_reasons: string[];
-  preventive_measures: string[];
+  is_negative: boolean;
 }
 
 export const AnalyticsProfitPage: React.FC = () => {
@@ -39,6 +38,7 @@ export const AnalyticsProfitPage: React.FC = () => {
   const [utilizationReport, setUtilizationReport] = useState<VehicleUtilizationReport | null>(null);
   const [driverKPIs, setDriverKPIs] = useState<DriverPerformanceKPIItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
   // Investigation Modal State
@@ -49,8 +49,9 @@ export const AnalyticsProfitPage: React.FC = () => {
   }, []);
 
   const loadAnalytics = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
-      setLoading(true);
       const [pData, uData, kData] = await Promise.all([
         analyticsApi.getTripProfitability(),
         analyticsApi.getVehicleUtilization(),
@@ -58,107 +59,98 @@ export const AnalyticsProfitPage: React.FC = () => {
       ]);
       setProfitReport(pData);
       setUtilizationReport(uData);
-      if (kData?.drivers && kData.drivers.length > 0) {
-        setDriverKPIs(kData.drivers);
-      } else {
-        throw new Error('Fallback to comprehensive driver roster');
-      }
-    } catch (err) {
-      // Mock Demo Data for visual display
-      setProfitReport({
-        date_from: '2026-08-01',
-        date_to: '2026-08-28',
-        total_trips: 45,
-        total_revenue_ex_gst: 18450.0,
-        total_direct_costs: 8970.0,
-        total_gross_profit: 9480.0,
-        average_margin_pct: 51.38,
-        low_margin_trips_count: 2,
-        negative_margin_trips_count: 0,
-        trips: [],
-      });
-
-      // Complete registered chauffeurs with full live metrics
-      setDriverKPIs([
-        { driver_id: 'd-sonu', full_name: 'Sonu Tripathi (Lead Chauffeur)', phone: '+61 412 889 001', rating: 4.99, total_trips_completed: 48, total_earnings: 6720.0, on_time_arrival_rate_pct: 99.2, assigned_trips_count: 48 },
-        { driver_id: 'd-alex', full_name: 'Alexander Vance (Senior VIP)', phone: '+61 433 221 100', rating: 4.97, total_trips_completed: 42, total_earnings: 5880.0, on_time_arrival_rate_pct: 97.6, assigned_trips_count: 43 },
-        { driver_id: 'd-marcus', full_name: 'Marcus Vance (Airport Specialist)', phone: '+61 411 000 111', rating: 4.95, total_trips_completed: 38, total_earnings: 5120.0, on_time_arrival_rate_pct: 96.5, assigned_trips_count: 39 },
-        { driver_id: 'd-leo', full_name: 'Leo Thorne (Sprinter & Van Chauffeur)', phone: '+61 422 333 444', rating: 4.93, total_trips_completed: 34, total_earnings: 4590.0, on_time_arrival_rate_pct: 95.1, assigned_trips_count: 35 },
-        { driver_id: 'd-sarah', full_name: 'Sarah Jenkins (Corporate Executive)', phone: '+61 498 112 334', rating: 4.91, total_trips_completed: 31, total_earnings: 4185.0, on_time_arrival_rate_pct: 94.2, assigned_trips_count: 32 },
-        { driver_id: 'd-jason', full_name: 'Jason Scott (Interstate Dispatch)', phone: '+61 400 998 771', rating: 4.90, total_trips_completed: 28, total_earnings: 3780.0, on_time_arrival_rate_pct: 93.8, assigned_trips_count: 29 },
-      ]);
+      // An empty roster is a real answer, not a failure. This used to throw on
+      // purpose so the screen would fall through to six invented chauffeurs.
+      setDriverKPIs(kData?.drivers ?? []);
+    } catch (err: any) {
+      // Reporting fabricated revenue and margins is worse than reporting
+      // nothing: these are the figures the business is steered by.
+      setProfitReport(null);
+      setUtilizationReport(null);
+      setDriverKPIs([]);
+      const detail = err?.response?.data?.detail;
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Analytics unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  const revenueChartData = [
-    { day: 'Mon', revenue: 2450, cost: 1100, profit: 1350, margin: 55.1 },
-    { day: 'Tue', revenue: 3100, cost: 1450, profit: 1650, margin: 53.2 },
-    { day: 'Wed', revenue: 2800, cost: 1300, profit: 1500, margin: 53.6 },
-    { day: 'Thu', revenue: 3900, cost: 1800, profit: 2100, margin: 53.8 },
-    { day: 'Fri', revenue: 4800, cost: 2200, profit: 2600, margin: 54.2 },
-    { day: 'Sat', revenue: 3400, cost: 1600, profit: 1800, margin: 52.9 },
-    { day: 'Sun', revenue: 2900, cost: 1350, profit: 1550, margin: 53.4 },
+  // Every figure below is derived from the API reports. These were previously
+  // three hardcoded arrays: a fabricated week of revenue, an invented fleet
+  // mix, and two made-up "flagged" trips complete with root-cause narratives
+  // for journeys that never happened.
+
+  const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+  const revenueChartData = (() => {
+    const byDay = DAY_NAMES.map((day) => ({ day, revenue: 0, cost: 0, profit: 0, margin: 0 }));
+    for (const trip of profitReport?.trips ?? []) {
+      const bucket = byDay[new Date(trip.pickup_datetime).getDay()];
+      bucket.revenue += trip.net_revenue_ex_gst ?? 0;
+      bucket.cost += trip.total_direct_cost ?? 0;
+      bucket.profit += trip.gross_profit ?? 0;
+    }
+    for (const bucket of byDay) {
+      bucket.margin = bucket.revenue ? (bucket.profit / bucket.revenue) * 100 : 0;
+    }
+    // Start the week on Monday, as the roster is read.
+    return [...byDay.slice(1), byDay[0]];
+  })();
+
+  // Scale the bars to the busiest day so an empty or quiet week still renders.
+  const maxRevenue = Math.max(1, ...revenueChartData.map((d) => d.revenue));
+
+  const FLEET_COLOURS = [
+    { color: 'bg-amber-400', hex: '#D4AF37' },
+    { color: 'bg-cyan-400', hex: '#06B6D4' },
+    { color: 'bg-emerald-400', hex: '#10B981' },
+    { color: 'bg-purple-400', hex: '#A855F7' },
+    { color: 'bg-rose-400', hex: '#F43F5E' },
   ];
 
-  const maxRevenue = 5000;
+  const fleetShare = (() => {
+    const byCategory = new Map<string, number>();
+    for (const v of utilizationReport?.vehicles ?? []) {
+      byCategory.set(v.category, (byCategory.get(v.category) ?? 0) + (v.total_trips ?? 0));
+    }
+    const total = [...byCategory.values()].reduce((a, b) => a + b, 0);
+    return [...byCategory.entries()]
+      .filter(([, trips]) => trips > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([category, trips], idx) => ({
+        name: category.replace(/_/g, ' '),
+        trips,
+        pct: total ? Math.round((trips / total) * 100) : 0,
+        ...FLEET_COLOURS[idx % FLEET_COLOURS.length],
+      }));
+  })();
 
-  const fleetShare = [
-    { name: 'Executive Sedan', pct: 45, color: 'bg-amber-400', hex: '#D4AF37', trips: 19 },
-    { name: 'Premium SUV', pct: 25, color: 'bg-cyan-400', hex: '#06B6D4', trips: 11 },
-    { name: 'People Mover', pct: 20, color: 'bg-emerald-400', hex: '#10B981', trips: 9 },
-    { name: 'Minibus Shuttle', pct: 10, color: 'bg-purple-400', hex: '#A855F7', trips: 6 },
-  ];
-
-  // Flagged Trips with Root Cause Cost Analysis & Safety Measures
-  const flaggedTrips: FlaggedTripDetail[] = [
-    {
-      booking_number: 'CRW-MEL-9812',
-      route: 'Melbourne Airport Terminal 1 ➔ Brighton Golden Mile',
-      vehicle: 'Mercedes-Benz S-Class S450 LWB (GTS783)',
-      chauffeur: 'Sonu Tripathi',
-      gross_revenue: 180.0,
-      direct_cost: 148.0,
-      net_profit: 32.0,
-      margin_pct: 17.8,
-      spike_reasons: [
-        'CityLink Tollway & Tullamarine Peak Surcharge: $38.50 AUD incurred on route.',
-        'Unplanned International Flight Delay Idle Waiting: 65 mins excess buffer at terminal.',
-        'Customer detour request through South Yarra (+8 km fuel burn).',
-      ],
-      preventive_measures: [
-        'Enable automated airport wait-time charge ($1.80/min after 30 mins) to auto-bill the client.',
-        'Enable automated CityLink/EastLink Toll pass-through on client invoice.',
-        'Enforce GPS dynamic detour rate calculation ($3.50/km for mid-trip changes).',
-      ],
-    },
-    {
-      booking_number: 'CRW-SYD-7740',
-      route: 'Sydney Domestic T3 ➔ Parramatta CBD Financial Center',
-      vehicle: 'Audi Q7 Black Edition (AMJ506)',
-      chauffeur: 'Marcus Vance',
-      gross_revenue: 290.0,
-      direct_cost: 228.0,
-      net_profit: 62.0,
-      margin_pct: 21.4,
-      spike_reasons: [
-        'Interstate Subcontractor Partner Peak Surge: 22% commission payout ($63.80 AUD).',
-        'M5 Tunnel & WestConnex Toll charges during peak morning traffic ($24.20 AUD).',
-        'Peak rush hour delay leading to 85 mins driver duration.',
-      ],
-      preventive_measures: [
-        'Lock maximum subcontractor commission to 15% in Partner Agreement.',
-        'Implement dynamic peak-hour surcharge (+15%) during Sydney 07:00-09:30 AM window.',
-        'Use real-time traffic routing to bypass tollways when travel time is identical.',
-      ],
-    },
-  ];
+  const flaggedTrips: FlaggedTripDetail[] = (profitReport?.trips ?? [])
+    .filter((t) => t.is_low_margin || t.is_negative_margin)
+    .sort((a, b) => a.margin_percentage - b.margin_percentage)
+    .map((t) => ({
+      booking_number: t.booking_number,
+      route: t.route_summary,
+      vehicle: t.vehicle_category?.replace(/_/g, ' ') ?? '—',
+      passenger: t.passenger_name ?? '—',
+      gross_revenue: t.gross_customer_fare,
+      direct_cost: t.total_direct_cost,
+      net_profit: t.gross_profit,
+      margin_pct: t.margin_percentage,
+      is_negative: t.is_negative_margin,
+    }));
 
   const [downloadSuccessMessage, setDownloadSuccessMessage] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [downloadingReport, setDownloadingReport] = useState<'trips' | 'ledger' | null>(null);
 
-  const downloadCSVFile = (csvContent: string, fileName: string) => {
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const saveBlob = (blob: Blob, fileName: string) => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
@@ -168,45 +160,97 @@ export const AnalyticsProfitPage: React.FC = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
-
-    setDownloadSuccessMessage(`✅ ${fileName} generated & downloaded successfully!`);
-    setTimeout(() => setDownloadSuccessMessage(null), 4000);
   };
 
-  const handleDownloadTripProfitability = () => {
-    const csvRows = [
-      ['Booking Reference', 'Trip Date', 'Corporate Client / Account', 'Passenger Name', 'Pickup Location', 'Dropoff Location', 'Vehicle Model', 'Rego Plate', 'Chauffeur', 'Gross Fare (AUD Inc GST)', '10% Australian GST (AUD)', 'Net Revenue (Ex GST)', 'Driver Payout / Cost (AUD)', 'Company Net Profit (AUD)', 'Profit Margin (%)', 'Payment Status'],
-      ['CCM-2026-9901', '2026-08-28 18:30', 'Rio Tinto Mining Executive Account', 'David Sterling', 'Melbourne Airport Terminal 1', 'Grand Hyatt Melbourne (123 Collins St)', 'Mercedes-Benz S-Class S450 LWB', 'GTS783', 'Sonu Tripathi', '440.00', '40.00', '400.00', '240.00', '160.00', '40.0%', 'PAID'],
-      ['CCM-2026-9940', '2026-08-25 09:00', 'BHP Billiton VIP Corporate Services', 'Claire Redfield', 'Collins Square, 727 Collins St', 'Domaine Chandon Winery, Yarra Valley', 'Mercedes-Benz Sprinter Luxury Minibus', 'BS14OK', 'Sonu Tripathi', '680.00', '61.82', '618.18', '340.00', '278.18', '45.0%', 'PAID'],
-      ['CCM-2026-8812', '2026-08-24 11:15', 'Macquarie Group Private Wealth', 'Marcus Brody', 'Sydney Kingsford Smith T3', 'Crown Towers Sydney Barangaroo', 'Audi Q7 Black Edition Quattro', 'AMJ506', 'Marcus Vance', '320.00', '29.09', '290.91', '160.00', '130.91', '45.0%', 'PAID'],
-      ['CCM-2026-7730', '2026-08-22 14:00', 'PwC Australia Executive Chauffeur', 'Sarah Jenkins', 'Melbourne Airport Terminal 2', '101 Collins St, Melbourne CBD', 'Mercedes-Benz E-Class Executive', 'BYY499', 'Alexander Vance', '190.00', '17.27', '172.73', '95.00', '77.73', '45.0%', 'PAID'],
-      ['CCM-2026-6641', '2026-08-20 16:30', 'Herbert Smith Freehills Law', 'Alexander Vance', 'Crown Towers, Southbank', 'Melbourne Airport Terminal 4', 'Mercedes-Benz V-Class People Mover', 'CPS711', 'Sonu Tripathi', '240.00', '21.82', '218.18', '120.00', '98.18', '45.0%', 'PAID'],
-      ['CCM-2026-5520', '2026-08-18 10:00', 'Private VIP Passenger', 'Elena Rostova', 'Grand Hyatt Collins St', 'Mornington Peninsula Winery Tour', 'Mercedes-Benz S-Class S450 LWB', 'GTS783', 'Sonu Tripathi', '520.00', '47.27', '472.73', '260.00', '212.73', '45.0%', 'PAID'],
-    ];
+  const stamp = () => new Date().toISOString().slice(0, 10);
 
-    const csvContent = csvRows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(',')).join('\n');
-    downloadCSVFile(csvContent, 'opal_trip_profitability_audit_2026.csv');
+  /**
+   * Both exports are generated by the API from the booking records. They used
+   * to be hardcoded arrays of invented trips and ledger transactions —
+   * accounting exports that matched nothing in the database.
+   */
+  const runExport = async (
+    kind: 'trips' | 'ledger',
+    fetcher: () => Promise<Blob>,
+    fileName: string
+  ) => {
+    if (downloadingReport) return;
+    setDownloadingReport(kind);
+    setDownloadError(null);
+    try {
+      const blob = await fetcher();
+      saveBlob(blob, fileName);
+      setDownloadSuccessMessage(`${fileName} downloaded.`);
+      setTimeout(() => setDownloadSuccessMessage(null), 4000);
+    } catch (err: any) {
+      const status = err?.response?.status;
+      setDownloadError(
+        status === 403
+          ? 'Your role does not have access to this export.'
+          : status
+            ? `Export failed (HTTP ${status}).`
+            : 'Export failed: cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setDownloadingReport(null);
+    }
   };
 
-  const handleDownloadFinancialLedger = () => {
-    const csvRows = [
-      ['Transaction ID', 'Posting Date & Time', 'Entity / Account Name', 'Accounting Type', 'Transaction Description', 'Gross Credit (AUD)', 'Gross Debit (AUD)', '10% GST Component (AUD)', 'Net Operating Impact (AUD)', 'Payment Method', 'Audit Invoice Ref'],
-      ['TXN-2026-1001', '2026-08-28 18:35 AEST', 'Rio Tinto Mining Executive Account', 'SALES_REVENUE', 'Executive Chauffeur Transfer (MEL T1 ➔ Grand Hyatt)', '440.00', '0.00', '40.00', '400.00', 'Direct EFT Bank Transfer', 'INV-2026-0041'],
-      ['TXN-2026-1002', '2026-08-28 19:45 AEST', 'Sonu Tripathi (Chauffeur)', 'DRIVER_PAYOUT', 'Driver Payout Allocation (S-Class GTS783)', '0.00', '240.00', '0.00', '-240.00', 'Direct Bank Payout', 'PAY-2026-9901'],
-      ['TXN-2026-1003', '2026-08-25 09:10 AEST', 'BHP Billiton VIP Corporate Services', 'SALES_REVENUE', 'Full Day VIP Charter (Collins Square ➔ Yarra Valley)', '680.00', '0.00', '61.82', '618.18', 'Corporate OSKO Direct', 'INV-2026-0042'],
-      ['TXN-2026-1004', '2026-08-25 18:30 AEST', 'Sonu Tripathi (Chauffeur)', 'DRIVER_PAYOUT', 'Charter Driver Payout Allocation (Sprinter BS14OK)', '0.00', '340.00', '0.00', '-340.00', 'Direct Bank Payout', 'PAY-2026-9940'],
-      ['TXN-2026-1005', '2026-08-24 11:20 AEST', 'Macquarie Group Private Wealth', 'SALES_REVENUE', 'Executive Airport VIP Transfer (SYD T3 ➔ Barangaroo)', '320.00', '0.00', '29.09', '290.91', 'Corporate Amex Card', 'INV-2026-0043'],
-      ['TXN-2026-1006', '2026-08-24 12:45 AEST', 'Marcus Vance (Chauffeur)', 'DRIVER_PAYOUT', 'Sydney Airport Transfer Driver Payout', '0.00', '160.00', '0.00', '-160.00', 'Direct Bank Payout', 'PAY-2026-8812'],
-      ['TXN-2026-1007', '2026-08-22 14:15 AEST', 'PwC Australia Executive Chauffeur', 'SALES_REVENUE', 'Airport Transfer (MEL T2 ➔ 101 Collins St)', '190.00', '0.00', '17.27', '172.73', 'Direct Bank Transfer', 'INV-2026-0044'],
-      ['TXN-2026-1008', '2026-08-22 15:30 AEST', 'Alexander Vance (Chauffeur)', 'DRIVER_PAYOUT', 'Airport Transfer Driver Payout (E-Class BYY499)', '0.00', '95.00', '0.00', '-95.00', 'Direct Bank Payout', 'PAY-2026-7730'],
-    ];
+  const handleDownloadTripProfitability = () =>
+    runExport(
+      'trips',
+      () => analyticsApi.exportTripProfitabilityCsv(),
+      `opal_trip_profitability_${stamp()}.csv`
+    );
 
-    const csvContent = csvRows.map((e) => e.map((val) => `"${val.replace(/"/g, '""')}"`).join(',')).join('\n');
-    downloadCSVFile(csvContent, 'opal_general_financial_ledger_2026.csv');
-  };
+  const handleDownloadFinancialLedger = () =>
+    runExport(
+      'ledger',
+      () => analyticsApi.exportFinancialLedgerCsv(),
+      `opal_financial_ledger_${stamp()}.csv`
+    );
+
+  const hasData = (profitReport?.total_trips ?? 0) > 0;
 
   return (
     <div className="space-y-6">
+      {(loadError || downloadError) && (
+        <div role="alert" className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg space-y-2">
+          {loadError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-[#0A0E1A]">Reports could not be loaded</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">
+                  {loadError} Figures below are blank rather than estimated.
+                </p>
+              </div>
+              <button
+                onClick={loadAnalytics}
+                className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {downloadError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <p className="text-xs font-bold text-[#0A0E1A]">{downloadError}</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!loading && !loadError && !hasData && (
+        <div className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-6 text-center text-[#0A0E1A]">
+          <p className="text-sm font-black">No completed trips in this period yet</p>
+          <p className="text-xs font-bold opacity-75 mt-1">
+            Revenue, margins and chauffeur scorecards appear here once trips are completed.
+          </p>
+        </div>
+      )}
+
       {/* Download Alert Toast */}
       {downloadSuccessMessage && (
         <div className="p-3.5 rounded-2xl bg-[#06090F] border border-[#DFCAA8] text-white font-bold text-xs flex items-center justify-between shadow-xl animate-in fade-in">
@@ -262,7 +306,9 @@ export const AnalyticsProfitPage: React.FC = () => {
             {profitReport?.average_margin_pct.toFixed(1)}%
           </span>
           <span className="text-xs text-[#0A0E1A] font-black flex items-center gap-1 mt-1">
-            <ArrowUpRight className="w-3.5 h-3.5 text-[#0A0E1A]" /> +4.2% higher than target
+            {profitReport?.total_trips
+              ? `Across ${profitReport.total_trips} completed ${profitReport.total_trips === 1 ? 'trip' : 'trips'}`
+              : 'No completed trips yet'}
           </span>
         </div>
 
@@ -488,7 +534,8 @@ export const AnalyticsProfitPage: React.FC = () => {
                 <div>
                   <h3 className="text-base font-black text-[#0A0E1A]">Low Margin Trips — Root Cause Investigation</h3>
                   <p className="text-xs text-[#0A0E1A] font-bold">
-                    2 trips flagged below 25% profit target • Cost spike breakdown & preventive safety measures
+                    {flaggedTrips.length} {flaggedTrips.length === 1 ? 'trip' : 'trips'} flagged
+                    by the margin report • fare, direct cost and resulting margin
                   </p>
                 </div>
               </div>
@@ -513,7 +560,7 @@ export const AnalyticsProfitPage: React.FC = () => {
                         <span className="font-black text-[#0A0E1A]">{trip.route}</span>
                       </div>
                       <span className="text-[11px] text-[#0A0E1A] font-mono font-bold block mt-0.5">
-                        Vehicle: {trip.vehicle} • Chauffeur: {trip.chauffeur}
+                        Vehicle: {trip.vehicle} • Passenger: {trip.passenger}
                       </span>
                     </div>
 
@@ -541,28 +588,20 @@ export const AnalyticsProfitPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Root Cause Spikes */}
                   <div className="space-y-1.5 p-3 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]">
-                    <span className="text-[11px] font-black text-[#0A0E1A] flex items-center gap-1.5">
-                      <AlertTriangle className="w-3.5 h-3.5 text-[#0A0E1A]" /> Root Cause of Cost Spike:
+                    <span className="text-[11px] font-black flex items-center gap-1.5">
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {trip.is_negative
+                        ? 'This trip ran at a loss.'
+                        : `Margin ${trip.margin_pct.toFixed(1)}% is below the healthy threshold.`}
                     </span>
-                    <ul className="list-disc list-inside space-y-1 text-[#0A0E1A] text-[11px] font-bold">
-                      {trip.spike_reasons.map((reason, rIdx) => (
-                        <li key={rIdx}>{reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Preventive Safety Measures */}
-                  <div className="space-y-1.5 p-3 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A]">
-                    <span className="text-[11px] font-black text-[#0A0E1A] flex items-center gap-1.5">
-                      <Lightbulb className="w-3.5 h-3.5 text-[#0A0E1A]" /> Recommended Preventive Action for Future:
-                    </span>
-                    <ul className="list-disc list-inside space-y-1 text-[#0A0E1A] text-[11px] font-bold">
-                      {trip.preventive_measures.map((measure, mIdx) => (
-                        <li key={mIdx}>{measure}</li>
-                      ))}
-                    </ul>
+                    <p className="text-[11px] font-bold">
+                      Direct cost is {trip.gross_revenue
+                        ? ((trip.direct_cost / trip.gross_revenue) * 100).toFixed(0)
+                        : '0'}% of the fare. Check the driver payout or partner
+                      offload rate, and whether tolls, airport parking and waiting
+                      time were passed on to the client.
+                    </p>
                   </div>
                 </div>
               ))}

@@ -368,6 +368,22 @@ export const analyticsApi = {
     });
     return res.data;
   },
+  /** Server-generated CSV of every trip's margin, from the booking records. */
+  exportTripProfitabilityCsv: async (dateFrom?: string, dateTo?: string) => {
+    const res = await apiClient.get(`/analytics/export/trip-profitability.csv`, {
+      params: { date_from: dateFrom, date_to: dateTo },
+      responseType: 'blob',
+    });
+    return res.data as Blob;
+  },
+  /** Server-generated general ledger CSV. Accountant/admin only. */
+  exportFinancialLedgerCsv: async (dateFrom?: string, dateTo?: string) => {
+    const res = await apiClient.get(`/analytics/export/financial-ledger.csv`, {
+      params: { date_from: dateFrom, date_to: dateTo },
+      responseType: 'blob',
+    });
+    return res.data as Blob;
+  },
   getDriverKPIs: async (dateFrom?: string, dateTo?: string) => {
     const res = await apiClient.get<{ drivers: DriverPerformanceKPIItem[] }>(`/analytics/driver-kpis`, {
       params: { date_from: dateFrom, date_to: dateTo },
