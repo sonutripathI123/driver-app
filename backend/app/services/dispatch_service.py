@@ -23,6 +23,8 @@ from app.models.user import User
 from app.models.vehicle import Vehicle
 from app.schemas.dispatch import (
     DriverAvailabilityResponse,
+    LiveActivityItem,
+    LiveActivityResponse,
     OperateBoardLegItem,
     OperateBoardResponse,
     OperateBoardSummary,
@@ -464,6 +466,69 @@ class DispatchService:
         await db.commit()
         await db.refresh(leg)
         return leg
+
+    @staticmethod
+    async def get_live_activity(
+        db: AsyncSession,
+        since: Optional[datetime] = None,
+        limit: int = 25
+    ) -> LiveActivityResponse:
+        """
+        Recent chauffeur milestones, read from each leg's own timestamps.
+
+        This is what the admin dashboard listens to. It replaces a global
+        in-memory dict that held one hardcoded booking, was shared by every
+        user of the platform, and could be read or overwritten by anyone on the
+        internet without a token.
+        """
+        # Only legs that have actually started moving can have produced an event.
+        stmt = (
+            select(BookingLeg)
+            .options(
+                selectinload(BookingLeg.booking),
+                selectinload(BookingLeg.driver),
+                selectinload(BookingLeg.vehicle),
+            )
+            .where(BookingLeg.en_route_at.is_not(None))
+            .order_by(BookingLeg.en_route_at.desc())
+            .limit(200)
+        )
+        res = await db.execute(stmt)
+        legs = res.scalars().unique().all()
+
+        events: List[LiveActivityItem] = []
+        for leg in legs:
+            # The latest milestone each leg reached, with the time it happened.
+            milestones = [
+                (LegStatus.COMPLETED, leg.completed_at),
+                (LegStatus.PICKED_UP, leg.picked_up_at),
+                (LegStatus.ARRIVED, leg.arrived_at),
+                (LegStatus.EN_ROUTE, leg.en_route_at),
+            ]
+            for status_value, occurred in milestones:
+                if not occurred:
+                    continue
+                if since and occurred <= since:
+                    break
+                events.append(LiveActivityItem(
+                    leg_id=leg.id,
+                    booking_id=leg.booking_id,
+                    booking_number=leg.booking.booking_number if leg.booking else "",
+                    status=status_value,
+                    occurred_at=occurred,
+                    passenger_name=leg.booking.passenger_name if leg.booking else None,
+                    driver_name=leg.driver.full_name if leg.driver else None,
+                    vehicle_plate=leg.vehicle.registration_plate if leg.vehicle else None,
+                    pickup_address=leg.pickup_address,
+                    dropoff_address=leg.dropoff_address,
+                ))
+                break  # one event per leg: its most recent milestone
+
+        events.sort(key=lambda e: e.occurred_at, reverse=True)
+        return LiveActivityResponse(
+            server_time=datetime.now(timezone.utc),
+            events=events[:limit],
+        )
 
     @staticmethod
     async def get_operate_board(

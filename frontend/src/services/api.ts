@@ -157,21 +157,38 @@ export const bookingsApi = {
     });
     return res.data;
   },
-  getLiveSync: async () => {
-    const res = await apiClient.get<any>(`/bookings/live-sync`);
-    return res.data;
-  },
-  updateLiveSync: async (status: string) => {
-    const res = await apiClient.post<any>(`/bookings/live-sync`, { status });
-    return res.data;
-  },
-  resetLiveSync: async () => {
-    const res = await apiClient.post<any>(`/bookings/live-sync/reset`);
-    return res.data;
-  },
 };
 
+export interface LiveActivityItem {
+  leg_id: string;
+  booking_id: string;
+  booking_number: string;
+  status: 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED';
+  occurred_at: string;
+  passenger_name?: string | null;
+  driver_name?: string | null;
+  vehicle_plate?: string | null;
+  pickup_address?: string | null;
+  dropoff_address?: string | null;
+}
+
+export interface LiveActivityResponse {
+  server_time: string;
+  events: LiveActivityItem[];
+}
+
 export const dispatchApi = {
+  /**
+   * Recent chauffeur milestones from the database. Replaces the old
+   * /bookings/live-sync cache, which was one global status for a single
+   * hardcoded booking and needed no token to read or overwrite.
+   */
+  getLiveActivity: async (since?: string, limit = 25) => {
+    const res = await apiClient.get<LiveActivityResponse>(`/dispatch/live-activity`, {
+      params: { since, limit },
+    });
+    return res.data;
+  },
   getOperateBoard: async (date?: string) => {
     const res = await apiClient.get(`/dispatch/board`, { params: { target_date: date } });
     return res.data;

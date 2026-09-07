@@ -100,7 +100,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       vehiclePlate: 'ST-9305-VIC (Mercedes S450)',
       driverPayout: 170.0,
       netProfit: 248.18,
-      status: (localStorage.getItem('crown_active_trip_status') as any) || 'ALLOCATED',
+      status: 'ALLOCATED',
     },
     {
       id: 'b-01',

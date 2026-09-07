@@ -75,6 +75,29 @@ class OperateBoardResponse(BaseModel):
     legs: List[OperateBoardLegItem]
 
 
+class LiveActivityItem(BaseModel):
+    """One chauffeur milestone, derived from the leg's own timestamps."""
+    leg_id: str
+    booking_id: str
+    booking_number: str
+    status: LegStatus
+    occurred_at: datetime
+    passenger_name: Optional[str] = None
+    driver_name: Optional[str] = None
+    vehicle_plate: Optional[str] = None
+    pickup_address: Optional[str] = None
+    dropoff_address: Optional[str] = None
+
+
+class LiveActivityResponse(BaseModel):
+    """
+    Replaces the previous global in-memory live-sync cache, which tracked a
+    single hardcoded booking and was readable and writable without auth.
+    """
+    server_time: datetime
+    events: List[LiveActivityItem]
+
+
 class DriverAvailabilityResponse(BaseModel):
     driver_id: str
     driver_name: str

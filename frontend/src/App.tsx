@@ -15,7 +15,7 @@ import { PartnersFleetPage } from './pages/PartnersFleetPage';
 import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
 import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
 import { LoginPage } from './pages/LoginPage';
-import { bookingsApi } from './services/api';
+import { dispatchApi } from './services/api';
 import { triggerNativeNotification } from './utils/notificationSound';
 
 const BootSplash: React.FC = () => (
@@ -27,42 +27,61 @@ const BootSplash: React.FC = () => (
   </div>
 );
 
-/** Background watcher: chimes and pops a notification when a chauffeur advances a trip. */
+const MILESTONE_LABELS: Record<string, string> = {
+  EN_ROUTE: '🚗 Chauffeur En Route to Pickup',
+  ARRIVED: '📍 Chauffeur Arrived at Pickup',
+  PICKED_UP: '👤 Passenger On Board',
+  COMPLETED: '🎉 Trip Successfully Completed',
+};
+
+/**
+ * Background watcher: notifies when any chauffeur advances any trip.
+ *
+ * Polls the dispatch live-activity feed, which reads the real leg timestamps.
+ * The previous version tracked a single global status for one hardcoded
+ * booking, so a second concurrent trip produced no alert at all — and it
+ * could not tell a genuine change from another user's.
+ */
 const useLiveTripWatcher = (enabled: boolean) => {
-  const lastKnownStatusRef = useRef<string | null>(null);
+  // Server time from the previous poll, so events are never missed or repeated
+  // because of clock differences between the browser and the API.
+  const sinceRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (!enabled) {
-      lastKnownStatusRef.current = null;
+      sinceRef.current = null;
       return;
     }
 
-    const checkLiveEvents = async () => {
+    let cancelled = false;
+
+    const poll = async () => {
       try {
-        const syncData = await bookingsApi.getLiveSync();
-        const currentStatus = syncData?.status;
-        if (currentStatus && lastKnownStatusRef.current && lastKnownStatusRef.current !== currentStatus) {
-          const statusLabels: Record<string, string> = {
-            ARRIVED: '📍 Chauffeur Arrived at Pickup',
-            PICKED_UP: '👤 Passenger On Board',
-            COMPLETED: '🎉 Trip Successfully Completed',
-            EN_ROUTE: '🚗 Chauffeur En Route to Pickup',
-          };
-          const title = statusLabels[currentStatus] || `🚗 Trip Milestone: ${currentStatus}`;
-          const passenger = syncData?.passenger_name || 'passenger';
-          const driver = syncData?.driver_name || 'the assigned chauffeur';
-          const ref = syncData?.booking_number || 'booking';
-          triggerNativeNotification(title, `${ref} (${passenger}) updated by ${driver}.`);
+        const data = await dispatchApi.getLiveActivity(sinceRef.current ?? undefined);
+        if (cancelled) return;
+
+        // The first poll establishes a baseline; announcing history on load
+        // would chime for trips that finished hours ago.
+        if (sinceRef.current) {
+          for (const event of [...data.events].reverse()) {
+            const title = MILESTONE_LABELS[event.status] || `🚗 Trip Milestone: ${event.status}`;
+            const who = event.driver_name || 'the assigned chauffeur';
+            const passenger = event.passenger_name ? ` (${event.passenger_name})` : '';
+            triggerNativeNotification(title, `${event.booking_number}${passenger} updated by ${who}.`);
+          }
         }
-        lastKnownStatusRef.current = currentStatus || null;
+        sinceRef.current = data.server_time;
       } catch {
-        // Transient network/auth errors are handled by the API interceptor.
+        // Auth and network failures are handled by the API interceptor.
       }
     };
 
-    checkLiveEvents();
-    const interval = setInterval(checkLiveEvents, 5000);
-    return () => clearInterval(interval);
+    poll();
+    const interval = setInterval(poll, 10000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [enabled]);
 };
 
@@ -112,7 +131,9 @@ const isDirectDriverLink =
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isBootstrapping, currentRole } = useAuth();
 
-  useLiveTripWatcher(isAuthenticated);
+  // Staff only: the live feed is a staff endpoint, so polling it as a
+  // chauffeur would just 403 every interval.
+  useLiveTripWatcher(isAuthenticated && currentRole !== 'DRIVER');
 
   if (isBootstrapping) return <BootSplash />;
   if (!isAuthenticated) return <LoginPage />;

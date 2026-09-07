@@ -14,6 +14,7 @@ from app.models.enums import LegStatus, VehicleCategory
 from app.models.user import User
 from app.schemas.booking import BookingLegRead
 from app.schemas.dispatch import (
+    LiveActivityResponse,
     AllocateDriverRequest,
     DriverAvailabilityResponse,
     OffloadPartnerRequest,
@@ -23,6 +24,19 @@ from app.schemas.dispatch import (
 from app.services.dispatch_service import DispatchService
 
 router = APIRouter(prefix="/dispatch", tags=["Operations & Dispatch Board"])
+
+
+@router.get("/live-activity", response_model=LiveActivityResponse, dependencies=[Depends(require_staff)])
+async def get_live_activity(
+    since: Optional[datetime] = Query(None, description="Only milestones after this timestamp"),
+    limit: int = Query(25, ge=1, le=100),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Recent chauffeur trip milestones for the dashboard's live feed and chime.
+    Access: Staff (ADMIN, OPERATIONS_MANAGER, DISPATCHER, ACCOUNTANT)
+    """
+    return await DispatchService.get_live_activity(db=db, since=since, limit=limit)
 
 
 @router.get("/board", response_model=OperateBoardResponse, dependencies=[Depends(require_staff)])

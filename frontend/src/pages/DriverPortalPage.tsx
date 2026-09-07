@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { bookingsApi, driverPortalApi, fleetApi } from '../services/api';
+import { driverPortalApi } from '../services/api';
 import { Booking, BookingLeg, Driver } from '../types';
 import confetti from 'canvas-confetti';
 import {
@@ -195,13 +195,6 @@ export const DriverPortalPage: React.FC = () => {
     }
 
     setTrips((prev) => prev.map((t) => (t.id === activeTrip.id ? { ...t, status: nextStatus } : t)));
-
-    // Keeps the legacy admin chime working until live-sync moves onto the DB.
-    try {
-      await bookingsApi.updateLiveSync(nextStatus);
-    } catch {
-      /* the chime is best-effort; the trip status above already persisted */
-    }
 
     if (nextStatus === 'EN_ROUTE') {
       showToast('🚗 Status: EN ROUTE — dispatcher notified.');
