@@ -38,20 +38,69 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
-// On an expired/invalid token, clear the session so the app falls back to the
-// login screen instead of silently rendering empty data.
+const clearStoredSession = () => {
+  localStorage.removeItem('chauffeur_access_token');
+  localStorage.removeItem('chauffeur_refresh_token');
+  localStorage.removeItem('chauffeur_user');
+};
+
+// Access tokens last an hour, so a dispatcher mid-shift would otherwise be
+// thrown back to the login screen. Exchange the refresh token instead, and
+// share one in-flight exchange so parallel 401s don't each trigger their own.
+let refreshInFlight: Promise<string> | null = null;
+
+const refreshAccessToken = (): Promise<string> => {
+  if (refreshInFlight) return refreshInFlight;
+
+  const refreshToken = localStorage.getItem('chauffeur_refresh_token');
+  if (!refreshToken) return Promise.reject(new Error('No refresh token stored'));
+
+  refreshInFlight = apiClient
+    .post<LoginResponse>('/auth/refresh', { refresh_token: refreshToken })
+    .then((res) => {
+      localStorage.setItem('chauffeur_access_token', res.data.access_token);
+      if (res.data.refresh_token) {
+        localStorage.setItem('chauffeur_refresh_token', res.data.refresh_token);
+      }
+      if (res.data.user) {
+        localStorage.setItem('chauffeur_user', JSON.stringify(res.data.user));
+      }
+      return res.data.access_token;
+    })
+    .finally(() => {
+      refreshInFlight = null;
+    });
+
+  return refreshInFlight;
+};
+
+// Endpoints where a 401 is the answer, not a stale-token symptom.
+const isAuthExchange = (url: string) =>
+  url.includes('/auth/login') || url.includes('/auth/refresh');
+
 apiClient.interceptors.response.use(
   (res) => res,
-  (error) => {
+  async (error) => {
     const status = error?.response?.status;
-    const url: string = error?.config?.url || '';
-    if ((status === 401 || status === 403) && !url.includes('/auth/login')) {
-      localStorage.removeItem('chauffeur_access_token');
-      localStorage.removeItem('chauffeur_refresh_token');
-      localStorage.removeItem('chauffeur_user');
-      window.dispatchEvent(new Event('chauffeur:unauthorized'));
+    const config = error?.config;
+    const url: string = config?.url || '';
+
+    // A 403 means the account is signed in but lacks the role for this route
+    // (a driver reaching an admin endpoint, say). That must not end the session.
+    if (status !== 401 || !config || isAuthExchange(url) || config._retriedAfterRefresh) {
+      return Promise.reject(error);
     }
-    return Promise.reject(error);
+
+    try {
+      const token = await refreshAccessToken();
+      config._retriedAfterRefresh = true;
+      config.headers = { ...(config.headers || {}), Authorization: `Bearer ${token}` };
+      return apiClient.request(config);
+    } catch {
+      clearStoredSession();
+      window.dispatchEvent(new Event('chauffeur:unauthorized'));
+      return Promise.reject(error);
+    }
   }
 );
 

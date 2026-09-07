@@ -110,14 +110,18 @@ const isDirectDriverLink =
   window.location.pathname.includes('/driver') || window.location.search.includes('view=driver');
 
 const AppRoutes: React.FC = () => {
-  const { isAuthenticated, isBootstrapping } = useAuth();
+  const { isAuthenticated, isBootstrapping, currentRole } = useAuth();
 
   useLiveTripWatcher(isAuthenticated);
 
   if (isBootstrapping) return <BootSplash />;
   if (!isAuthenticated) return <LoginPage />;
 
-  if (isDirectDriverLink) {
+  // Chauffeurs only ever get the mobile portal. Without this a driver signing
+  // in landed on the admin dashboard, which then 403s on every staff endpoint.
+  const isDriver = currentRole === 'DRIVER';
+
+  if (isDriver || isDirectDriverLink) {
     return (
       <div className="min-h-screen bg-[#070B14] text-slate-100 p-3 sm:p-6 flex flex-col justify-start">
         <DriverPortalPage />
