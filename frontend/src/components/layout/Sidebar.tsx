@@ -10,6 +10,7 @@ import {
   Users,
   Car,
   Bell,
+  Mail,
   UserCheck,
   X
 } from 'lucide-react';
@@ -22,6 +23,7 @@ export type NavTab =
   | 'driver-portal'
   | 'clients'
   | 'notifications'
+  | 'email-hub'
   | 'flights'
   | 'invoicing'
   | 'analytics'
@@ -66,6 +68,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'driver-portal', label: 'Driver Mobile PWA', icon: Smartphone, badge: 'App', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
+        { id: 'email-hub', label: 'Email & Dispatch Comms', icon: Mail, badge: 'SMTP', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
       ],

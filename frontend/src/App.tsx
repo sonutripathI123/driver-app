@@ -12,6 +12,7 @@ import { InvoicingTaxPage } from './pages/InvoicingTaxPage';
 import { AnalyticsProfitPage } from './pages/AnalyticsProfitPage';
 import { PartnersFleetPage } from './pages/PartnersFleetPage';
 import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
+import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
 import { bookingsApi } from './services/api';
 import { triggerNativeNotification, playNotificationChime } from './utils/notificationSound';
 
@@ -65,6 +66,8 @@ export const App: React.FC = () => {
         return <ClientsCustomersPage />;
       case 'notifications':
         return <NotificationsHubPage />;
+      case 'email-hub':
+        return <EmailCommunicationsHubPage />;
       case 'flights':
         return <FlightRadarPage />;
       case 'invoicing':
