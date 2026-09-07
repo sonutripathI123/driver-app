@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -13,9 +13,11 @@ import {
   Mail,
   UserCheck,
   LogOut,
+  KeyRound,
   X
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { ChangePasswordModal } from '../ChangePasswordModal';
 
 export type NavTab =
   | 'dashboard'
@@ -44,6 +46,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile
 }) => {
   const { user, logout } = useAuth();
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   const initials = (user?.full_name || '')
     .split(' ')
@@ -190,6 +193,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </p>
           </div>
           <button
+            onClick={() => setShowChangePassword(true)}
+            title="Change password"
+            aria-label="Change password"
+            className="p-1.5 rounded-lg border border-[#E6D8C3] text-[#0A0E1A] hover:bg-[#FEF9C3] hover:text-[#0A0E1A] transition-colors shrink-0"
+          >
+            <KeyRound className="w-3.5 h-3.5" />
+          </button>
+          <button
             onClick={logout}
             title="Sign out"
             aria-label="Sign out"
@@ -222,6 +233,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {sidebarContent}
           </div>
         </div>
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal onClose={() => setShowChangePassword(false)} />
       )}
     </>
   );
