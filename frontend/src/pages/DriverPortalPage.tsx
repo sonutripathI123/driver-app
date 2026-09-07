@@ -38,8 +38,10 @@ interface DriverTripItem {
   flightNumber?: string;
   flightStatus?: string;
   driverPayout: number;
-  status: 'ALLOCATED' | 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED';
+  status: 'ALLOCATED' | 'DISPATCHED' | 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED';
   notes?: string;
+  /** Unformatted pickup timestamp, kept so trips can be ordered. */
+  pickupDatetimeRaw: string;
 }
 
 interface ChauffeurProfileItem {
@@ -53,193 +55,169 @@ interface ChauffeurProfileItem {
   rating: number;
 }
 
-const DEFAULT_DRIVERS: ChauffeurProfileItem[] = [
-  { id: 'drv-sonu', name: 'Sonu Tripathi (Live Driver)', plate: 'ST-9305-VIC', vehicle: 'Mercedes-Benz S-Class S450 (Obsidian Black)', phone: '+61 432 000 718', email: 'sonu@opalchauffeurs.com.au', license: 'VIC-DA-9305', rating: 5.0 },
-  { id: 'drv-01', name: 'Marcus Vance', plate: 'AURA-01', vehicle: 'Mercedes S-Class S450', phone: '+61 411 998 877', email: 'marcus@opalchauffeurs.com.au', license: 'VIC-DA-0112', rating: 4.98 },
-  { id: 'drv-02', name: 'Daniel Ricciardo', plate: 'DR-03-VIC', vehicle: 'BMW 740i Executive', phone: '+61 433 221 100', email: 'daniel@opalchauffeurs.com.au', license: 'VIC-DA-0344', rating: 4.99 },
-  { id: 'drv-03', name: 'Fernando Alonso', plate: 'FA-14-VIC', vehicle: 'Mercedes S-Class S450', phone: '+61 433 778 899', email: 'fernando@opalchauffeurs.com.au', license: 'VIC-DA-1499', rating: 4.96 },
-  { id: 'drv-04', name: 'Lewis Hamilton', plate: 'LH-44-VIC', vehicle: 'Mercedes V-Class Luxury Van', phone: '+61 499 001 122', email: 'lewis@opalchauffeurs.com.au', license: 'VIC-DA-4401', rating: 4.99 },
-];
+/** Statuses that mean the chauffeur has a job in hand right now. */
+const IN_HAND: DriverTripItem['status'][] = ['ALLOCATED', 'DISPATCHED', 'EN_ROUTE', 'ARRIVED', 'PICKED_UP'];
+
+const MELBOURNE = 'Australia/Melbourne';
+
+/** Every leg status needs its own label: falling through to "COMPLETED" told
+ *  a chauffeur their trip was finished before they had even set off. */
+const STATUS_LABELS: Record<DriverTripItem['status'], string> = {
+  ALLOCATED: 'ASSIGNED TO YOU',
+  DISPATCHED: 'READY TO START',
+  EN_ROUTE: 'EN ROUTE (On The Way)',
+  ARRIVED: 'ARRIVED AT PICKUP',
+  PICKED_UP: 'ON BOARD (Driving To Dropoff)',
+  COMPLETED: 'COMPLETED ✓',
+};
+
+const formatPickupDate = (iso: string) =>
+  new Intl.DateTimeFormat('en-AU', {
+    timeZone: MELBOURNE, weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
+  }).format(new Date(iso));
+
+const formatPickupTime = (iso: string) =>
+  `${new Intl.DateTimeFormat('en-AU', {
+    timeZone: MELBOURNE, hour: '2-digit', minute: '2-digit', hour12: false,
+  }).format(new Date(iso))} AEST`;
+
+/** Maps the API's DriverJobItem onto the shape this screen renders. */
+const toTripItem = (job: any): DriverTripItem => ({
+  id: job.id,
+  bookingNumber: job.booking_number,
+  tripType: job.flight_number
+    ? 'AIRPORT VIP CHAUFFEUR TRANSFER'
+    : `${String(job.vehicle_category || 'CHAUFFEUR').replace(/_/g, ' ')} TRANSFER`,
+  passengerName: job.passenger_name || 'VIP Passenger',
+  passengerPhone: job.passenger_phone || '',
+  paxCount: job.passenger_count ?? 1,
+  luggageCount: job.luggage_count ?? 0,
+  pickupDate: formatPickupDate(job.pickup_datetime),
+  pickupTime: formatPickupTime(job.pickup_datetime),
+  pickupAddress: job.pickup_address,
+  dropoffAddress: job.dropoff_address,
+  isAirport: !!job.flight_number,
+  flightNumber: job.flight_number || undefined,
+  driverPayout: job.allocation_payout ?? 0,
+  status: job.status,
+  notes: job.pickup_notes || job.special_instructions || undefined,
+  pickupDatetimeRaw: job.pickup_datetime,
+});
 
 export const DriverPortalPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'ACTIVE' | 'UPCOMING' | 'HISTORY'>('ACTIVE');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // Default to Sonu Tripathi
-  const currentDriver = DEFAULT_DRIVERS[0];
-
-  // Active Trip State (Live synced with Sahil Tripathi booking)
-  const [activeTrip, setActiveTrip] = useState<DriverTripItem>({
-    id: 'leg-sahil',
-    bookingNumber: 'CCM-2026-9901',
-    tripType: 'AIRPORT VIP CHAUFFEUR TRANSFER',
-    passengerName: 'Sahil Tripathi',
-    passengerPhone: '+91 6386154107',
-    paxCount: 2,
-    luggageCount: 2,
-    pickupDate: 'Today, 31 Aug 2026',
-    pickupTime: '18:30 AEST',
-    pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
-    dropoffAddress: 'Melbourne Airport (MEL), Terminal 2 International',
-    isAirport: true,
-    flightNumber: 'QF400 (Qantas Airways)',
-    flightStatus: 'ON_TIME',
-    driverPayout: 170.0,
-    status: 'EN_ROUTE',
-    notes: 'VIP Client. Cold bottled water and luggage assistance required.',
-  });
-
-  // Fetch initial live status on page load & poll server
-  useEffect(() => {
-    const fetchServerSync = async () => {
-      try {
-        const syncData = await bookingsApi.getLiveSync();
-        if (syncData?.status) {
-          setActiveTrip((prev) => ({ ...prev, status: syncData.status }));
-          localStorage.setItem('crown_active_trip_status', syncData.status);
-        }
-      } catch (e) {
-        const localStatus = localStorage.getItem('crown_active_trip_status') as any;
-        if (localStatus) {
-          setActiveTrip((prev) => ({ ...prev, status: localStatus }));
-        }
-      }
-    };
-
-    fetchServerSync();
-    const interval = setInterval(fetchServerSync, 1500);
-
-    const handleStorageChange = () => {
-      const live = localStorage.getItem('crown_active_trip_status') as any;
-      if (live && live !== activeTrip.status) {
-        setActiveTrip((prev) => ({ ...prev, status: live }));
-      }
-    };
-    window.addEventListener('storage', handleStorageChange);
-
-    return () => {
-      clearInterval(interval);
-      window.removeEventListener('storage', handleStorageChange);
-    };
-  }, []);
-
-  // Upcoming Trips
-  const [upcomingTrips, setUpcomingTrips] = useState<DriverTripItem[]>([
-    {
-      id: 'leg-02',
-      bookingNumber: 'CCM-2026-0882',
-      tripType: 'CORPORATE EXECUTIVE CHARTER',
-      passengerName: 'Rio Tinto Mining Delegation',
-      passengerPhone: '+61 499 888 777',
-      paxCount: 4,
-      luggageCount: 4,
-      pickupDate: 'Tomorrow, 1 Sept 2026',
-      pickupTime: '09:00 AEST',
-      pickupAddress: 'Crown Towers, 8 Whiteman St, Southbank VIC 3006',
-      dropoffAddress: 'Yarra Valley Estate, Coldstream',
-      isAirport: false,
-      driverPayout: 210.0,
-      status: 'ALLOCATED',
-      notes: 'Executive group transfer. Vehicle pre-cooled required.',
-    },
-    {
-      id: 'leg-03',
-      bookingNumber: 'CCM-2026-0885',
-      tripType: 'AIRPORT IN-BOUND ARRIVAL',
-      passengerName: 'Dr. Arthur Pendelton',
-      passengerPhone: '+61 499 111 444',
-      paxCount: 1,
-      luggageCount: 2,
-      pickupDate: 'Tomorrow, 1 Sept 2026',
-      pickupTime: '13:00 AEST',
-      pickupAddress: 'Melbourne Airport Terminal 2 Arrivals Gate 11',
-      dropoffAddress: 'The Langham Melbourne, 1 Southgate Ave',
-      isAirport: true,
-      flightNumber: 'CX135 (Cathay Pacific)',
-      flightStatus: 'SCHEDULED',
-      driverPayout: 155.0,
-      status: 'ALLOCATED',
-      notes: 'Meet and Greet with iPad Nameboard: "Dr. Arthur Pendelton".',
-    },
-  ]);
-
-  // History Trips
-  const [historyTrips, setHistoryTrips] = useState<DriverTripItem[]>([
-    {
-      id: 'leg-04',
-      bookingNumber: 'CCM-2026-0879',
-      tripType: 'EXECUTIVE SEDAN TRANSFER',
-      passengerName: 'Dr. Sophia Sterling',
-      passengerPhone: '+61 422 334 455',
-      paxCount: 1,
-      luggageCount: 1,
-      pickupDate: 'Today, 31 Aug 2026',
-      pickupTime: '11:15 AEST',
-      pickupAddress: 'Grand Hyatt Melbourne, 123 Collins St',
-      dropoffAddress: 'Essendon Airport Jet Base',
-      isAirport: true,
-      driverPayout: 140.0,
-      status: 'COMPLETED',
-    },
-    {
-      id: 'leg-05',
-      bookingNumber: 'CCM-2026-0878',
-      tripType: 'DOMESTIC AIRPORT TRANSFER',
-      passengerName: 'David Warner',
-      passengerPhone: '+61 411 222 333',
-      paxCount: 1,
-      luggageCount: 2,
-      pickupDate: 'Today, 31 Aug 2026',
-      pickupTime: '08:45 AEST',
-      pickupAddress: 'Park Hyatt Melbourne, 1 Parliament Square',
-      dropoffAddress: 'Melbourne Airport Terminal 4',
-      isAirport: true,
-      driverPayout: 160.0,
-      status: 'COMPLETED',
-    },
-  ]);
+  const [profile, setProfile] = useState<ChauffeurProfileItem | null>(null);
+  const [trips, setTrips] = useState<DriverTripItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isStepping, setIsStepping] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3500);
   };
 
-  // Step Status Handler (Syncs with Central Server + Admin Dashboard)
+  const loadManifest = async () => {
+    try {
+      const [me, jobs] = await Promise.all([
+        driverPortalApi.getProfile(),
+        driverPortalApi.getManifest('ALL'),
+      ]);
+      const jobList = Array.isArray(jobs) ? jobs : [];
+      // The plate that matters is the one on the job in hand; a driver's
+      // "default vehicle" is often unset because allocation is per leg.
+      const jobVehicle = jobList.find((j: any) => IN_HAND.includes(j.status) && j.vehicle_plate);
+      const vehicle = me?.default_vehicle;
+      setProfile({
+        id: me.id,
+        name: me.full_name,
+        plate: jobVehicle?.vehicle_plate || vehicle?.registration_plate || 'No vehicle assigned',
+        vehicle:
+          jobVehicle?.vehicle_name ||
+          (vehicle ? `${vehicle.make} ${vehicle.model}` : 'Awaiting vehicle allocation'),
+        phone: me.phone,
+        email: me.email,
+        license: me.license_number,
+        rating: me.rating ?? 0,
+      });
+      setTrips(jobList.map(toTripItem));
+      setLoadError(null);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Manifest unavailable (HTTP ${err.response.status}).`
+            : 'No connection. Your manifest may be out of date.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Poll so a dispatcher's allocation shows up without the driver reloading.
+  useEffect(() => {
+    loadManifest();
+    const interval = setInterval(loadManifest, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const currentDriver: ChauffeurProfileItem =
+    profile ?? { id: '', name: 'Chauffeur', plate: '—', vehicle: '—', phone: '', rating: 0 };
+
+  const byPickupAsc = (a: DriverTripItem, b: DriverTripItem) =>
+    new Date(a.pickupDatetimeRaw).getTime() - new Date(b.pickupDatetimeRaw).getTime();
+
+  const inHand = trips.filter((t) => IN_HAND.includes(t.status)).sort(byPickupAsc);
+  const activeTrip: DriverTripItem | null =
+    inHand.find((t) => t.status !== 'ALLOCATED') ?? inHand[0] ?? null;
+  const upcomingTrips = inHand.filter((t) => t.id !== activeTrip?.id);
+  const historyTrips = trips
+    .filter((t) => t.status === 'COMPLETED')
+    .sort((a, b) => -byPickupAsc(a, b));
+
+  // Step Status Handler: the server is the source of truth, so only reflect a
+  // milestone in the UI once the API has actually accepted it. Showing
+  // "Completed" for a tap the backend never received would be worse than an error.
   const handleUpdateStatus = async (nextStatus: 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED') => {
-    setActiveTrip((prev) => ({ ...prev, status: nextStatus }));
+    if (!activeTrip || isStepping) return;
+    setIsStepping(true);
+    try {
+      await driverPortalApi.stepLegStatus(activeTrip.id, nextStatus);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      showToast(`⚠️ Could not update: ${typeof detail === 'string' ? detail : 'no connection. Try again.'}`);
+      setIsStepping(false);
+      return;
+    }
 
-    localStorage.setItem('crown_active_trip_status', nextStatus);
-    window.dispatchEvent(new Event('storage'));
+    setTrips((prev) => prev.map((t) => (t.id === activeTrip.id ? { ...t, status: nextStatus } : t)));
 
+    // Keeps the legacy admin chime working until live-sync moves onto the DB.
     try {
       await bookingsApi.updateLiveSync(nextStatus);
-    } catch (e) {
-      console.log('Central backend sync', e);
+    } catch {
+      /* the chime is best-effort; the trip status above already persisted */
     }
 
     if (nextStatus === 'EN_ROUTE') {
-      showToast('🚗 Status: EN ROUTE — Dispatcher & Passenger notified!');
+      showToast('🚗 Status: EN ROUTE — dispatcher notified.');
     } else if (nextStatus === 'ARRIVED') {
-      showToast('📍 Status: ARRIVED AT PICKUP — Passenger notified of your arrival outside Crown Towers!');
+      showToast(`📍 Status: ARRIVED — passenger notified you are at ${activeTrip.pickupAddress}.`);
     } else if (nextStatus === 'PICKED_UP') {
-      showToast('👤 Status: PASSENGER ON BOARD — En route to Melbourne Airport Terminal 2.');
+      showToast(`👤 PASSENGER ON BOARD — en route to ${activeTrip.dropoffAddress}.`);
     } else if (nextStatus === 'COMPLETED') {
-      showToast(`🎉 TRIP COMPLETED! +$${activeTrip.driverPayout.toFixed(2)} AUD credited to your earnings.`);
-
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#fbbf24', '#10b981', '#06b6d4'],
-      });
-
-      setHistoryTrips((prev) => [{ ...activeTrip, status: 'COMPLETED' }, ...prev]);
+      showToast(`🎉 TRIP COMPLETED! +$${activeTrip.driverPayout.toFixed(2)} AUD added to your earnings.`);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 }, colors: ['#fbbf24', '#10b981', '#06b6d4'] });
     }
 
-    try {
-      await driverPortalApi.stepLegStatus(activeTrip.id, nextStatus);
-    } catch (e) {}
+    setIsStepping(false);
+    loadManifest();
   };
+
 
   // Open Google Maps Directions
   const handleOpenMaps = (address: string) => {
@@ -247,7 +225,7 @@ export const DriverPortalPage: React.FC = () => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`, '_blank');
   };
 
-  const totalEarningsToday = historyTrips.reduce((acc, t) => acc + t.driverPayout, 0) + (activeTrip.status === 'COMPLETED' ? activeTrip.driverPayout : 0);
+  const totalEarningsToday = historyTrips.reduce((acc, t) => acc + t.driverPayout, 0);
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-5 pb-12">
@@ -276,7 +254,7 @@ export const DriverPortalPage: React.FC = () => {
               <span
                 className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#121A2D] text-white border border-[#DFCAA8]"
               >
-                ● {activeTrip.status === 'COMPLETED' ? 'On Duty' : 'Active Trip'}
+                ● {activeTrip ? 'Active Trip' : 'On Duty'}
               </span>
             </div>
             <p className="text-[11px] text-white font-mono mt-0.5 truncate max-w-[240px] sm:max-w-none">
@@ -291,6 +269,30 @@ export const DriverPortalPage: React.FC = () => {
         </span>
       </div>
 
+      {/* Manifest status: a chauffeur must never be left guessing whether
+          the screen is current. */}
+      {isLoading && (
+        <div className="p-3.5 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center gap-2.5 text-white">
+          <Radio className="w-4 h-4 text-amber-400 animate-pulse shrink-0" />
+          <span className="text-xs font-bold">Loading your manifest…</span>
+        </div>
+      )}
+
+      {loadError && !isLoading && (
+        <div role="alert" className="p-3.5 rounded-2xl bg-[#2A1214] border border-red-500 flex flex-col sm:flex-row sm:items-center gap-2.5 text-white">
+          <div className="flex items-start gap-2.5 flex-1 min-w-0">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+            <span className="text-xs font-bold break-words">{loadError}</span>
+          </div>
+          <button
+            onClick={() => { setIsLoading(true); loadManifest(); }}
+            className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* 2. Top 3 Navigation Tabs (Active & Today | Upcoming | History) */}
       <div className="flex p-1.5 bg-[#0D1322] rounded-2xl border border-[#1F2E4D] gap-1 shadow-inner">
         <button
@@ -303,7 +305,7 @@ export const DriverPortalPage: React.FC = () => {
         >
           <Car className="w-3.5 h-3.5" />
           <span>Active & Today</span>
-          {activeTrip.status !== 'COMPLETED' && (
+          {activeTrip && (
             <span className="w-2 h-2 rounded-full bg-[#0A0E1A] animate-ping ml-0.5" />
           )}
         </button>
@@ -336,7 +338,7 @@ export const DriverPortalPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 1: ACTIVE & TODAY TRIP MANIFEST                                       */}
       {/* ========================================================================= */}
-      {activeTab === 'ACTIVE' && (
+      {activeTab === 'ACTIVE' && activeTrip && (
         <div className="space-y-4 animate-in fade-in duration-200 text-white">
           <div className="p-5 sm:p-7 rounded-3xl bg-[#121A2D] border border-[#DFCAA8]/40 shadow-2xl space-y-6">
             {/* Top Badges */}
@@ -352,13 +354,7 @@ export const DriverPortalPage: React.FC = () => {
               <span
                 className="px-3 py-1 rounded-full text-xs font-black uppercase tracking-wide flex items-center gap-1.5 bg-[#0D1322] text-white border border-[#DFCAA8]"
               >
-                ● {activeTrip.status === 'EN_ROUTE'
-                  ? 'EN ROUTE (On The Way)'
-                  : activeTrip.status === 'ARRIVED'
-                  ? 'ARRIVED AT PICKUP'
-                  : activeTrip.status === 'PICKED_UP'
-                  ? 'ON BOARD (Driving To Airport)'
-                  : 'COMPLETED ✓'}
+                ● {STATUS_LABELS[activeTrip.status] ?? activeTrip.status}
               </span>
             </div>
 
@@ -423,9 +419,11 @@ export const DriverPortalPage: React.FC = () => {
                     <Plane className="w-4 h-4 shrink-0 text-white" />
                     <span className="font-bold font-mono">Flight: {activeTrip.flightNumber}</span>
                   </div>
-                  <span className="px-2.5 py-0.5 rounded bg-[#0D1322] text-white border border-slate-700 text-[10px] font-bold">
-                    Status: {activeTrip.flightStatus}
-                  </span>
+                  {activeTrip.flightStatus && (
+                    <span className="px-2.5 py-0.5 rounded bg-[#0D1322] text-white border border-slate-700 text-[10px] font-bold">
+                      Status: {activeTrip.flightStatus}
+                    </span>
+                  )}
                 </div>
               )}
 
@@ -515,6 +513,21 @@ export const DriverPortalPage: React.FC = () => {
       {/* ========================================================================= */}
       {/* TAB 2: UPCOMING SCHEDULED TRIPS                                           */}
       {/* ========================================================================= */}
+      {activeTab === 'ACTIVE' && !activeTrip && !isLoading && (
+        <div className="p-8 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] text-center space-y-3 text-white">
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#06090F] border border-[#DFCAA8] flex items-center justify-center">
+            <Car className="w-7 h-7 text-[#DFCAA8]" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="text-sm font-black text-white">No trip assigned right now</h3>
+            <p className="text-xs font-bold text-slate-300 max-w-sm mx-auto">
+              When dispatch allocates a job to you it will appear here automatically —
+              no need to refresh. Check “Upcoming” for jobs later today.
+            </p>
+          </div>
+        </div>
+      )}
+
       {activeTab === 'UPCOMING' && (
         <div className="space-y-4 animate-in fade-in duration-200 text-white">
           {upcomingTrips.map((trip) => (
