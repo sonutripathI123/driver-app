@@ -13,145 +13,102 @@ import {
   ArrowRight
 } from 'lucide-react';
 
-interface AirlineMetadata {
+interface FlightView {
+  flight_number: string;
   airline: string;
+  origin_airport: string;
+  origin_gate: string;
+  destination_airport: string;
   terminal: string;
   gate: string;
-  origin: string;
-  originGate: string;
-  defaultDelay: number;
+  scheduled_arrival: string;
+  estimated_arrival: string;
+  delay_minutes: number;
+  status: string;
+  rescheduled_pickup_time: string;
+  wait_time_policy: string;
 }
 
-const GLOBAL_AIRLINE_DATABASE: Record<string, AirlineMetadata> = {
-  QF: { airline: 'Qantas Airways', terminal: 'T1 Domestic', gate: 'Gate 14', origin: 'SYD (Sydney Kingsford Smith)', originGate: 'Gate 4', defaultDelay: 25 },
-  VA: { airline: 'Virgin Australia', terminal: 'T3 Domestic', gate: 'Gate 22', origin: 'BNE (Brisbane Airport)', originGate: 'Gate 8', defaultDelay: 15 },
-  JQ: { airline: 'Jetstar Airways', terminal: 'T4 Domestic', gate: 'Gate 31', origin: 'OOL (Gold Coast Airport)', originGate: 'Gate 3', defaultDelay: 30 },
-  ZL: { airline: 'Regional Express (Rex)', terminal: 'T4 Domestic', gate: 'Gate 28', origin: 'ADL (Adelaide Airport)', originGate: 'Gate 5', defaultDelay: 0 },
-  EK: { airline: 'Emirates', terminal: 'T2 International', gate: 'Gate 09', origin: 'DXB (Dubai International)', originGate: 'Gate B12', defaultDelay: 20 },
-  SQ: { airline: 'Singapore Airlines', terminal: 'T2 International', gate: 'Gate 11', origin: 'SIN (Singapore Changi)', originGate: 'Gate T3-A4', defaultDelay: 0 },
-  QR: { airline: 'Qatar Airways', terminal: 'T2 International', gate: 'Gate 07', origin: 'DOH (Hamad International Doha)', originGate: 'Gate C8', defaultDelay: 25 },
-  CX: { airline: 'Cathay Pacific', terminal: 'T2 International', gate: 'Gate 15', origin: 'HKG (Hong Kong International)', originGate: 'Gate 24', defaultDelay: 10 },
-  NZ: { airline: 'Air New Zealand', terminal: 'T2 International', gate: 'Gate 05', origin: 'AKL (Auckland International)', originGate: 'Gate 7', defaultDelay: 0 },
-  EY: { airline: 'Etihad Airways', terminal: 'T2 International', gate: 'Gate 12', origin: 'AUH (Abu Dhabi International)', originGate: 'Gate A15', defaultDelay: 35 },
-  MH: { airline: 'Malaysia Airlines', terminal: 'T2 International', gate: 'Gate 10', origin: 'KUL (Kuala Lumpur International)', originGate: 'Gate G4', defaultDelay: 0 },
-  TG: { airline: 'Thai Airways', terminal: 'T2 International', gate: 'Gate 16', origin: 'BKK (Bangkok Suvarnabhumi)', originGate: 'Gate E2', defaultDelay: 0 },
-  UA: { airline: 'United Airlines', terminal: 'T2 International', gate: 'Gate 08', origin: 'SFO (San Francisco International)', originGate: 'Gate G94', defaultDelay: 40 },
-  DL: { airline: 'Delta Air Lines', terminal: 'T2 International', gate: 'Gate 06', origin: 'LAX (Los Angeles International)', originGate: 'Gate 132', defaultDelay: 0 },
-  BA: { airline: 'British Airways', terminal: 'T2 International', gate: 'Gate 04', origin: 'LHR (London Heathrow)', originGate: 'Gate 32', defaultDelay: 45 },
-  JL: { airline: 'Japan Airlines', terminal: 'T2 International', gate: 'Gate 18', origin: 'NRT (Tokyo Narita)', originGate: 'Gate 61', defaultDelay: 0 },
-};
-
 export const FlightRadarPage: React.FC = () => {
-  const [flightQuery, setFlightQuery] = useState('VA214');
-  const [flightData, setFlightData] = useState({
-    flight_number: 'VA214',
-    airline: 'Virgin Australia',
-    origin_airport: 'BNE (Brisbane Airport)',
-    origin_gate: 'Gate 8',
-    destination_airport: 'MEL (Melbourne Tullamarine)',
-    terminal: 'T3 Domestic',
-    gate: 'Gate 22',
-    scheduled_arrival: '18:30 AEST',
-    estimated_arrival: '18:45 AEST',
-    delay_minutes: 15,
-    status: 'DELAYED',
-    rescheduled_pickup_time: '19:15 AEST (+30m buffer)',
-    wait_time_policy: '60 minutes complimentary from touchdown',
-  });
+  const [flightQuery, setFlightQuery] = useState('');
+  const [flightData, setFlightData] = useState<FlightView | null>(null);
+  const [lookupError, setLookupError] = useState<string | null>(null);
+  const [isLooking, setIsLooking] = useState(false);
+  // null = not yet known; set from whether the API reports a configured provider.
+  const [providerConnected, setProviderConnected] = useState<boolean | null>(null);
 
   const [waitMinutes, setWaitMinutes] = useState(75);
   const excessWaitTimeCharge = Math.max(0, waitMinutes - 60) * 1.5;
 
-  // Query live flight data on page mount
-  React.useEffect(() => {
-    const fetchInitial = async () => {
-      try {
-        const data = await flightsApi.lookup('QF400');
-        if (data && data.airline) {
-          const delay = data.delay_minutes || 0;
-          setFlightData({
-            flight_number: 'QF400',
-            airline: data.airline,
-            origin_airport: data.origin_airport || 'SYD (Sydney Kingsford Smith)',
-            origin_gate: 'Gate 4',
-            destination_airport: 'MEL (Melbourne Tullamarine)',
-            terminal: data.terminal || 'T1 Domestic',
-            gate: 'Gate 14',
-            scheduled_arrival: '10:10 AEST',
-            estimated_arrival: delay > 0 ? `10:${10 + delay} AEST` : '10:10 AEST',
-            delay_minutes: delay,
-            status: data.status || (delay > 0 ? 'DELAYED' : 'ON_TIME'),
-            rescheduled_pickup_time: delay > 0 ? `Today at 10:${(10 + delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 10:40 AEST (+30m buffer)',
-            wait_time_policy: '60 minutes complimentary from touchdown',
-          });
-        }
-      } catch (e) {}
-    };
-    fetchInitial();
-  }, []);
+  const AEST = 'Australia/Melbourne';
+  const fmtAest = (iso?: string | null) =>
+    iso
+      ? `${new Intl.DateTimeFormat('en-AU', {
+          timeZone: AEST, hour: '2-digit', minute: '2-digit', hour12: false,
+        }).format(new Date(iso))} AEST`
+      : '—';
 
+  /**
+   * Shows only what the provider actually returned.
+   *
+   * The page used to seed itself with an invented VA214 arrival, and even on a
+   * successful lookup it pasted hardcoded gates and a fixed "18:30 AEST"
+   * schedule over the API's own values. On failure it fabricated the whole
+   * record from an airline-prefix table. Fields the provider does not supply —
+   * gates, origin gate — are shown as unavailable instead.
+   */
   const handleLookup = async (e: React.FormEvent) => {
     e.preventDefault();
     const cleanQuery = flightQuery.trim().toUpperCase().replace(/\s+/g, '');
-    if (!cleanQuery) return;
+    if (!cleanQuery || isLooking) return;
 
-    // Parse Airline prefix
-    const prefix = cleanQuery.slice(0, 2);
-    const meta = GLOBAL_AIRLINE_DATABASE[prefix] || {
-      airline: cleanQuery.startsWith('Q') ? 'Qantas Airways' : cleanQuery.startsWith('V') ? 'Virgin Australia' : cleanQuery.startsWith('J') ? 'Jetstar' : 'Commercial Airline',
-      terminal: cleanQuery.startsWith('E') || cleanQuery.startsWith('S') || cleanQuery.startsWith('C') ? 'T2 International' : 'T1 Domestic',
-      gate: 'Gate 12',
-      origin: 'SYD (Sydney Kingsford Smith)',
-      originGate: 'Gate 4',
-      defaultDelay: 0,
-    };
-
+    setIsLooking(true);
+    setLookupError(null);
     try {
       const data = await flightsApi.lookup(cleanQuery);
-      if (data && data.airline) {
-        const delay = data.delay_minutes || 0;
-        const liveStatus = data.status || (delay > 0 ? 'DELAYED' : 'ON_TIME');
-        setFlightData({
-          flight_number: cleanQuery,
-          airline: data.airline,
-          origin_airport: data.origin_airport || meta.origin,
-          origin_gate: meta.originGate,
-          destination_airport: data.destination_airport || 'MEL (Melbourne Tullamarine)',
-          terminal: data.terminal || meta.terminal,
-          gate: meta.gate,
-          scheduled_arrival: '18:30 AEST',
-          estimated_arrival: delay > 0 ? `18:${30 + delay} AEST` : '18:30 AEST',
-          delay_minutes: delay,
-          status: liveStatus,
-          rescheduled_pickup_time: delay > 0 ? `Today at 19:${(delay + 30) % 60 < 10 ? '0' + (delay + 30) % 60 : (delay + 30) % 60} AEST (+30m buffer)` : 'On Schedule at 19:00 AEST',
-          wait_time_policy: '60 minutes complimentary from touchdown',
-        });
-        return;
-      }
-    } catch (err) {
-      console.log('Using local aviation intelligence engine');
+      const delay = data.delay_minutes ?? 0;
+      setProviderConnected(true);
+      setFlightData({
+        flight_number: data.flight_number || cleanQuery,
+        airline: data.airline || '—',
+        origin_airport: data.origin_airport || '—',
+        origin_gate: '—',
+        destination_airport: data.destination_airport || '—',
+        terminal: data.terminal || '—',
+        gate: '—',
+        scheduled_arrival: fmtAest(data.scheduled_arrival),
+        estimated_arrival: fmtAest(data.estimated_arrival ?? data.scheduled_arrival),
+        delay_minutes: delay,
+        status: data.status || (delay > 0 ? 'DELAYED' : 'ON_TIME'),
+        // The dispatch service adds the pickup buffer when a leg is synced;
+        // this screen is a lookup, so it does not assert a new pickup time.
+        rescheduled_pickup_time: delay >= 15
+          ? `Sync the booking leg to move the pickup by ${delay} minutes`
+          : 'No reschedule required',
+        wait_time_policy: '60 minutes complimentary from touchdown',
+      });
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const detail = err?.response?.data?.detail;
+      // 503 is the API saying no provider is configured; 404 means the provider
+      // answered but had nothing for that flight.
+      if (status === 503) setProviderConnected(false);
+      else if (status === 404) setProviderConnected(true);
+      setFlightData(null);
+      setLookupError(
+        typeof detail === 'string'
+          ? detail
+          : status === 404
+            ? `No live data found for flight ${cleanQuery}.`
+            : status
+              ? `Flight lookup failed (HTTP ${status}).`
+              : 'Flight lookup failed: cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setIsLooking(false);
     }
-
-    // Dynamic resolution fallback
-    const delay = 0;
-    const status = 'ON_TIME';
-
-    setFlightData({
-      flight_number: cleanQuery,
-      airline: meta.airline,
-      origin_airport: meta.origin,
-      origin_gate: meta.originGate,
-      destination_airport: 'MEL (Melbourne Tullamarine)',
-      terminal: meta.terminal,
-      gate: meta.gate,
-      scheduled_arrival: '18:30 AEST',
-      estimated_arrival: '18:30 AEST',
-      delay_minutes: delay,
-      status: status,
-      rescheduled_pickup_time: 'On Schedule at 19:00 AEST (+30m buffer)',
-      wait_time_policy: '60 minutes complimentary from touchdown',
-    });
   };
+
 
   return (
     <div className="space-y-6">
@@ -160,12 +117,23 @@ export const FlightRadarPage: React.FC = () => {
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-black text-[#0A0E1A] tracking-tight">Airport Flight Radar & Automation</h1>
-            <span className="px-2.5 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] text-xs font-black font-mono shadow-sm">
-              ALL AUSTRALIA AIRPORTS ACTIVE
+            <span
+              className={`px-2.5 py-0.5 rounded-full text-xs font-black font-mono shadow-sm border ${
+                providerConnected === false
+                  ? 'bg-[#FFFFFF] border-[#EF4444] text-[#B91C1C]'
+                  : 'bg-[#FFFFFF] border-[#DFCAA8] text-[#0A0E1A]'
+              }`}
+            >
+              {providerConnected === false
+                ? 'NO FLIGHT PROVIDER CONNECTED'
+                : providerConnected
+                  ? 'LIVE PROVIDER CONNECTED'
+                  : 'FLIGHT PROVIDER STATUS UNKNOWN'}
             </span>
           </div>
           <p className="text-xs text-[#0A0E1A] font-bold mt-1">
-            Real-time commercial flight tracking across all Australian airports (MEL, SYD, BNE, PER, ADL, AVV, ESS) with automatic pickup buffer.
+            Commercial flight tracking with automatic pickup buffer. Arrival times,
+            terminal and delay come from the connected provider — nothing is estimated here.
           </p>
         </div>
 
@@ -193,11 +161,12 @@ export const FlightRadarPage: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left Column: 3D Holographic Globe (5 Cols) */}
         <div className="lg:col-span-5 h-[420px]">
-          <RadarGlobeCanvas activeFlightsCount={8} activeDriversCount={14} />
+          <RadarGlobeCanvas activeFlightsCount={flightData ? 1 : 0} activeDriversCount={0} />
         </div>
 
         {/* Right Column: Flight Telemetry & Delay Compensation Card (7 Cols) */}
         <div className="lg:col-span-7 flex flex-col space-y-4">
+          {flightData && (
           <div className="glass-panel p-6 rounded-2xl space-y-4 text-xs shadow-xl animate-in fade-in duration-300 text-[#0A0E1A]">
             <div className="flex items-center justify-between border-b border-[#E6D8C3] pb-3">
               <div className="flex items-center gap-3">
@@ -253,6 +222,26 @@ export const FlightRadarPage: React.FC = () => {
               </p>
             </div>
           </div>
+          )}
+
+          {!flightData && (
+            <div className="glass-panel p-6 rounded-2xl text-xs shadow-xl text-[#0A0E1A] space-y-2">
+              {lookupError ? (
+                <>
+                  <p className="text-sm font-black">Flight data unavailable</p>
+                  <p className="font-bold opacity-80 break-words">{lookupError}</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-black">Search a flight number to begin</p>
+                  <p className="font-bold opacity-80">
+                    Arrival times, terminal and delay come from the connected flight
+                    data provider. Nothing is shown until a lookup returns.
+                  </p>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Complimentary Wait Time & Billing Simulator */}
           <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] space-y-3 text-xs shadow-lg text-[#0A0E1A]">

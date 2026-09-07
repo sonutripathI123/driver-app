@@ -44,6 +44,14 @@ class FlightTrackingService:
     ) -> FlightLookupResponse:
         """Queries live flight provider for current flight status."""
         provider = get_flight_provider()
+        if provider is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "No live flight data provider is connected. Set AEROAPI_KEY "
+                    "(FlightAware AeroAPI) to enable flight tracking."
+                )
+            )
         data = await provider.get_flight_status(flight_number, flight_date)
         if not data:
             raise HTTPException(
@@ -94,6 +102,14 @@ class FlightTrackingService:
             )
 
         provider = get_flight_provider()
+        if provider is None:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=(
+                    "No live flight data provider is connected. Set AEROAPI_KEY "
+                    "(FlightAware AeroAPI) to enable flight tracking."
+                )
+            )
         flight_data = await provider.get_flight_status(
             leg.flight_number,
             leg.pickup_datetime.date()

@@ -1,3 +1,18 @@
+"""
+NOT A LIVE SCHEDULE SOURCE — retained for reference only, and deliberately not
+selected by get_flight_provider().
+
+This queries OpenSky and FlightRadar24 for ADS-B position, which is real, but
+those feeds carry no schedules, terminals or gates. To fill the gaps it applies
+a hardcoded arrival timetable (QF400 at 10:10, EK404 at 19:15, everything
+unrecognised at 18:30 today) and infers "delay" from altitude and groundspeed —
+a slow aircraft above 10,000 ft is reported as 12 minutes late. Neither is a
+measurement, and the dispatch service reschedules a real pickup on a delay of
+15 minutes or more.
+
+Use FlightAwareProvider with AEROAPI_KEY for genuine schedule and delay data.
+"""
+
 from datetime import date, datetime, timedelta, timezone
 import logging
 from typing import Optional
