@@ -26,14 +26,31 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
-    # Outbound Email (Resend HTTP API). Without RESEND_API_KEY the gateway
-    # records the message and reports that it was not delivered, rather than
-    # claiming success.
-    RESEND_API_KEY: str = ""
-    RESEND_API_URL: str = "https://api.resend.com/emails"
+    # Outbound Email.
+    # EMAIL_PROVIDER selects the transport: "resend", "brevo" or "smtp". Leave
+    # it as "auto" to use whichever one is configured. With nothing configured
+    # the gateway records the message and reports that it was not delivered,
+    # rather than claiming success.
+    EMAIL_PROVIDER: str = "auto"
     EMAIL_FROM_ADDRESS: str = "book@opalchauffeurs.com.au"
     EMAIL_FROM_NAME: str = "Opal Chauffeurs Australia"
     EMAIL_REPLY_TO: str = ""
+
+    # Resend (HTTP API)
+    RESEND_API_KEY: str = ""
+    RESEND_API_URL: str = "https://api.resend.com/emails"
+
+    # Brevo, formerly Sendinblue (HTTP API)
+    BREVO_API_KEY: str = ""
+    BREVO_API_URL: str = "https://api.brevo.com/v3/smtp/email"
+
+    # Direct SMTP (business mailbox, Gmail app password, cPanel, ...)
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USERNAME: str = ""
+    SMTP_PASSWORD: str = ""
+    # STARTTLS on 587; set false and use port 465 for implicit SSL
+    SMTP_USE_TLS: bool = True
 
     # Default Seed Admin
     DEFAULT_ADMIN_EMAIL: str = "admin@chauffeurplatform.com"
