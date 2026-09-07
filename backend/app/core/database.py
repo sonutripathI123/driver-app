@@ -28,6 +28,12 @@ db_url = get_async_database_url(settings.DATABASE_URL)
 connect_args = {}
 if db_url.startswith("sqlite"):
     connect_args["check_same_thread"] = False
+elif db_url.startswith("postgresql"):
+    # Managed Postgres (Neon/Render/Supabase) requires TLS. asyncpg does not
+    # understand libpq's sslmode/channel_binding query params, so strip them
+    # and pass SSL through connect_args instead.
+    db_url = db_url.split("?", 1)[0]
+    connect_args["ssl"] = "require"
 
 engine = create_async_engine(
     db_url,

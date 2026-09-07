@@ -63,12 +63,18 @@ def get_async_database_url(url: str) -> str:
 async def run_async_migrations() -> None:
     """Run migrations in 'online' mode using AsyncEngine."""
     db_url = get_async_database_url(settings.DATABASE_URL)
-    configuration = config.get_section(config.config_ini_section, {})
-    configuration["sqlalchemy.url"] = db_url
 
     connect_args = {}
     if db_url.startswith("sqlite"):
         connect_args["check_same_thread"] = False
+    elif db_url.startswith("postgresql"):
+        # Keep in sync with app/core/database.py: asyncpg rejects libpq's
+        # sslmode/channel_binding params, so strip them and pass SSL directly.
+        db_url = db_url.split("?", 1)[0]
+        connect_args["ssl"] = "require"
+
+    configuration = config.get_section(config.config_ini_section, {})
+    configuration["sqlalchemy.url"] = db_url
 
     connectable = async_engine_from_config(
         configuration,
