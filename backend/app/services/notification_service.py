@@ -92,6 +92,7 @@ class NotificationService:
             subject=subject,
             content=html_content,
             status=dispatch_res.get("status", "SENT").upper(),
+            error_message=dispatch_res.get("failure_reason"),
             external_message_id=dispatch_res.get("message_id")
         )
         db.add(notif)

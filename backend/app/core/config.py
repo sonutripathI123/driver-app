@@ -26,6 +26,15 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
 
+    # Outbound Email (Resend HTTP API). Without RESEND_API_KEY the gateway
+    # records the message and reports that it was not delivered, rather than
+    # claiming success.
+    RESEND_API_KEY: str = ""
+    RESEND_API_URL: str = "https://api.resend.com/emails"
+    EMAIL_FROM_ADDRESS: str = "book@opalchauffeurs.com.au"
+    EMAIL_FROM_NAME: str = "Opal Chauffeurs Australia"
+    EMAIL_REPLY_TO: str = ""
+
     # Default Seed Admin
     DEFAULT_ADMIN_EMAIL: str = "admin@chauffeurplatform.com"
     DEFAULT_ADMIN_PASSWORD: str = "AdminSecurePassword123!"
