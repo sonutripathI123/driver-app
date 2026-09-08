@@ -76,12 +76,17 @@ class OperateBoardResponse(BaseModel):
 
 
 class LiveActivityItem(BaseModel):
-    """One chauffeur milestone, derived from the leg's own timestamps."""
+    """One dispatch event: a chauffeur milestone, or a flight status change."""
     leg_id: str
     booking_id: str
     booking_number: str
     status: LegStatus
     occurred_at: datetime
+    #: "MILESTONE" for a chauffeur step, "FLIGHT" for an inbound flight update.
+    kind: str = "MILESTONE"
+    flight_number: Optional[str] = None
+    flight_status: Optional[str] = None
+    flight_delay_minutes: Optional[int] = None
     passenger_name: Optional[str] = None
     driver_name: Optional[str] = None
     vehicle_plate: Optional[str] = None

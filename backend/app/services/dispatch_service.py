@@ -524,6 +524,50 @@ class DispatchService:
                 ))
                 break  # one event per leg: its most recent milestone
 
+        # Delayed or cancelled inbound flights belong in the same feed: a
+        # dispatcher watching the board needs to see a flight slip as promptly
+        # as a chauffeur milestone.
+        flight_stmt = (
+            select(BookingLeg)
+            .options(
+                selectinload(BookingLeg.booking),
+                selectinload(BookingLeg.driver),
+                selectinload(BookingLeg.vehicle),
+            )
+            .where(
+                BookingLeg.flight_number.is_not(None),
+                BookingLeg.status.notin_([LegStatus.CANCELLED, LegStatus.COMPLETED]),
+                BookingLeg.flight_status.is_not(None),
+            )
+            .order_by(BookingLeg.updated_at.desc())
+            .limit(50)
+        )
+        flight_res = await db.execute(flight_stmt)
+        for leg in flight_res.scalars().unique().all():
+            delay = leg.flight_delay_minutes or 0
+            disrupted = delay >= 15 or (leg.flight_status or "").upper() in ("CANCELLED", "CANCELED", "DIVERTED")
+            if not disrupted:
+                continue
+            occurred = leg.updated_at
+            if not occurred or (since and occurred <= since):
+                continue
+            events.append(LiveActivityItem(
+                leg_id=leg.id,
+                booking_id=leg.booking_id,
+                booking_number=leg.booking.booking_number if leg.booking else "",
+                status=leg.status,
+                occurred_at=occurred,
+                kind="FLIGHT",
+                flight_number=leg.flight_number,
+                flight_status=leg.flight_status,
+                flight_delay_minutes=delay,
+                passenger_name=leg.booking.passenger_name if leg.booking else None,
+                driver_name=leg.driver.full_name if leg.driver else None,
+                vehicle_plate=leg.vehicle.registration_plate if leg.vehicle else None,
+                pickup_address=leg.pickup_address,
+                dropoff_address=leg.dropoff_address,
+            ))
+
         events.sort(key=lambda e: e.occurred_at, reverse=True)
         return LiveActivityResponse(
             server_time=datetime.now(timezone.utc),

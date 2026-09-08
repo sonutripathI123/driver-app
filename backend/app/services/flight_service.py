@@ -18,7 +18,7 @@ from app.schemas.flight import (
     FlightWaitTimeRequest,
     FlightWaitTimeResponse,
 )
-from app.services.notification_service import NotificationService
+from app.services.notification_service import NotificationService, get_customer_contact
 
 
 def utc_now() -> datetime:
@@ -141,6 +141,50 @@ class FlightTrackingService:
             schedule_adjusted = True
             notes += f" Delayed by {flight_data.delay_minutes}m. Pickup rescheduled to {new_pickup.strftime('%I:%M %p')}."
 
+            # Alert the passenger. Their flight is the one that moved, and until
+            # now only the driver and the manager were told — the client would
+            # have walked out to a car that was no longer coming at that time.
+            booking = leg.booking
+            if booking:
+                cust_name, cust_email, cust_phone = get_customer_contact(booking)
+                pickup_local = new_pickup.strftime("%d %b %Y at %H:%M UTC")
+                if cust_email:
+                    await NotificationService.record_and_dispatch_email(
+                        db, cust_email, "FLIGHT_DELAY_CUSTOMER_EMAIL",
+                        f"Your pickup has moved — flight {leg.flight_number} is delayed",
+                        NotificationService.build_branded_email(
+                            heading="Your chauffeur pickup has been rescheduled",
+                            intro=(
+                                f"Dear {cust_name}, flight {leg.flight_number} is running "
+                                f"{flight_data.delay_minutes} minutes late, so we have moved your "
+                                f"pickup to match. Your chauffeur has been notified."
+                            ),
+                            rows=[
+                                ("Booking reference", f"#{booking.booking_number}"),
+                                ("Flight", leg.flight_number or "—"),
+                                ("Delay", f"{flight_data.delay_minutes} minutes"),
+                                ("New pickup", pickup_local),
+                                ("Pickup point", leg.flight_terminal or leg.pickup_address),
+                                ("Chauffeur", leg.driver.full_name if leg.driver else "Being allocated"),
+                            ],
+                            footer_note=(
+                                "There is nothing you need to do. Your chauffeur will be waiting "
+                                "when you land."
+                            ),
+                        ),
+                        leg.booking_id
+                    )
+                if cust_phone:
+                    await NotificationService.record_and_dispatch_sms(
+                        db, cust_phone, "FLIGHT_DELAY_CUSTOMER_SMS",
+                        (
+                            f"Opal Chauffeurs: Flight {leg.flight_number} is delayed "
+                            f"{flight_data.delay_minutes} min. Your pickup has moved to "
+                            f"{pickup_local}. Your chauffeur has been notified."
+                        ),
+                        leg.booking_id
+                    )
+
             # Alert Driver via SMS if assigned
             if leg.driver and leg.driver.phone:
                 sms_msg = f"Opal Chauffeurs Alert: Flight {leg.flight_number} delayed +{flight_data.delay_minutes}m. New pickup: {new_pickup.strftime('%I:%M %p')} at {leg.flight_terminal or 'Airport'}."
@@ -158,13 +202,47 @@ class FlightTrackingService:
                 booking_id=leg.booking_id
             )
 
-        # Critical Cancellation Handling
-        if flight_data.status == "CANCELLED":
+        # Critical Cancellation Handling.
+        # Providers disagree on the spelling — AeroDataBox returns "Canceled" —
+        # so an exact match on "CANCELLED" silently skipped this entire branch.
+        if (flight_data.status or "").upper() in ("CANCELLED", "CANCELED"):
             notes += " FLIGHT CANCELLED by airline."
-            ops_alert = f"[CRITICAL OPS ALERT] Inbound Flight {leg.flight_number} for Booking #{leg.booking.booking_number} is CANCELLED."
+            b_num = leg.booking.booking_number if leg.booking else ""
+            ops_alert = (
+                f"[CRITICAL OPS ALERT] Inbound flight {leg.flight_number} for booking "
+                f"#{b_num} is CANCELLED. The pickup has not been moved automatically — "
+                f"contact the passenger to rebook."
+            )
             await NotificationService.record_and_dispatch_email(
                 db, NotificationService.OPS_EMAIL, "FLIGHT_CANCELLED_OPS_ALERT", ops_alert, ops_alert, leg.booking_id
             )
+
+            # A cancellation previously produced one ops email and nothing else:
+            # no manager alert, and neither the passenger nor the chauffeur was
+            # told, while the pickup stayed on the board as though the flight
+            # were still coming.
+            await NotificationService.dispatch_manager_mobile_alert(
+                db=db,
+                event_type="FLIGHT_DELAY",
+                title=f"FLIGHT CANCELLED: {leg.flight_number} (#{b_num})",
+                message=(
+                    f"Booking #{b_num}\n"
+                    f"Pickup {leg.pickup_address}\n"
+                    f"Driver: {leg.driver.full_name if leg.driver else 'Unassigned'}\n"
+                    f"Passenger needs rebooking."
+                ),
+                booking_id=leg.booking_id,
+                urgency="HIGH"
+            )
+            if leg.driver and leg.driver.phone:
+                await NotificationService.record_and_dispatch_sms(
+                    db, leg.driver.phone, "FLIGHT_CANCELLED_DRIVER_SMS",
+                    (
+                        f"Opal Chauffeurs: Flight {leg.flight_number} for booking #{b_num} "
+                        f"is CANCELLED. Do not proceed to the airport. Dispatch will confirm."
+                    ),
+                    leg.booking_id
+                )
 
         if schedule_adjusted:
             audit = AuditLog(

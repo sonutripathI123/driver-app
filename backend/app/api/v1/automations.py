@@ -9,6 +9,7 @@ from app.core.database import get_db
 from app.core.rbac import require_ops
 from app.schemas.notification import AutomationRunSummary
 from app.services.automation_service import AutomationService
+from app.services.flight_service import FlightTrackingService
 
 logger = logging.getLogger(__name__)
 
@@ -17,6 +18,17 @@ router = APIRouter(prefix="/automations", tags=["Automations & Scheduled Jobs"])
 
 async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
     """Runs each scheduled job and merges the counts."""
+    # Poll inbound flights first. Nothing else calls this, so without it a delay
+    # is only ever noticed when a dispatcher opens a booking and syncs it by
+    # hand — by which time the passenger has already landed.
+    try:
+        synced = await FlightTrackingService.poll_all_active_airport_legs(db=db)
+        if synced:
+            logger.info(f"[CRON FLIGHTS] synced {len(synced)} airport legs")
+    except Exception as ex:
+        # A flight provider outage must not stop the payment and handover jobs.
+        logger.error(f"[CRON FLIGHTS] polling failed: {ex}")
+
     s1 = await AutomationService.process_balance_chasing(db=db)
     s2 = await AutomationService.process_pre_trip_confirmation_reminders(db=db)
     s3 = await AutomationService.process_pre_trip_handovers(db=db)
