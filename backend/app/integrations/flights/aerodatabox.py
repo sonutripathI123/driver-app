@@ -38,8 +38,15 @@ class AeroDataBoxProvider(BaseFlightProvider):
             return None
 
         clean_flight = flight_number.strip().upper().replace(" ", "")
-        target = (flight_date or datetime.now(timezone.utc).date()).isoformat()
-        url = f"https://{self.api_host}/flights/number/{clean_flight}/{target}"
+        # With a date, ask for that date. Without one, use the nearest-day form:
+        # that is what an operator means by "look this flight up now", and
+        # substituting today's date would 204 for a flight that does not run
+        # daily. A dated lookup that finds nothing stays empty on purpose —
+        # offering the most recent occurrence instead would hand a dispatcher an
+        # arrival time from another day.
+        url = f"https://{self.api_host}/flights/number/{clean_flight}"
+        if flight_date:
+            url += f"/{flight_date.isoformat()}"
         headers = {
             "X-RapidAPI-Key": self.api_key,
             "X-RapidAPI-Host": self.api_host,
@@ -48,10 +55,20 @@ class AeroDataBoxProvider(BaseFlightProvider):
 
         try:
             async with httpx.AsyncClient(timeout=12.0) as client:
-                res = await client.get(url, headers=headers, params={"withLocation": "false"})
+                params = {
+                    "withAircraftImage": "false",
+                    "withLocation": "false",
+                    "withFlightPlan": "false",
+                }
+                if flight_date:
+                    params["dateLocalRole"] = "Both"
+                res = await client.get(url, headers=headers, params=params)
 
-            if res.status_code == 204:
-                logger.info(f"AeroDataBox: no flight found for {clean_flight} on {target}")
+            if res.status_code == 204 or not res.text.strip():
+                logger.info(
+                    f"AeroDataBox: no flight found for {clean_flight}"
+                    + (f" on {flight_date.isoformat()}" if flight_date else "")
+                )
                 return None
             if res.status_code != 200:
                 logger.warning(f"AeroDataBox error {res.status_code} for {clean_flight}: {res.text[:300]}")
