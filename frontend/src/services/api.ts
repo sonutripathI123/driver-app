@@ -429,6 +429,10 @@ export const fleetApi = {
     const res = await apiClient.get<Vehicle[]>(`/vehicles/`);
     return res.data;
   },
+  createDriver: async (data: any) => {
+    const res = await apiClient.post<Driver>(`/drivers/`, data);
+    return res.data;
+  },
   createVehicle: async (data: any) => {
     const res = await apiClient.post<Vehicle>(`/vehicles/`, data);
     return res.data;

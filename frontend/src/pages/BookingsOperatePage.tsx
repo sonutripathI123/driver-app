@@ -37,11 +37,14 @@ export const BookingsOperatePage: React.FC = () => {
   // Add Driver Modal State
   const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
   const [newDriverName, setNewDriverName] = useState('');
-  const [newDriverPhone, setNewDriverPhone] = useState('+91 ');
+  const [newDriverPhone, setNewDriverPhone] = useState('+61 ');
   const [newDriverEmail, setNewDriverEmail] = useState('');
-  const [newDriverVehicle, setNewDriverVehicle] = useState('Mercedes-Benz S-Class S450');
-  const [newDriverPlate, setNewDriverPlate] = useState('VIC-VIP-');
-  const [newDriverLicense, setNewDriverLicense] = useState('VIC-DA-');
+  const [newDriverLicense, setNewDriverLicense] = useState('');
+  const [newDriverVehicleId, setNewDriverVehicleId] = useState('');
+  const [newDriverPassword, setNewDriverPassword] = useState('');
+  const [savingDriver, setSavingDriver] = useState(false);
+  const [driverFormError, setDriverFormError] = useState<string | null>(null);
+  const [driverNotice, setDriverNotice] = useState<string | null>(null);
 
   // Allocation Modal State
   const [selectedLeg, setSelectedLeg] = useState<{ bookingId: string; leg: BookingLeg } | null>(null);
@@ -61,63 +64,76 @@ export const BookingsOperatePage: React.FC = () => {
   const [offloadPayout, setOffloadPayout] = useState<number>(150);
   const [offloadNotes, setOffloadNotes] = useState('');
 
-  const handleSaveNewDriver = (e: React.FormEvent) => {
+  /**
+   * Onboards a chauffeur.
+   *
+   * This used to build a driver object in the browser, push it into local
+   * state and write it to a `crown_custom_drivers` localStorage key, then
+   * fire confetti. Nothing was ever sent to the API. The record existed only
+   * in that one browser, no other dispatcher could see it, the board's own
+   * 15-second refresh wiped it from the list, and because the modal
+   * pre-selected the invented id for allocation the very next allocate
+   * attempt failed against a driver the server had never heard of.
+   *
+   * It also filled blanks with placeholders — a licence number of
+   * "VIC-DA-88" for anyone who left the field empty, which is a compliance
+   * record, and an email guessed from the person's name.
+   */
+  const handleSaveNewDriver = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newDriverName.trim() || !newDriverPhone.trim()) {
-      alert('Please enter driver name and phone number.');
-      return;
-    }
-
-    const newDriverId = `drv-${Date.now()}`;
-    const newDriverObj: Driver = {
-      id: newDriverId,
-      full_name: newDriverName.trim(),
-      phone: newDriverPhone.trim(),
-      email: newDriverEmail.trim() || `${newDriverName.toLowerCase().replace(/\s+/g, '.')}@opalchauffeurs.com.au`,
-      license_number: newDriverLicense.trim() || 'VIC-DA-88',
-      status: 'AVAILABLE',
-      rating: 5.0,
-      total_trips_completed: 0,
-      is_active: true,
-    };
-
-    const updatedDrivers = [newDriverObj, ...drivers];
-    setDrivers(updatedDrivers);
-    setAllocationDriverId(newDriverId);
-
-    // Save to localStorage for cross-page persistence
-    const savedCustom = localStorage.getItem('crown_custom_drivers');
-    let customList = [];
+    setDriverFormError(null);
+    setDriverNotice(null);
+    setSavingDriver(true);
     try {
-      customList = savedCustom ? JSON.parse(savedCustom) : [];
-    } catch (e) {}
-    customList = [
-      {
-        id: newDriverId,
-        name: newDriverObj.full_name,
-        phone: newDriverObj.phone,
-        email: newDriverObj.email,
-        vehicle: newDriverVehicle,
-        plate: newDriverPlate,
-        license: newDriverObj.license_number,
+      const created = await fleetApi.createDriver({
+        full_name: newDriverName.trim(),
+        phone: newDriverPhone.trim(),
+        email: newDriverEmail.trim(),
+        license_number: newDriverLicense.trim(),
+        default_vehicle_id: newDriverVehicleId || null,
+        status: 'AVAILABLE',
         rating: 5.0,
-      },
-      ...customList,
-    ];
-    localStorage.setItem('crown_custom_drivers', JSON.stringify(customList));
-    window.dispatchEvent(new Event('storage'));
+        is_active: true,
+        // Without an explicit password the API falls back to one shared
+        // default for every chauffeur it creates.
+        create_user_account: true,
+        password: newDriverPassword,
+      });
 
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.5 },
-      colors: ['#fbbf24', '#10b981', '#06b6d4'],
-    });
+      setDrivers((prev) => [created, ...prev.filter((d) => d.id !== created.id)]);
+      setAllocationDriverId(created.id);
+      setDriverNotice(
+        `${created.full_name} is on the roster. Their portal login is ${created.email} with the password you just set — pass it on, and they can change it from the portal.`
+      );
 
-    setIsAddDriverOpen(false);
-    setNewDriverName('');
-    setNewDriverPhone('+91 ');
-    setNewDriverEmail('');
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.5 },
+        colors: ['#DFCAA8', '#C2A16B', '#FAF6F0'],
+      });
+
+      setIsAddDriverOpen(false);
+      setNewDriverName('');
+      setNewDriverPhone('+61 ');
+      setNewDriverEmail('');
+      setNewDriverLicense('');
+      setNewDriverVehicleId('');
+      setNewDriverPassword('');
+      loadData();
+    } catch (err: any) {
+      // A duplicate licence number is the common one, and the API says so.
+      const detail = err?.response?.data?.detail;
+      setDriverFormError(
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail) && detail.length
+            ? detail.map((d: any) => `${(d.loc || []).slice(1).join('.') || 'field'}: ${d.msg}`).join(' • ')
+            : err?.message || 'The chauffeur was not saved.'
+      );
+    } finally {
+      setSavingDriver(false);
+    }
   };
 
   // Poll the board so a chauffeur advancing a trip on their phone shows up
@@ -309,6 +325,19 @@ export const BookingsOperatePage: React.FC = () => {
 
   return (
     <div className="space-y-6 text-[#0A0E1A]">
+      {driverNotice && (
+        <div className="flex items-start gap-3 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] p-4 shadow-lg">
+          <UserCheck className="w-5 h-5 text-[#0A0E1A] shrink-0 mt-0.5" />
+          <p className="text-xs font-bold text-[#0A0E1A] flex-1 min-w-0 break-words">{driverNotice}</p>
+          <button
+            onClick={() => setDriverNotice(null)}
+            className="shrink-0 p-1 rounded-lg border border-[#E6D8C3] hover:bg-[#FAF6F0]"
+          >
+            <X className="w-4 h-4 text-[#0A0E1A]" />
+          </button>
+        </div>
+      )}
+
       {boardError && (
         <div
           role="alert"
@@ -797,7 +826,7 @@ export const BookingsOperatePage: React.FC = () => {
                   <input
                     type="tel"
                     required
-                    placeholder="+91 9876543210 or +61 400..."
+                    placeholder="+61 400 000 000"
                     value={newDriverPhone}
                     onChange={(e) => setNewDriverPhone(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black"
@@ -807,51 +836,81 @@ export const BookingsOperatePage: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-black text-[#0A0E1A] mb-1">Email Address</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Email Address *</label>
                   <input
                     type="email"
+                    required
                     placeholder="driver@opalchauffeurs.com.au"
                     value={newDriverEmail}
                     onChange={(e) => setNewDriverEmail(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
                   />
+                  <p className="text-[10px] text-slate-700 font-bold mt-1">This becomes their driver portal login.</p>
                 </div>
 
                 <div>
-                  <label className="block font-black text-[#0A0E1A] mb-1">Accreditation / License No</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Driver Accreditation / Licence No *</label>
                   <input
                     type="text"
-                    placeholder="VIC-DA-88219"
+                    required
+                    minLength={3}
+                    placeholder="Their real licence number"
                     value={newDriverLicense}
                     onChange={(e) => setNewDriverLicense(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black"
                   />
+                  <p className="text-[10px] text-slate-700 font-bold mt-1">
+                    Their real accreditation number. This is a compliance record, so it must not be guessed.
+                  </p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
                 <div>
-                  <label className="block font-black text-[#0A0E1A] mb-1">Assigned Vehicle</label>
-                  <input
-                    type="text"
-                    placeholder="Mercedes-Benz S-Class S450"
-                    value={newDriverVehicle}
-                    onChange={(e) => setNewDriverVehicle(e.target.value)}
+                  {/* Was two free-text boxes whose values went nowhere. The API
+                      links a driver to a vehicle by id, so this is the real fleet. */}
+                  <label className="block font-black text-[#0A0E1A] mb-1">Default Vehicle</label>
+                  <select
+                    value={newDriverVehicleId}
+                    onChange={(e) => setNewDriverVehicleId(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
-                  />
+                  >
+                    <option value="">No default vehicle</option>
+                    {vehicles.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.make} {v.model} — {v.registration_plate}
+                      </option>
+                    ))}
+                  </select>
+                  {vehicles.length === 0 && (
+                    <p className="text-[10px] text-slate-700 font-bold mt-1">
+                      No vehicles on file yet — add them under Partners &amp; Fleet.
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <label className="block font-black text-[#0A0E1A] mb-1">Registration Plate</label>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Initial Portal Password *</label>
                   <input
                     type="text"
-                    placeholder="VIC-VIP-77"
-                    value={newDriverPlate}
-                    onChange={(e) => setNewDriverPlate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black uppercase"
+                    required
+                    minLength={8}
+                    placeholder="At least 8 characters"
+                    value={newDriverPassword}
+                    onChange={(e) => setNewDriverPassword(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A] font-mono font-black"
                   />
+                  <p className="text-[10px] text-slate-700 font-bold mt-1">
+                    Give this to the chauffeur — they can change it from the portal.
+                  </p>
                 </div>
               </div>
+
+              {driverFormError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-[11px] font-bold break-words">
+                  {driverFormError}
+                </div>
+              )}
 
               <div className="pt-3 border-t border-[#E6D8C3] flex items-center justify-end gap-2.5">
                 <button
@@ -863,10 +922,15 @@ export const BookingsOperatePage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-6 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all"
+                  disabled={savingDriver}
+                  className="px-6 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all disabled:opacity-60"
                 >
-                  <Check className="w-4 h-4 text-white" />
-                  <span>Save & Onboard Driver</span>
+                  {savingDriver ? (
+                    <RefreshCw className="w-4 h-4 text-white animate-spin" />
+                  ) : (
+                    <Check className="w-4 h-4 text-white" />
+                  )}
+                  <span>{savingDriver ? 'Saving…' : 'Save & Onboard Driver'}</span>
                 </button>
               </div>
             </form>
