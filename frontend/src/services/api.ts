@@ -301,6 +301,25 @@ export const flightsApi = {
   },
 };
 
+export const customersApi = {
+  list: async () => {
+    const res = await apiClient.get<Customer[] | { customers: Customer[] }>(`/customers/`);
+    const data = res.data as any;
+    return (Array.isArray(data) ? data : data?.customers ?? []) as Customer[];
+  },
+  create: async (payload: {
+    full_name: string;
+    email: string;
+    phone: string;
+    company_name?: string;
+    is_vip?: boolean;
+    notes?: string;
+  }) => {
+    const res = await apiClient.post<Customer>(`/customers/`, payload);
+    return res.data;
+  },
+};
+
 export const invoicesApi = {
   list: async (status?: string) => {
     const res = await apiClient.get<{ invoices: Invoice[]; total_count: number; total_outstanding_balance: number }>(

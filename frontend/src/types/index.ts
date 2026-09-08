@@ -53,8 +53,13 @@ export interface Customer {
   phone: string;
   company_name?: string;
   is_vip: boolean;
-  total_bookings_count: number;
-  total_spend: number;
+  /** The API returns total_bookings / total_spent; the older names are kept
+   *  because some screens still read them. */
+  total_bookings?: number;
+  total_spent?: number;
+  total_bookings_count?: number;
+  total_spend?: number;
+  notes?: string | null;
 }
 
 export interface Driver {

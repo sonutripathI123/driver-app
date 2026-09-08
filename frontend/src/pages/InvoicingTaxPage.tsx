@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { invoicesApi } from '../services/api';
-import { Invoice, TaxSummaryBASReport } from '../types';
+import { customersApi, invoicesApi } from '../services/api';
+import { Customer, Invoice, TaxSummaryBASReport } from '../types';
 import {
   ReceiptText,
   DollarSign,
@@ -26,8 +26,12 @@ import {
   Plus,
   ArrowRight,
   Check,
-  Briefcase
+  Briefcase,
+  AlertTriangle,
 } from 'lucide-react';
+
+/** Current BAS quarter. Kept in one place so the label and the query agree. */
+const BAS_PERIOD = { from: '2026-07-01', to: '2026-09-30' };
 
 interface CorporateCreditAccount {
   id: string;
@@ -47,6 +51,11 @@ interface CorporateCreditAccount {
 
 export const InvoicingTaxPage: React.FC = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [basError, setBasError] = useState<string | null>(null);
+  const [fifoError, setFifoError] = useState<string | null>(null);
+  const [isSettling, setIsSettling] = useState(false);
   const [basReport, setBasReport] = useState<TaxSummaryBASReport | null>(null);
   const [activeTab, setActiveTab] = useState<'invoices' | 'fifo' | 'bas'>('invoices');
 
@@ -69,8 +78,8 @@ export const InvoicingTaxPage: React.FC = () => {
   });
 
   // FIFO Remittance State
-  const [fifoCustomerId, setFifoCustomerId] = useState('cust-01');
-  const [fifoAmount, setFifoAmount] = useState<number>(1440);
+  const [fifoCustomerId, setFifoCustomerId] = useState('');
+  const [fifoAmount, setFifoAmount] = useState<number>(0);
   const [fifoPaymentMethod, setFifoPaymentMethod] = useState('EFT_BANK_TRANSFER');
   const [fifoResult, setFifoResult] = useState<any>(null);
 
@@ -82,303 +91,166 @@ export const InvoicingTaxPage: React.FC = () => {
     loadCorporateAccounts();
   }, []);
 
-  const loadCorporateAccounts = () => {
-    let initialAccounts: CorporateCreditAccount[] = [
-      {
-        id: 'cust-01',
-        company_name: 'Rio Tinto Mining Executive Account',
-        account_code: 'CORP-RIO-880',
-        contact_person: 'David Sterling (Managing Director)',
-        email: 'd.sterling@riotinto.com',
-        phone: '+61 412 889 001',
-        abn: '48 004 458 404',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 25000.0,
-        total_pending_balance: 1440.0,
-        unpaid_invoices_count: 2,
-        overdue_amount: 440.0,
-        status: 'OVERDUE',
-      },
-      {
-        id: 'cust-02',
-        company_name: 'BHP Billiton VIP Corporate Services',
-        account_code: 'CORP-BHP-550',
-        contact_person: 'Claire Redfield (VP Operations)',
-        email: 'c.redfield@bhp.com',
-        phone: '+61 498 221 445',
-        abn: '49 004 028 077',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 30000.0,
-        total_pending_balance: 2160.0,
-        unpaid_invoices_count: 3,
-        overdue_amount: 0.0,
-        status: 'CURRENT',
-      },
-      {
-        id: 'cust-03',
-        company_name: 'Macquarie Group Private Wealth',
-        account_code: 'CORP-MQG-102',
-        contact_person: 'Marcus Brody (CEO)',
-        email: 'm.brody@macquarie.com',
-        phone: '+61 400 334 119',
-        abn: '46 008 583 542',
-        billing_terms: 'Net 14 Days Post-Paid',
-        credit_limit: 15000.0,
-        total_pending_balance: 920.0,
-        unpaid_invoices_count: 2,
-        overdue_amount: 0.0,
-        status: 'CURRENT',
-      },
-      {
-        id: 'cust-04',
-        company_name: 'PwC Australia Executive Chauffeur Account',
-        account_code: 'CORP-PWC-740',
-        contact_person: 'Sarah Jenkins (Senior Partner)',
-        email: 's.jenkins@pwc.com.au',
-        phone: '+61 411 990 223',
-        abn: '52 780 433 757',
-        billing_terms: 'Monthly (Net 30 Days)',
-        credit_limit: 20000.0,
-        total_pending_balance: 680.0,
-        unpaid_invoices_count: 1,
-        overdue_amount: 0.0,
-        status: 'CURRENT',
-      },
-      {
-        id: 'cust-05',
-        company_name: 'Herbert Smith Freehills Corporate Law',
-        account_code: 'CORP-HSF-910',
-        contact_person: 'Alexander Vance (Managing Partner)',
-        email: 'a.vance@hsf.com',
-        phone: '+61 402 771 889',
-        abn: '35 162 971 789',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 18000.0,
-        total_pending_balance: 530.0,
-        unpaid_invoices_count: 1,
-        overdue_amount: 0.0,
-        status: 'CURRENT',
-      },
-    ];
-
+  // Corporate accounts are customers in the database. They used to be a
+  // hardcoded Rio Tinto record plus whatever a browser had in localStorage, so
+  // every machine showed a different client list.
+  const loadCorporateAccounts = async () => {
     try {
-      const saved = localStorage.getItem('crown_corporate_credit_accounts');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        initialAccounts = [...initialAccounts, ...parsed];
-      }
-    } catch (e) {}
-
-    setCorporateAccounts(initialAccounts);
+      const [customers, invoiceData] = await Promise.all([
+        customersApi.list(),
+        invoicesApi.list(),
+      ]);
+      const open = (invoiceData?.invoices ?? []).filter(
+        (inv: Invoice) => !['PAID', 'VOID'].includes(inv.status)
+      );
+      setCorporateAccounts(
+        customers.map((c: Customer) => {
+          const theirs = open.filter(
+            (inv: Invoice) => inv.customer_email === c.email || inv.customer_name === c.full_name
+          );
+          return {
+            id: c.id,
+            company_name: c.company_name || c.full_name,
+            // Not fields the customer record carries — shown as unavailable
+            // rather than invented.
+            account_code: '—',
+            contact_person: c.full_name,
+            email: c.email,
+            phone: c.phone,
+            abn: '—',
+            billing_terms: '—',
+            credit_limit: 0,
+            total_pending_balance: theirs.reduce((sum: number, inv: Invoice) => sum + (inv.balance_due ?? 0), 0),
+            unpaid_invoices_count: theirs.length,
+            overdue_amount: theirs
+              .filter((inv: Invoice) => inv.status === 'OVERDUE')
+              .reduce((sum: number, inv: Invoice) => sum + (inv.balance_due ?? 0), 0),
+            status: theirs.some((inv: Invoice) => inv.status === 'OVERDUE') ? 'OVERDUE' : 'CURRENT',
+          } as CorporateCreditAccount;
+        })
+      );
+    } catch {
+      setCorporateAccounts([]);
+    }
   };
 
   const loadInvoicingData = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
       const data = await invoicesApi.list();
-      if (data?.invoices && data.invoices.length > 0) {
-        setInvoices(data.invoices);
-        return;
-      }
-    } catch (err) {}
-
-    // Comprehensive ATO Compliant Invoices with full Client & Journey metadata
-    const demoInvoices: Invoice[] = [
-      {
-        id: 'inv-01',
-        invoice_number: 'INV-2026-0041',
-        booking_number: 'CRW-MEL-9901',
-        status: 'ISSUED',
-        customer_name: 'David Sterling',
-        customer_company: 'Rio Tinto Mining Executive Account',
-        customer_email: 'd.sterling@riotinto.com',
-        customer_phone: '+61 412 889 001',
-        customer_abn: '48 004 458 404',
-        passenger_name: 'David Sterling + 1 Guest',
-        route_summary: 'Melbourne Airport (MEL T1) ➔ Grand Hyatt Melbourne',
-        pickup_location: 'Melbourne Airport Terminal 1 Domestic Pick-up',
-        dropoff_location: 'Grand Hyatt Melbourne (123 Collins St, Melbourne CBD)',
-        journey_datetime: '27 Aug 2026, 02:30 PM AEST',
-        vehicle_model: 'Mercedes-Benz S-Class S450 LWB',
-        vehicle_plate: 'GTS783',
-        driver_name: 'Sonu Tripathi',
-        flight_number: 'QF440 (Sydney ➔ Melbourne)',
-        issue_date: '2026-08-27',
-        due_date: '2026-09-10',
-        subtotal_ex_gst: 400.0,
-        gst_amount: 40.0,
-        total_inc_gst: 440.0,
-        amount_paid: 0.0,
-        balance_due: 440.0,
-        currency: 'AUD',
-        payment_method: 'Direct EFT Bank Transfer (14 Days Terms)',
-        line_items: [
-          {
-            id: 'li-01',
-            invoice_id: 'inv-01',
-            description: 'Executive Chauffeur Transfer (MEL T1 ➔ Grand Hyatt Collins St)',
-            quantity: 1,
-            unit_price_ex_gst: 400.0,
-            gst_amount: 40.0,
-            total_inc_gst: 440.0,
-          },
-        ],
-      },
-      {
-        id: 'inv-02',
-        invoice_number: 'INV-2026-0042',
-        booking_number: 'CRW-MEL-9940',
-        status: 'PAID',
-        customer_name: 'Claire Redfield',
-        customer_company: 'BHP Billiton VIP Corporate Services',
-        customer_email: 'c.redfield@bhp.com',
-        customer_phone: '+61 498 221 445',
-        customer_abn: '49 004 028 077',
-        passenger_name: 'Claire Redfield & Board Delegation (6 PAX)',
-        route_summary: 'Collins Square, Docklands ➔ Yarra Valley Winery & Return',
-        pickup_location: 'Collins Square Tower 2, 727 Collins St, Melbourne',
-        dropoff_location: 'Domaine Chandon Winery, Yarra Valley (Full Day Charter)',
-        journey_datetime: '25 Aug 2026, 09:00 AM AEST',
-        vehicle_model: 'Mercedes-Benz Sprinter Luxury Minibus',
-        vehicle_plate: 'BS14OK',
-        driver_name: 'Sonu Tripathi',
-        issue_date: '2026-08-25',
-        due_date: '2026-09-08',
-        subtotal_ex_gst: 618.18,
-        gst_amount: 61.82,
-        total_inc_gst: 680.0,
-        amount_paid: 680.0,
-        balance_due: 0.0,
-        currency: 'AUD',
-        payment_method: 'Corporate OSKO Direct Transfer',
-        paid_at: '2026-08-26',
-        line_items: [
-          {
-            id: 'li-02',
-            invoice_id: 'inv-02',
-            description: 'Full Day VIP Executive Charter (Collins Square ➔ Yarra Valley Winery)',
-            quantity: 1,
-            unit_price_ex_gst: 618.18,
-            gst_amount: 61.82,
-            total_inc_gst: 680.0,
-          },
-        ],
-      },
-      {
-        id: 'inv-03',
-        invoice_number: 'INV-2026-0043',
-        booking_number: 'CRW-SYD-8812',
-        status: 'PAID',
-        customer_name: 'Marcus Brody',
-        customer_company: 'Macquarie Group Private Wealth',
-        customer_email: 'm.brody@macquarie.com',
-        customer_phone: '+61 400 334 119',
-        customer_abn: '46 008 583 542',
-        passenger_name: 'Marcus Brody (CEO)',
-        route_summary: 'Sydney Domestic T3 ➔ Crown Towers Sydney Barangaroo',
-        pickup_location: 'Sydney Kingsford Smith Airport T3 Domestic',
-        dropoff_location: 'Crown Towers Sydney, 1 Barangaroo Ave',
-        journey_datetime: '24 Aug 2026, 11:15 AM AEST',
-        vehicle_model: 'Audi Q7 Black Edition Quattro',
-        vehicle_plate: 'AMJ506',
-        driver_name: 'Marcus Vance',
-        flight_number: 'VA833 (Melbourne ➔ Sydney)',
-        issue_date: '2026-08-24',
-        due_date: '2026-09-07',
-        subtotal_ex_gst: 290.91,
-        gst_amount: 29.09,
-        total_inc_gst: 320.0,
-        amount_paid: 320.0,
-        balance_due: 0.0,
-        currency: 'AUD',
-        payment_method: 'Corporate Amex Card',
-        paid_at: '2026-08-24',
-        line_items: [
-          {
-            id: 'li-03',
-            invoice_id: 'inv-03',
-            description: 'Executive Airport VIP Chauffeur Transfer (SYD T3 ➔ Barangaroo)',
-            quantity: 1,
-            unit_price_ex_gst: 290.91,
-            gst_amount: 29.09,
-            total_inc_gst: 320.0,
-          },
-        ],
-      },
-    ];
-    setInvoices(demoInvoices);
+      // An empty ledger is a real answer. This used to fall through to eight
+      // fabricated ATO invoices carrying real-looking ABNs.
+      setInvoices(data?.invoices ?? []);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setInvoices([]);
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Invoices unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
+    }
 
     try {
-      const bas = await invoicesApi.getTaxSummary('2026-07-01', '2026-09-30');
+      const bas = await invoicesApi.getTaxSummary(BAS_PERIOD.from, BAS_PERIOD.to);
       setBasReport(bas);
-    } catch (err) {
-      setBasReport({
-        period_label: 'Q1 FY26 (Jul 2026 - Sep 2026)',
-        gross_sales_inc_gst: 24500.0,
-        gst_collected_10pct: 2227.27,
-        net_sales_ex_gst: 22272.73,
-        driver_payouts_total: 9800.0,
-        net_operating_margin: 12472.73,
-      });
+      setBasError(null);
+    } catch (err: any) {
+      // A BAS report is filed with the ATO. Inventing $24,500 of sales and
+      // $2,227.27 of GST when the query fails is not a display fallback, it is
+      // a fabricated tax figure.
+      const detail = err?.response?.data?.detail;
+      setBasReport(null);
+      setBasError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `BAS summary unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleExecuteFIFO = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSettling) return;
+    setIsSettling(true);
+    setFifoError(null);
     try {
       const res = await invoicesApi.allocateFIFO({
-        customer_id: fifoCustomerId || 'cust-01',
+        customer_id: fifoCustomerId,
         payment_amount: fifoAmount,
         payment_method: fifoPaymentMethod,
-        reference_number: `REM-${Math.floor(100000 + Math.random() * 900000)}`,
+        reference_number: `REM-${Date.now()}`,
       });
       setFifoResult(res);
       loadInvoicingData();
-    } catch (err) {
-      setFifoResult({
-        settlement_status: 'SUCCESS',
-        allocated_amount: fifoAmount,
-        invoices_cleared: 2,
-        remaining_unallocated_credit: 0,
-        message: 'Lump-sum payment applied against oldest outstanding invoices sequentially (FIFO).',
-      });
+      loadCorporateAccounts();
+    } catch (err: any) {
+      // This is a money movement. The previous version answered a failed
+      // allocation with settlement_status "SUCCESS" and "invoices_cleared: 2",
+      // so a payment the ledger never recorded was reported as reconciled
+      // against two invoices that were still outstanding.
+      const detail = err?.response?.data?.detail;
+      setFifoResult(null);
+      setFifoError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Allocation failed (HTTP ${err.response.status}). No payment has been recorded.`
+            : 'Allocation failed: cannot reach the Opal Cloud Engine. No payment has been recorded.'
+      );
+    } finally {
+      setIsSettling(false);
     }
   };
 
-  // Quick Select Account for FIFO Settle
   const handleQuickSettleAccount = (acc: CorporateCreditAccount) => {
     setFifoCustomerId(acc.id);
     setFifoAmount(acc.total_pending_balance);
     setIsCreditAccountsModalOpen(false);
   };
 
-  // Add Corporate Account Handler
-  const handleCreateCorporateAccount = (e: React.FormEvent) => {
+  // Add Corporate Account Handler. Creates a customer in the database — this
+  // used to write to localStorage, so the account existed only in the browser
+  // that created it and vanished when site data was cleared.
+  const handleCreateCorporateAccount = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newAccount.company_name || !newAccount.contact_person) return;
+    if (!newAccount.company_name || !newAccount.contact_person || isSettling) return;
 
-    const created: CorporateCreditAccount = {
-      id: `cust-${Date.now()}`,
-      company_name: newAccount.company_name,
-      account_code: newAccount.account_code || `CORP-${newAccount.company_name.slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
-      contact_person: newAccount.contact_person,
-      email: newAccount.email,
-      phone: newAccount.phone,
-      abn: newAccount.abn || 'Not Provided',
-      billing_terms: newAccount.billing_terms,
-      credit_limit: Number(newAccount.credit_limit) || 25000,
-      total_pending_balance: Number(newAccount.initial_pending_balance) || 0,
-      unpaid_invoices_count: Number(newAccount.initial_pending_balance) > 0 ? 1 : 0,
-      overdue_amount: 0,
-      status: 'CURRENT',
-    };
-
-    const updated = [...corporateAccounts, created];
-    setCorporateAccounts(updated);
-
+    setIsSettling(true);
+    setLoadError(null);
     try {
-      const existing = JSON.parse(localStorage.getItem('crown_corporate_credit_accounts') || '[]');
-      localStorage.setItem('crown_corporate_credit_accounts', JSON.stringify([...existing, created]));
-    } catch (err) {}
+      await customersApi.create({
+        full_name: newAccount.contact_person,
+        email: newAccount.email,
+        phone: newAccount.phone,
+        company_name: newAccount.company_name,
+        notes: [
+          newAccount.abn ? `ABN ${newAccount.abn}` : null,
+          newAccount.billing_terms ? `Terms: ${newAccount.billing_terms}` : null,
+          newAccount.account_code ? `Account code: ${newAccount.account_code}` : null,
+        ].filter(Boolean).join(' | ') || undefined,
+      });
+      await loadCorporateAccounts();
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Could not create the account (HTTP ${err.response.status}).`
+            : 'Could not create the account: cannot reach the Opal Cloud Engine.'
+      );
+      setIsSettling(false);
+      return;
+    }
+    setIsSettling(false);
 
     setIsAddAccountOpen(false);
     setNewAccount({
@@ -398,8 +270,61 @@ export const InvoicingTaxPage: React.FC = () => {
   const totalPendingCorporateDebt = corporateAccounts.reduce((sum, a) => sum + a.total_pending_balance, 0);
   const selectedAccountDetails = corporateAccounts.find(a => a.id === fifoCustomerId);
 
+  const outstandingInvoices = invoices.filter((inv) => !['PAID', 'VOID'].includes(inv.status));
+  const outstandingCount = outstandingInvoices.length;
+  const outstandingBalance = outstandingInvoices.reduce((sum, inv) => sum + (inv.balance_due ?? 0), 0);
+
   return (
     <div className="space-y-6">
+      {(loadError || basError || fifoError) && (
+        <div role="alert" className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg space-y-2.5">
+          {loadError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-black text-[#0A0E1A]">Invoice ledger could not be loaded</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">{loadError}</p>
+              </div>
+              <button
+                onClick={() => { loadInvoicingData(); loadCorporateAccounts(); }}
+                className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+          {basError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#0A0E1A]">BAS summary could not be loaded</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">
+                  {basError} No figures are shown — do not file from this screen until it loads.
+                </p>
+              </div>
+            </div>
+          )}
+          {fifoError && (
+            <div className="flex items-start gap-2.5">
+              <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+              <div className="min-w-0">
+                <p className="text-sm font-black text-[#0A0E1A]">Payment was NOT allocated</p>
+                <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">{fifoError}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!loading && !loadError && invoices.length === 0 && (
+        <div className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-6 text-center text-[#0A0E1A]">
+          <p className="text-sm font-black">No invoices yet</p>
+          <p className="text-xs font-bold opacity-75 mt-1">
+            Tax invoices appear here once they are generated from completed bookings.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-xl">
         <div>
@@ -652,12 +577,12 @@ export const InvoicingTaxPage: React.FC = () => {
 
               <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[11px] text-[#0A0E1A] space-y-1 font-mono font-bold">
                 <div className="flex justify-between">
-                  <span className="text-[#0A0E1A]">ATO GST Ledger Status:</span>
-                  <span className="text-[#0A0E1A] font-black">100% RECONCILED</span>
+                  <span className="text-[#0A0E1A]">Outstanding invoices:</span>
+                  <span className="text-[#0A0E1A] font-black">{outstandingCount}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-[#0A0E1A]">Sequential Audit Trail:</span>
-                  <span className="text-[#0A0E1A] font-black">AUDIT READY</span>
+                  <span className="text-[#0A0E1A]">Total balance due:</span>
+                  <span className="text-[#0A0E1A] font-black">${outstandingBalance.toFixed(2)} AUD</span>
                 </div>
               </div>
             </div>
