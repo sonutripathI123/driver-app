@@ -320,6 +320,8 @@ export interface ManagerNotificationSettings {
   telegram_bot_token?: string;
   telegram_chat_id?: string;
   browser_push_enabled: boolean;
+  /** Email is the only manager channel that needs no telco account. */
+  manager_email_enabled?: boolean;
   alert_on_new_booking: boolean;
   alert_on_driver_allocation: boolean;
   alert_on_driver_rejection: boolean;
