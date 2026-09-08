@@ -163,8 +163,13 @@ export interface LiveActivityItem {
   leg_id: string;
   booking_id: string;
   booking_number: string;
-  status: 'EN_ROUTE' | 'ARRIVED' | 'PICKED_UP' | 'COMPLETED';
+  status: string;
   occurred_at: string;
+  /** MILESTONE = a chauffeur step; FLIGHT = an inbound flight disruption. */
+  kind: 'MILESTONE' | 'FLIGHT';
+  flight_number?: string | null;
+  flight_status?: string | null;
+  flight_delay_minutes?: number | null;
   passenger_name?: string | null;
   driver_name?: string | null;
   vehicle_plate?: string | null;

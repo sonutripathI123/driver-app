@@ -64,9 +64,27 @@ const useLiveTripWatcher = (enabled: boolean) => {
         // would chime for trips that finished hours ago.
         if (sinceRef.current) {
           for (const event of [...data.events].reverse()) {
+            const passenger = event.passenger_name ? ` (${event.passenger_name})` : '';
+
+            if (event.kind === 'FLIGHT') {
+              // A flight slipping is not a chauffeur milestone; without this it
+              // announced itself as "Trip Milestone: ALLOCATED".
+              // Named distinctly: `cancelled` above is the effect's cleanup flag.
+              const flightCancelled = ['CANCELLED', 'CANCELED'].includes(
+                (event.flight_status || '').toUpperCase()
+              );
+              const title = flightCancelled
+                ? `🛑 Flight ${event.flight_number} CANCELLED`
+                : `✈️ Flight ${event.flight_number} delayed ${event.flight_delay_minutes}m`;
+              const body = flightCancelled
+                ? `${event.booking_number}${passenger} needs rebooking — the pickup was not moved automatically.`
+                : `${event.booking_number}${passenger} pickup rescheduled. Chauffeur and passenger notified.`;
+              triggerNativeNotification(title, body);
+              continue;
+            }
+
             const title = MILESTONE_LABELS[event.status] || `🚗 Trip Milestone: ${event.status}`;
             const who = event.driver_name || 'the assigned chauffeur';
-            const passenger = event.passenger_name ? ` (${event.passenger_name})` : '';
             triggerNativeNotification(title, `${event.booking_number}${passenger} updated by ${who}.`);
           }
         }
