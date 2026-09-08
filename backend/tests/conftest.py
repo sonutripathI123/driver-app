@@ -9,6 +9,8 @@ from app.core.database import Base, get_db
 from app.core.security import create_access_token, hash_password
 from app.models.enums import UserRole
 from app.models.user import User
+from app.services import flight_service
+from tests.stub_flight_provider import StubFlightProvider
 from main import app
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -152,3 +154,34 @@ def auth_header(user: User) -> Dict[str, str]:
         email=user.email
     )
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture(scope="function")
+def stub_flight_provider(monkeypatch) -> StubFlightProvider:
+    """
+    Installs a predictable flight provider for the duration of one test.
+
+    Production returns 503 when no provider is configured, rather than
+    inventing arrival times, so tests have to supply one explicitly. Patched
+    where flight_service imported the symbol, which is what it actually calls.
+    """
+    provider = StubFlightProvider()
+    monkeypatch.setattr(flight_service, "get_flight_provider", lambda: provider)
+    return provider
+
+
+@pytest.fixture(scope="session", autouse=True)
+def relax_general_rate_limit():
+    """
+    The whole suite shares one client IP, so the 120-requests-per-minute
+    sliding window ran out partway through and later tests failed with 429
+    depending on execution order. Only the general bucket is raised; the
+    auth bucket is left alone because test_security_hardening drives its own
+    threshold to prove the limiter works.
+    """
+    from app.core.config import settings as app_settings
+
+    original = app_settings.RATE_LIMIT_REQUESTS_PER_MINUTE
+    app_settings.RATE_LIMIT_REQUESTS_PER_MINUTE = 100000
+    yield
+    app_settings.RATE_LIMIT_REQUESTS_PER_MINUTE = original

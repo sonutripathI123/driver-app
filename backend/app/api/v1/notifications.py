@@ -35,18 +35,30 @@ async def get_vapid_public_key():
     return {"public_key": webpush_gateway.get_public_key()}
 
 
-@router.post("/webpush-subscription")
+@router.post("/webpush-subscription", dependencies=[Depends(require_staff)])
 async def register_webpush_subscription(subscription: dict):
-    """Registers a browser push subscription for background OS notifications."""
+    """
+    Registers a browser push subscription for background OS notifications.
+    Access: Staff
+
+    Was open: anyone who posted a subscription here would have started
+    receiving the business's dispatch alerts on their own device.
+    """
     success = webpush_gateway.register_subscription(subscription)
     return {"status": "registered" if success else "failed"}
 
 
-@router.get("/manager-settings", response_model=ManagerNotificationSettings)
+@router.get("/manager-settings", response_model=ManagerNotificationSettings, dependencies=[Depends(require_staff)])
 async def get_manager_notification_settings(
     db: AsyncSession = Depends(get_db)
 ):
-    """Get current Business Owner / Manager Mobile Alert Settings."""
+    """
+    Get current Business Owner / Manager Mobile Alert Settings.
+    Access: Staff
+
+    Was open, so an anonymous request returned the manager's mobile number
+    and email address along with any Telegram bot token stored here.
+    """
     return await NotificationService.load_manager_settings(db)
 
 
@@ -60,13 +72,18 @@ async def update_manager_notification_settings(
     return await NotificationService.save_manager_settings(db, settings, current_user.email)
 
 
-@router.post("/test-mobile-ping", response_model=NotificationRead)
+@router.post("/test-mobile-ping", response_model=NotificationRead, dependencies=[Depends(require_staff)])
 async def send_test_mobile_ping(
     payload: TestMobilePingRequest,
     db: AsyncSession = Depends(get_db)
 ):
     """
     Sends an immediate test alert to the Manager's mobile phone to verify SMS/WhatsApp connectivity.
+    Access: Staff
+
+    This was open to the internet and takes an arbitrary target_phone, so
+    anyone who knew the URL could make the platform send SMS and WhatsApp
+    messages to any number in the world on the business's account.
     """
     mgr = await NotificationService.load_manager_settings(db)
     target_phone = payload.target_phone or mgr.manager_phone

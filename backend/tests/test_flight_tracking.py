@@ -18,7 +18,7 @@ from tests.conftest import auth_header
 
 
 @pytest.mark.asyncio
-async def test_flight_lookup_mock_provider():
+async def test_flight_lookup_via_provider(stub_flight_provider):
     # 1. QF401 (Delayed +45m)
     qf = await FlightTrackingService.lookup_flight("QF401")
     assert qf.flight_number == "QF401"
@@ -42,7 +42,8 @@ async def test_flight_lookup_mock_provider():
 @pytest.mark.asyncio
 async def test_automated_flight_delay_rescheduling_and_driver_alert(
     db_session: AsyncSession,
-    dispatcher_user: User
+    dispatcher_user: User,
+    stub_flight_provider
 ):
     now = datetime.now(timezone.utc).replace(hour=10, minute=0, second=0, microsecond=0)
     sms_gateway.sent_sms.clear()
@@ -123,7 +124,7 @@ async def test_automated_flight_delay_rescheduling_and_driver_alert(
 
 
 @pytest.mark.asyncio
-async def test_active_airport_legs_polling_cron(db_session: AsyncSession):
+async def test_active_airport_legs_polling_cron(db_session: AsyncSession, stub_flight_provider):
     now = datetime.now(timezone.utc)
 
     # Create 2 airport legs within upcoming 24h
@@ -233,7 +234,8 @@ def test_complimentary_and_billable_wait_time_calculations():
 @pytest.mark.asyncio
 async def test_flight_api_endpoints_and_rbac(
     client: AsyncClient,
-    dispatcher_user: User
+    dispatcher_user: User,
+    stub_flight_provider
 ):
     disp_headers = auth_header(dispatcher_user)
 

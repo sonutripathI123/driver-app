@@ -16,7 +16,7 @@ from app.services.flight_service import FlightTrackingService
 router = APIRouter(prefix="/flights", tags=["Flight Tracking & Airport Automation"])
 
 
-@router.get("/lookup", response_model=FlightLookupResponse)
+@router.get("/lookup", response_model=FlightLookupResponse, dependencies=[Depends(require_staff)])
 async def lookup_flight_status(
     flight_number: str = Query(..., description="Flight code, e.g. QF401, EK406"),
     flight_date: Optional[date] = Query(None, description="Flight scheduled date (YYYY-MM-DD)")
@@ -24,6 +24,11 @@ async def lookup_flight_status(
     """
     Query real-time flight status, arrival airport, and delay estimates.
     Access: Staff (ADMIN, OPERATIONS_MANAGER, DISPATCHER, ACCOUNTANT)
+
+    The docstring said "Staff" but there was no dependency, so this was open
+    to the internet. Every call spends a request from the metered flight-data
+    plan, so anyone who knew the URL could drain the quota — and it leaked
+    which flights the business is watching.
     """
     return await FlightTrackingService.lookup_flight(flight_number=flight_number, flight_date=flight_date)
 

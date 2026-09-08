@@ -186,9 +186,16 @@ export const subscribeToWebPush = async (): Promise<boolean> => {
 
     // Send subscription to backend
     const apiBase = import.meta.env.VITE_API_BASE_URL ? `${import.meta.env.VITE_API_BASE_URL}/api/v1` : '/api/v1';
+    // The endpoint now requires a signed-in staff account, so the access
+    // token has to travel with it. Raw fetch rather than the axios client to
+    // keep this utility free of a circular import.
+    const accessToken = localStorage.getItem('chauffeur_access_token');
     await fetch(`${apiBase}/notifications/webpush-subscription`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
       body: JSON.stringify(subscription.toJSON()),
     });
     return true;

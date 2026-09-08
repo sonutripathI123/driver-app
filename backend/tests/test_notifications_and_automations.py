@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta, timezone
 import pytest
+from app.core.config import settings
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.integrations.notifications.email_client import email_gateway
@@ -48,7 +49,9 @@ async def test_dual_ops_and_customer_notifications_on_booking(db_session: AsyncS
 
     # 2. Verify Customer & Ops emails dispatched
     customer_emails = [e for e in email_gateway.sent_emails if e["to"] == "george@mercedes-racing.com"]
-    ops_emails = [e for e in email_gateway.sent_emails if e["to"] == "ops@crownchauffeurs.com.au"]
+    # Compared against the configured address rather than a literal, which
+    # went stale when the operations mailbox changed.
+    ops_emails = [e for e in email_gateway.sent_emails if e["to"] == settings.OPS_EMAIL]
     customer_sms = [s for s in sms_gateway.sent_sms if s["to"] == "+61411223344"]
 
     assert len(customer_emails) == 1

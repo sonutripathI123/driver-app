@@ -246,7 +246,13 @@ class NotificationService:
 
         # Email the same alert. Unlike SMS/WhatsApp this needs no telco account,
         # so it is the one manager channel that works today.
-        if mgr.manager_email_enabled and mgr.manager_email:
+        #
+        # Skipped when the manager address is the ops address, which is the
+        # default: the ops notice for the same event has already landed in
+        # that inbox, and two near-identical emails per cancellation trains
+        # the reader to ignore both.
+        duplicates_ops = (mgr.manager_email or "").strip().lower() == (settings.OPS_EMAIL or "").strip().lower()
+        if mgr.manager_email_enabled and mgr.manager_email and not duplicates_ops:
             rows: List[Tuple[str, str]] = []
             for line in message.split("\n"):
                 line = line.strip()
