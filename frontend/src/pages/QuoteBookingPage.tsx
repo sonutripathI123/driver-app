@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { LuxuryCarCanvas } from '../components/3d/LuxuryCarCanvas';
-import { bookingsApi, pricingApi } from '../services/api';
-import { VehicleCategory } from '../types';
+import { bookingsApi, customersApi, pricingApi } from '../services/api';
+import { Customer, VehicleCategory } from '../types';
 import { triggerNativeNotification } from '../utils/notificationSound';
 import confetti from 'canvas-confetti';
 import {
@@ -52,6 +52,17 @@ export const QuoteBookingPage: React.FC = () => {
   // Booking Result Modal
   const [createdBookingNumber, setCreatedBookingNumber] = useState<string | null>(null);
   const [bookingError, setBookingError] = useState<string | null>(null);
+  // Corporate accounts are customers with a company name. The dropdown used to
+  // offer three hardcoded ones — Rio Tinto, BHP, Macquarie — that existed
+  // nowhere in the database, so the code chosen matched no account.
+  const [corporateAccounts, setCorporateAccounts] = useState<Customer[]>([]);
+
+  useEffect(() => {
+    customersApi
+      .list()
+      .then((rows: Customer[]) => setCorporateAccounts(rows.filter((c) => c.company_name)))
+      .catch(() => setCorporateAccounts([]));
+  }, []);
   const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -564,9 +575,14 @@ export const QuoteBookingPage: React.FC = () => {
                     onChange={(e) => setCorporateAccountCode(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-[#0A0E1A] font-black"
                   >
-                    <option value="CORP-RIO-880" className="text-[#0A0E1A]">Rio Tinto Mining Executive Account (Net 30)</option>
-                    <option value="CORP-BHP-550" className="text-[#0A0E1A]">BHP Billiton VIP Corporate Services (Net 30)</option>
-                    <option value="CORP-MQG-102" className="text-[#0A0E1A]">Macquarie Group Private Wealth (Net 14)</option>
+                    <option value="" className="text-[#0A0E1A]">
+                      {corporateAccounts.length ? 'Select an account…' : 'No corporate accounts on file'}
+                    </option>
+                    {corporateAccounts.map((acc) => (
+                      <option key={acc.id} value={acc.id} className="text-[#0A0E1A]">
+                        {acc.company_name || acc.full_name}
+                      </option>
+                    ))}
                   </select>
                   <p className="text-[10px] text-[#0A0E1A] font-bold">This booking will be charged to the monthly corporate account credit ledger.</p>
                 </div>
