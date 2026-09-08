@@ -106,7 +106,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     COMPLETED: 'COMPLETED',
   };
 
-  const sampleBookings: DetailedBookingItem[] = bookings.flatMap((b) =>
+  const bookingRows: DetailedBookingItem[] = bookings.flatMap((b) =>
     (b.legs ?? []).map((leg) => {
       const payout = (leg.allocation_cost ?? 0) + (leg.partner_payout_amount ?? 0);
       const netExGst = (leg.fare_share ?? b.total_fare / Math.max(1, b.legs?.length || 1)) / 1.1;
@@ -169,7 +169,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       }))
   );
 
-  const sampleDrivers: DriverRosterItem[] = drivers.map((dr) => {
+  const driverRows: DriverRosterItem[] = drivers.map((dr) => {
     const legs = bookings.flatMap((b) =>
       (b.legs ?? []).filter((l) => l.driver_id === dr.id).map((l) => ({ booking: b, leg: l }))
     );
@@ -231,7 +231,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   };
 
   // Filtered Bookings
-  const filteredBookings = sampleBookings.filter((b) => {
+  const filteredBookings = bookingRows.filter((b) => {
     const matchesFilter =
       bookingFilter === 'ALL' ||
       (bookingFilter === 'COMPLETED' && b.status === 'COMPLETED') ||
@@ -249,7 +249,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   });
 
   // Filtered Drivers
-  const filteredDrivers = sampleDrivers.filter((d) => {
+  const filteredDrivers = driverRows.filter((d) => {
     const matchesFilter = driverFilter === 'ALL' || d.status === driverFilter;
     const matchesSearch =
       searchQuery === '' ||
@@ -270,6 +270,14 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   // pickup_datetime — so a cancelled booking scheduled outside the reporting
   // window was displayed as still pending.
   const CLOSED_BOOKING_STATUSES = ['COMPLETED', 'CANCELLED', 'REFUNDED', 'FINANCIALLY_CLOSED'];
+  const matchesFlightSearch = (f: { passengerName: string; flightNumber: string; airline: string; assignedDriver: string }) =>
+    searchQuery === '' ||
+    f.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.flightNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    f.assignedDriver.toLowerCase().includes(searchQuery.toLowerCase());
+  const visibleAirportFlights = airportFlights.filter(matchesFlightSearch);
+
   const pendingRides = bookings.filter((b) => !CLOSED_BOOKING_STATUSES.includes(b.status)).length;
   const activeDrivers = drivers.filter((d) => d.is_active).length;
   const availableDrivers = drivers.filter((d) => d.is_active && d.status === 'AVAILABLE').length;
@@ -729,7 +737,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     }`}
                   >
                     {tab === 'ALL'
-                      ? `All (${sampleBookings.length})`
+                      ? `All (${bookingRows.length})`
                       : tab === 'COMPLETED'
                       ? 'Completed (32)'
                       : tab === 'IN_PROGRESS'
@@ -754,6 +762,20 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Bookings List Table / Cards */}
             <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
+              {/* An empty table body with just a header reads as a broken
+                  page. Say which it is: nothing booked, or nothing matching. */}
+              {filteredBookings.length === 0 && (
+                <div className="p-8 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] text-center">
+                  <p className="text-xs font-black text-[#0A0E1A]">
+                    {bookings.length === 0 ? 'No bookings on the system yet.' : 'No bookings match this filter.'}
+                  </p>
+                  <p className="text-[11px] text-slate-700 font-semibold mt-1">
+                    {bookings.length === 0
+                      ? 'Jobs appear here as soon as a quote is confirmed or a website enquiry arrives.'
+                      : 'Try a different tab or clear the search.'}
+                  </p>
+                </div>
+              )}
               {filteredBookings.map((b) => (
                 <div
                   key={b.id}
@@ -874,7 +896,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     }`}
                   >
                     {tab === 'ALL'
-                      ? `All Drivers (${sampleDrivers.length})`
+                      ? `All Drivers (${driverRows.length})`
                       : tab === 'AVAILABLE'
                       ? '🟢 Free / Khali (4)'
                       : tab === 'ON_TRIP'
@@ -899,6 +921,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Drivers Roster Grid */}
             <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
+              {filteredDrivers.length === 0 && (
+                <div className="p-8 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] text-center">
+                  <p className="text-xs font-black text-[#0A0E1A]">
+                    {drivers.length === 0 ? 'No chauffeurs on the roster yet.' : 'No chauffeurs match this filter.'}
+                  </p>
+                  <p className="text-[11px] text-slate-700 font-semibold mt-1">
+                    {drivers.length === 0
+                      ? 'Onboard one from the Operate board to allocate work to them.'
+                      : 'Try a different availability tab.'}
+                  </p>
+                </div>
+              )}
               {filteredDrivers.map((d) => (
                 <div
                   key={d.id}
@@ -1028,16 +1062,19 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Flights List */}
             <div className="p-4 sm:p-6 overflow-y-auto space-y-3 text-[#0A0E1A]">
-              {airportFlights
-                .filter(
-                  (f) =>
-                    searchQuery === '' ||
-                    f.passengerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    f.flightNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    f.airline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    f.assignedDriver.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((f) => (
+              {visibleAirportFlights.length === 0 && (
+                <div className="p-8 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] text-center">
+                  <p className="text-xs font-black text-[#0A0E1A]">
+                    {airportFlights.length === 0
+                      ? 'No airport pickups scheduled.'
+                      : 'No airport pickups match this search.'}
+                  </p>
+                  <p className="text-[11px] text-slate-700 font-semibold mt-1">
+                    Legs flagged as an airport pickup with a flight number appear here.
+                  </p>
+                </div>
+              )}
+              {visibleAirportFlights.map((f) => (
                   <div
                     key={f.id}
                     className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] hover:border-[#DFCAA8] transition-all space-y-3 shadow-sm text-[#0A0E1A]"
