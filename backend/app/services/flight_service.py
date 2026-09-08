@@ -51,9 +51,12 @@ class FlightTrackingService:
             )
         data = await provider.get_flight_status(flight_number, flight_date)
         if not data:
+            # Say which it was: the provider refusing, a network failure, or the
+            # flight genuinely not being in its data.
+            reason = getattr(provider, "last_error", None)
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Flight details not found for '{flight_number}'."
+                status_code=status.HTTP_502_BAD_GATEWAY if reason else status.HTTP_404_NOT_FOUND,
+                detail=reason or f"Flight details not found for '{flight_number}'."
             )
         return FlightLookupResponse(
             flight_number=data.flight_number,
@@ -109,9 +112,10 @@ class FlightTrackingService:
             leg.pickup_datetime.date()
         )
         if not flight_data:
+            reason = getattr(provider, "last_error", None)
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Live flight data unavailable for '{leg.flight_number}'."
+                status_code=status.HTTP_502_BAD_GATEWAY if reason else status.HTTP_404_NOT_FOUND,
+                detail=reason or f"Live flight data unavailable for '{leg.flight_number}'."
             )
 
         old_pickup = ensure_utc(leg.pickup_datetime)

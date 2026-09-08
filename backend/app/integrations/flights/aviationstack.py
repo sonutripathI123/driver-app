@@ -39,6 +39,7 @@ class AviationStackProvider(BaseFlightProvider):
         flight_number: str,
         flight_date: Optional[date] = None
     ) -> Optional[FlightData]:
+        self.last_error = None
         if not self.api_key:
             return None
 
@@ -52,7 +53,8 @@ class AviationStackProvider(BaseFlightProvider):
                 res = await client.get(self.api_url, params=params)
 
             if res.status_code != 200:
-                logger.warning(f"AviationStack error {res.status_code} for {clean_flight}: {res.text[:300]}")
+                self.last_error = f"AviationStack HTTP {res.status_code}: {res.text[:200]}"
+                logger.warning(self.last_error)
                 return None
 
             payload: Dict[str, Any] = res.json()
@@ -108,5 +110,6 @@ class AviationStackProvider(BaseFlightProvider):
                 delay_minutes=delay,
             )
         except Exception as ex:
-            logger.error(f"AviationStack lookup exception for {clean_flight}: {ex}")
+            self.last_error = f"AviationStack request failed: {ex}"
+            logger.error(self.last_error)
             return None

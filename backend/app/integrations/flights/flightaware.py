@@ -30,6 +30,7 @@ class FlightAwareProvider(BaseFlightProvider):
         flight_number: str,
         flight_date: Optional[date] = None
     ) -> Optional[FlightData]:
+        self.last_error = None
         if not self.api_key:
             return None
 
@@ -41,7 +42,8 @@ class FlightAwareProvider(BaseFlightProvider):
             async with httpx.AsyncClient(timeout=10.0) as client:
                 res = await client.get(url, headers=headers)
                 if res.status_code != 200:
-                    logger.warning(f"FlightAware API error: {res.status_code} - {res.text}")
+                    self.last_error = f"FlightAware HTTP {res.status_code}: {res.text[:200]}"
+                    logger.warning(self.last_error)
                     return None
 
                 data = res.json()
@@ -74,5 +76,6 @@ class FlightAwareProvider(BaseFlightProvider):
                     delay_minutes=delay_mins
                 )
         except Exception as e:
-            logger.error(f"FlightAware lookup exception for {clean_flight}: {e}")
+            self.last_error = f"FlightAware request failed: {e}"
+            logger.error(self.last_error)
             return None

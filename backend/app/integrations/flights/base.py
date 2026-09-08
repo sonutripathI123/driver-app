@@ -19,6 +19,11 @@ class FlightData:
 
 
 class BaseFlightProvider(ABC):
+    #: Why the most recent lookup returned nothing. Without this a provider
+    #: refusal, a network block and a genuinely unknown flight all surfaced as
+    #: the same bare 404, with the cause only in logs the operator cannot see.
+    last_error: Optional[str] = None
+
     @abstractmethod
     async def get_flight_status(
         self,

@@ -34,6 +34,7 @@ class AeroDataBoxProvider(BaseFlightProvider):
         flight_number: str,
         flight_date: Optional[date] = None
     ) -> Optional[FlightData]:
+        self.last_error = None
         if not self.api_key or not self.api_host:
             return None
 
@@ -71,7 +72,8 @@ class AeroDataBoxProvider(BaseFlightProvider):
                 )
                 return None
             if res.status_code != 200:
-                logger.warning(f"AeroDataBox error {res.status_code} for {clean_flight}: {res.text[:300]}")
+                self.last_error = f"AeroDataBox HTTP {res.status_code}: {res.text[:200]}"
+                logger.warning(self.last_error)
                 return None
 
             payload: Any = res.json()
@@ -118,5 +120,6 @@ class AeroDataBoxProvider(BaseFlightProvider):
                 delay_minutes=delay_minutes(scheduled, estimated),
             )
         except Exception as ex:
-            logger.error(f"AeroDataBox lookup exception for {clean_flight}: {ex}")
+            self.last_error = f"AeroDataBox request failed: {ex}"
+            logger.error(self.last_error)
             return None
