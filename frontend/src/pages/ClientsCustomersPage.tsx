@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { bookingsApi, customersApi, invoicesApi } from '../services/api';
+import { Customer } from '../types';
 import {
   Users,
   Building2,
@@ -27,7 +29,8 @@ import {
   UserCheck,
   Printer,
   Download,
-  Receipt
+  Receipt,
+  AlertTriangle,
 } from 'lucide-react';
 
 interface ClientBookingHistory {
@@ -67,6 +70,9 @@ interface VIPClient {
 
 export const ClientsCustomersPage: React.FC = () => {
   const [clients, setClients] = useState<VIPClient[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'ALL' | 'CORPORATE' | 'VIP_PRIVATE' | 'UNPAID'>('ALL');
   const [selectedClient, setSelectedClient] = useState<VIPClient | null>(null);
@@ -98,295 +104,145 @@ export const ClientsCustomersPage: React.FC = () => {
     loadClients();
   }, []);
 
-  const loadClients = () => {
-    let initialClients: VIPClient[] = [
-      {
-        id: 'client-01',
-        name: 'David Sterling (Managing Director)',
-        company_name: 'Rio Tinto Mining Executive Account',
-        client_type: 'CORPORATE',
-        email: 'd.sterling@riotinto.com',
-        phone: '+61 412 889 001',
-        city: 'Melbourne VIC',
-        abn: '48 004 458 404',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 25000.0,
-        total_spent: 14850.0,
-        pending_balance: 1440.0,
-        unpaid_invoices_count: 2,
-        preferred_vehicle: 'Mercedes-Benz S-Class S450 LWB (GTS783)',
-        preferred_chauffeur: 'Sonu Tripathi',
-        vip_notes: 'Priority Airport Pickup, Sparkling Mineral Water, Strict On-Time Arrival',
-        rating: 5.0,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-9901',
-            invoice_number: 'INV-2026-0041',
-            date: '27 Aug 2026, 02:30 PM AEST',
-            pickup: 'Melbourne Airport Terminal 1 (Tullamarine)',
-            dropoff: 'Grand Hyatt Melbourne (123 Collins St)',
-            vehicle: 'Mercedes-Benz S-Class S450 LWB',
-            plate: 'GTS783',
-            chauffeur: 'Sonu Tripathi',
-            fare: 440.0,
-            payment_status: 'UNPAID',
-            payment_method: 'Direct EFT Bank Transfer (14 Days Terms)',
-          },
-          {
-            booking_number: 'CCM-2026-9750',
-            invoice_number: 'INV-2026-0038',
-            date: '20 Aug 2026, 08:30 AM AEST',
-            pickup: 'Crown Towers, 8 Whiteman St, Southbank',
-            dropoff: 'Melbourne Airport Terminal 1',
-            vehicle: 'Mercedes-Benz S-Class S450 LWB',
-            plate: 'GTS783',
-            chauffeur: 'Sonu Tripathi',
-            fare: 1000.0,
-            payment_status: 'UNPAID',
-            payment_method: 'Direct EFT Bank Transfer (14 Days Terms)',
-          },
-          {
-            booking_number: 'CCM-2026-9420',
-            invoice_number: 'INV-2026-0031',
-            date: '14 Aug 2026, 06:15 PM AEST',
-            pickup: 'Melbourne Airport Terminal 1',
-            dropoff: 'Park Hyatt Melbourne',
-            vehicle: 'Mercedes-Benz S-Class S450 LWB',
-            plate: 'GTS783',
-            chauffeur: 'Sonu Tripathi',
-            fare: 440.0,
-            payment_status: 'PAID',
-            payment_method: 'Direct EFT Bank Transfer',
-          },
-        ],
-      },
-      {
-        id: 'client-02',
-        name: 'Claire Redfield (VP Board Operations)',
-        company_name: 'BHP Billiton VIP Corporate Services',
-        client_type: 'CORPORATE',
-        email: 'c.redfield@bhp.com',
-        phone: '+61 498 221 445',
-        city: 'Melbourne VIC',
-        abn: '49 004 028 077',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 30000.0,
-        total_spent: 22400.0,
-        pending_balance: 2160.0,
-        unpaid_invoices_count: 3,
-        preferred_vehicle: 'Mercedes-Benz Sprinter Luxury Minibus (BS14OK)',
-        preferred_chauffeur: 'Sonu Tripathi',
-        vip_notes: 'Board delegation group transfers, full-day winery & executive retreats',
-        rating: 5.0,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-9940',
-            invoice_number: 'INV-2026-0042',
-            date: '25 Aug 2026, 09:00 AM AEST',
-            pickup: 'Collins Square, 727 Collins St, Docklands',
-            dropoff: 'Domaine Chandon Winery, Yarra Valley (Full Day)',
-            vehicle: 'Mercedes-Benz Sprinter Luxury Minibus',
-            plate: 'BS14OK',
-            chauffeur: 'Sonu Tripathi',
-            fare: 680.0,
-            payment_status: 'PAID',
-            payment_method: 'Corporate OSKO Direct Transfer',
-          },
-          {
-            booking_number: 'CCM-2026-9810',
-            invoice_number: 'INV-2026-0039',
-            date: '19 Aug 2026, 07:45 AM AEST',
-            pickup: '171 Collins St, Melbourne',
-            dropoff: 'Avalon Airport Executive Hangar',
-            vehicle: 'Mercedes-Benz V-Class People Mover',
-            plate: 'CPS711',
-            chauffeur: 'Sonu Tripathi',
-            fare: 740.0,
-            payment_status: 'UNPAID',
-            payment_method: 'Corporate OSKO Direct Transfer',
-          },
-        ],
-      },
-      {
-        id: 'client-03',
-        name: 'Marcus Brody (Managing Director & CEO)',
-        company_name: 'Macquarie Group Private Wealth',
-        client_type: 'CORPORATE',
-        email: 'm.brody@macquarie.com',
-        phone: '+61 400 334 119',
-        city: 'Sydney / Melbourne',
-        abn: '46 008 583 542',
-        billing_terms: 'Net 14 Days Post-Paid',
-        credit_limit: 15000.0,
-        total_spent: 11900.0,
-        pending_balance: 920.0,
-        unpaid_invoices_count: 2,
-        preferred_vehicle: 'Audi Q7 Black Edition Quattro (AMJ506)',
-        preferred_chauffeur: 'Marcus Vance',
-        vip_notes: 'Sydney Domestic T3 flights, luggage assistance at car door',
-        rating: 4.9,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-8812',
-            invoice_number: 'INV-2026-0043',
-            date: '24 Aug 2026, 11:15 AM AEST',
-            pickup: 'Sydney Airport T3 Domestic',
-            dropoff: 'Crown Towers Sydney, Barangaroo',
-            vehicle: 'Audi Q7 Black Edition Quattro',
-            plate: 'AMJ506',
-            chauffeur: 'Marcus Vance',
-            fare: 320.0,
-            payment_status: 'PAID',
-            payment_method: 'Corporate Amex Card',
-          },
-        ],
-      },
-      {
-        id: 'client-04',
-        name: 'Sarah Jenkins (Senior Managing Partner)',
-        company_name: 'PwC Australia Executive Chauffeur Account',
-        client_type: 'CORPORATE',
-        email: 's.jenkins@pwc.com.au',
-        phone: '+61 411 990 223',
-        city: 'Melbourne VIC',
-        abn: '52 780 433 757',
-        billing_terms: 'Monthly (Net 30 Days)',
-        credit_limit: 20000.0,
-        total_spent: 9800.0,
-        pending_balance: 680.0,
-        unpaid_invoices_count: 1,
-        preferred_vehicle: 'Mercedes-Benz E-Class Executive (BYY499)',
-        preferred_chauffeur: 'Alexander Vance',
-        vip_notes: 'Early morning airport transfers, quiet ride preference',
-        rating: 5.0,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-7730',
-            invoice_number: 'INV-2026-0044',
-            date: '22 Aug 2026, 02:00 PM AEST',
-            pickup: 'Melbourne Airport Terminal 2',
-            dropoff: '101 Collins St, Melbourne CBD',
-            vehicle: 'Mercedes-Benz E-Class Executive',
-            plate: 'BYY499',
-            chauffeur: 'Alexander Vance',
-            fare: 190.0,
-            payment_status: 'PAID',
-            payment_method: 'Direct EFT Bank Transfer',
-          },
-        ],
-      },
-      {
-        id: 'client-05',
-        name: 'Elena Rostova (Private VIP Client)',
-        company_name: 'Private Client Account',
-        client_type: 'VIP_PRIVATE',
-        email: 'elena.rostova@vipmail.com',
-        phone: '+61 433 881 229',
-        city: 'Melbourne VIC',
-        billing_terms: 'Instant Pay (Card / PayID on booking)',
-        credit_limit: 5000.0,
-        total_spent: 7420.0,
-        pending_balance: 0.0,
-        unpaid_invoices_count: 0,
-        preferred_vehicle: 'Mercedes-Benz S-Class S450 LWB (GTS783)',
-        preferred_chauffeur: 'Sonu Tripathi',
-        vip_notes: 'Luxury shopping charters (Chadstone & Collins St), champagne on special occasions',
-        rating: 5.0,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-5520',
-            invoice_number: 'INV-2026-0035',
-            date: '18 Aug 2026, 10:00 AM AEST',
-            pickup: 'Grand Hyatt Melbourne',
-            dropoff: 'Mornington Peninsula Winery Tour',
-            vehicle: 'Mercedes-Benz S-Class S450 LWB',
-            plate: 'GTS783',
-            chauffeur: 'Sonu Tripathi',
-            fare: 520.0,
-            payment_status: 'PAID',
-            payment_method: 'Apple Pay / Credit Card',
-          },
-        ],
-      },
-      {
-        id: 'client-06',
-        name: 'Alexander Vance (Managing Partner)',
-        company_name: 'Herbert Smith Freehills Law',
-        client_type: 'CORPORATE',
-        email: 'a.vance@hsf.com',
-        phone: '+61 402 771 889',
-        city: 'Melbourne VIC',
-        abn: '35 162 971 789',
-        billing_terms: 'Monthly (End of Month / Net 30)',
-        credit_limit: 18000.0,
-        total_spent: 8350.0,
-        pending_balance: 530.0,
-        unpaid_invoices_count: 1,
-        preferred_vehicle: 'Mercedes-Benz V-Class People Mover (CPS711)',
-        preferred_chauffeur: 'Sonu Tripathi',
-        vip_notes: 'Legal team transfers to Supreme Court and Airport',
-        rating: 4.9,
-        bookings: [
-          {
-            booking_number: 'CCM-2026-6641',
-            invoice_number: 'INV-2026-0036',
-            date: '20 Aug 2026, 04:30 PM AEST',
-            pickup: 'Crown Towers, Southbank',
-            dropoff: 'Melbourne Airport Terminal 4',
-            vehicle: 'Mercedes-Benz V-Class People Mover',
-            plate: 'CPS711',
-            chauffeur: 'Sonu Tripathi',
-            fare: 240.0,
-            payment_status: 'PAID',
-            payment_method: 'Corporate OSKO Direct',
-          },
-        ],
-      },
-    ];
+  const AEST = 'Australia/Melbourne';
+  const fmtDate = (iso?: string) =>
+    iso
+      ? new Intl.DateTimeFormat('en-AU', {
+          timeZone: AEST, day: '2-digit', month: 'short', year: 'numeric',
+          hour: '2-digit', minute: '2-digit', hour12: false,
+        }).format(new Date(iso))
+      : '—';
 
-    try {
-      const saved = localStorage.getItem('opal_registered_clients');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        initialClients = [...initialClients, ...parsed];
-      }
-    } catch (e) {}
-
-    setClients(initialClients);
+  const PAYMENT_LABEL: Record<string, ClientBookingHistory['payment_status']> = {
+    PAID_IN_FULL: 'PAID',
+    PARTIAL_DEPOSIT: 'PARTIALLY_PAID',
   };
 
-  const handleCreateClient = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newClient.name || !newClient.email) return;
-
-    const created: VIPClient = {
-      id: `client-${Date.now()}`,
-      name: newClient.name,
-      company_name: newClient.company_name || 'Private VIP Client',
-      client_type: newClient.client_type,
-      email: newClient.email,
-      phone: newClient.phone || '+61 400 000 000',
-      city: newClient.city,
-      abn: newClient.abn || undefined,
-      billing_terms: newClient.billing_terms,
-      credit_limit: Number(newClient.credit_limit) || 25000,
-      total_spent: 0,
-      pending_balance: 0,
-      unpaid_invoices_count: 0,
-      preferred_vehicle: newClient.preferred_vehicle,
-      preferred_chauffeur: newClient.preferred_chauffeur,
-      vip_notes: newClient.vip_notes,
-      rating: 5.0,
-      bookings: [],
-    };
-
-    const updated = [created, ...clients];
-    setClients(updated);
-
+  /**
+   * Clients come from the customer records, with spend, balances and journey
+   * history derived from their bookings and invoices.
+   *
+   * This screen previously held two hardcoded clients — a Rio Tinto executive
+   * account and a private VIP, complete with ABNs, credit limits and invented
+   * trip histories — merged with whatever a browser had in localStorage. Every
+   * machine therefore showed a different client book, and a client added on one
+   * was invisible on another.
+   */
+  const loadClients = async () => {
+    setLoading(true);
+    setLoadError(null);
     try {
-      const existing = JSON.parse(localStorage.getItem('opal_registered_clients') || '[]');
-      localStorage.setItem('opal_registered_clients', JSON.stringify([created, ...existing]));
-    } catch (err) {}
+      const [customers, bookingData, invoiceData] = await Promise.all([
+        customersApi.list(),
+        bookingsApi.list(),
+        invoicesApi.list(),
+      ]);
+      const bookings = bookingData?.bookings ?? [];
+      const invoices = invoiceData?.invoices ?? [];
+
+      setClients(
+        customers.map((c: Customer): VIPClient => {
+          const mine = bookings.filter(
+            (b) => b.passenger_email === c.email || b.passenger_name === c.full_name
+          );
+          const theirInvoices = invoices.filter(
+            (inv) => inv.customer_email === c.email || inv.customer_name === c.full_name
+          );
+          const open = theirInvoices.filter((inv) => !['PAID', 'VOID'].includes(inv.status));
+
+          return {
+            id: c.id,
+            name: c.full_name,
+            company_name: c.company_name || undefined,
+            client_type: c.company_name ? 'CORPORATE' : 'VIP_PRIVATE',
+            email: c.email,
+            phone: c.phone,
+            // Fields the customer record does not carry. Shown as unavailable
+            // rather than filled with plausible-looking values.
+            city: '—',
+            abn: undefined,
+            billing_terms: '—',
+            credit_limit: 0,
+            total_spent: c.total_spent ?? c.total_spend ?? 0,
+            pending_balance: open.reduce((sum, inv) => sum + (inv.balance_due ?? 0), 0),
+            unpaid_invoices_count: open.length,
+            preferred_vehicle: '—',
+            preferred_chauffeur: '—',
+            vip_notes: c.notes || '',
+            rating: 0,
+            bookings: mine.map((b): ClientBookingHistory => {
+              const leg = b.legs?.[0];
+              const inv = theirInvoices.find((i) => i.booking_id === b.id);
+              return {
+                booking_number: b.booking_number,
+                invoice_number: inv?.invoice_number || '—',
+                date: fmtDate(leg?.pickup_datetime || b.created_at),
+                pickup: leg?.pickup_address || '—',
+                dropoff: leg?.dropoff_address || '—',
+                vehicle: String(leg?.vehicle_category || '').replace(/_/g, ' ') || '—',
+                plate: leg?.vehicle_plate || '—',
+                chauffeur: leg?.driver_name || 'Unallocated',
+                fare: b.total_fare,
+                payment_status: PAYMENT_LABEL[b.payment_status] || 'UNPAID',
+                payment_method: '—',
+              };
+            }),
+          };
+        })
+      );
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setClients([]);
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Client list unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newClient.name || !newClient.email || isSaving) return;
+
+    setIsSaving(true);
+    setLoadError(null);
+    try {
+      // Saved to the database. This used to build the client locally and push
+      // it into localStorage, so the record lived in one browser only.
+      await customersApi.create({
+        full_name: newClient.name,
+        email: newClient.email,
+        phone: newClient.phone,
+        company_name: newClient.company_name || undefined,
+        is_vip: newClient.client_type === 'VIP_PRIVATE',
+        notes: [
+          newClient.abn ? `ABN ${newClient.abn}` : null,
+          newClient.city ? `City: ${newClient.city}` : null,
+          newClient.billing_terms ? `Terms: ${newClient.billing_terms}` : null,
+          newClient.preferred_vehicle ? `Preferred vehicle: ${newClient.preferred_vehicle}` : null,
+          newClient.preferred_chauffeur ? `Preferred chauffeur: ${newClient.preferred_chauffeur}` : null,
+          newClient.vip_notes || null,
+        ].filter(Boolean).join(' | ') || undefined,
+      });
+      await loadClients();
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setLoadError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Could not save the client (HTTP ${err.response.status}).`
+            : 'Could not save the client: cannot reach the Opal Cloud Engine.'
+      );
+      setIsSaving(false);
+      return;
+    }
+    setIsSaving(false);
 
     setIsAddClientModalOpen(false);
     setNewClient({
@@ -471,6 +327,31 @@ export const ClientsCustomersPage: React.FC = () => {
 
   return (
     <div className="space-y-6">
+      {loadError && (
+        <div role="alert" className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg flex items-start gap-2.5">
+          <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black text-[#0A0E1A]">Client book could not be loaded</p>
+            <p className="text-xs font-bold text-[#0A0E1A] opacity-75 break-words">{loadError}</p>
+          </div>
+          <button
+            onClick={loadClients}
+            className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#E0F2FE] hover:text-[#0A0E1A] transition-colors"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {!loading && !loadError && clients.length === 0 && (
+        <div className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-6 text-center text-[#0A0E1A]">
+          <p className="text-sm font-black">No clients yet</p>
+          <p className="text-xs font-bold opacity-75 mt-1">
+            Clients are created here, or automatically the first time someone books.
+          </p>
+        </div>
+      )}
+
       {/* Header */}
       <div className="glass-panel p-6 rounded-2xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4 shadow-lg">
         <div>
