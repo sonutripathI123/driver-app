@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { customersApi, invoicesApi } from '../services/api';
 import { Customer, Invoice, TaxSummaryBASReport } from '../types';
+import { BANK, BANK_CONFIGURED, COMPANY, NOT_CONFIGURED } from '../config/company';
 import {
   ReceiptText,
   DollarSign,
@@ -32,6 +33,17 @@ import {
 
 /** Current BAS quarter. Kept in one place so the label and the query agree. */
 const BAS_PERIOD = { from: '2026-07-01', to: '2026-09-30' };
+
+/** Invoice dates are ISO timestamps from the API; a document needs a date. */
+const fmtInvoiceDate = (iso?: string) => {
+  if (!iso) return '—';
+  const parsed = new Date(iso);
+  return Number.isNaN(parsed.getTime())
+    ? iso
+    : new Intl.DateTimeFormat('en-AU', {
+        timeZone: 'Australia/Melbourne', day: '2-digit', month: 'short', year: 'numeric',
+      }).format(parsed);
+};
 
 interface CorporateCreditAccount {
   id: string;
@@ -389,7 +401,7 @@ export const InvoicingTaxPage: React.FC = () => {
                       <span className="text-[11px] text-[#0A0E1A] font-bold block">{inv.passenger_name || inv.customer_name}</span>
                     </td>
                     <td className="py-4 px-4 text-[#0A0E1A] font-bold">
-                      {inv.issue_date} <span className="text-[#0A0E1A] block text-[10px] font-bold">Due: {inv.due_date}</span>
+                      {fmtInvoiceDate(inv.issue_date)} <span className="text-[#0A0E1A] block text-[10px] font-bold">Due: {fmtInvoiceDate(inv.due_date)}</span>
                     </td>
                     <td className="py-4 px-4">
                       <span
@@ -886,11 +898,11 @@ export const InvoicingTaxPage: React.FC = () => {
                       ● {previewInvoice.status}
                     </span>
                   </div>
-                  <p className="text-sm font-black text-[#0A0E1A]">Opal Chauffeurs Australia Pty Ltd</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Trading as Opal Chauffeurs VIP Transport Network</p>
-                  <p className="text-[11px] font-mono text-[#0A0E1A] font-black">ABN: 45 123 456 789</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Melbourne VIC • Australia</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Phone: +61 432 000 718 • accounts@opalchauffeurs.com.au</p>
+                  <p className="text-sm font-black text-[#0A0E1A]">{COMPANY.legalName}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">{COMPANY.tradingAs}</p>
+                  <p className="text-[11px] font-mono text-[#0A0E1A] font-black">ABN: {COMPANY.abn}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">{COMPANY.location}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">Phone: {COMPANY.phone} • {COMPANY.email}</p>
                 </div>
 
                 <div className="sm:text-right space-y-1 bg-[#FFFFFF] p-3.5 rounded-2xl border border-[#E6D8C3] font-mono w-full sm:w-auto shadow-sm text-[#0A0E1A]">
@@ -898,8 +910,8 @@ export const InvoicingTaxPage: React.FC = () => {
                   {previewInvoice.booking_number && (
                     <span className="text-[11px] text-[#0A0E1A] block font-bold">Booking Ref: <strong className="text-[#0A0E1A]">{previewInvoice.booking_number}</strong></span>
                   )}
-                  <span className="text-[11px] text-[#0A0E1A] block font-bold">Issue Date: <strong className="text-[#0A0E1A]">{previewInvoice.issue_date}</strong></span>
-                  <span className="text-[11px] text-[#0A0E1A] block font-bold">Payment Due: <strong className="text-[#0A0E1A]">{previewInvoice.due_date}</strong></span>
+                  <span className="text-[11px] text-[#0A0E1A] block font-bold">Issue Date: <strong className="text-[#0A0E1A]">{fmtInvoiceDate(previewInvoice.issue_date)}</strong></span>
+                  <span className="text-[11px] text-[#0A0E1A] block font-bold">Payment Due: <strong className="text-[#0A0E1A]">{fmtInvoiceDate(previewInvoice.due_date)}</strong></span>
                   {previewInvoice.paid_at && (
                     <span className="text-[11px] text-[#0A0E1A] font-black block">Paid Date: <strong>{previewInvoice.paid_at}</strong></span>
                   )}
@@ -1018,26 +1030,32 @@ export const InvoicingTaxPage: React.FC = () => {
                   <span className="text-[10px] text-[#0A0E1A] block uppercase font-black tracking-wider flex items-center gap-1.5 font-sans">
                     <CreditCard className="w-3.5 h-3.5 text-[#0A0E1A]" /> Remittance & EFT Payment Details
                   </span>
+                  {!BANK_CONFIGURED && (
+                    <p className="text-[10px] font-sans font-bold text-[#B91C1C]">
+                      Remittance details are not configured. Set them before sending this
+                      invoice — a client paying against placeholder details pays the wrong account.
+                    </p>
+                  )}
                   <div className="space-y-1 font-mono text-[#0A0E1A] font-bold">
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Bank:</span>
-                      <strong className="text-[#0A0E1A]">Commonwealth Bank of Australia</strong>
+                      <strong className="text-[#0A0E1A]">{BANK.name || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Account Name:</span>
-                      <strong className="text-[#0A0E1A]">Opal Chauffeurs Australia Pty Ltd</strong>
+                      <strong className="text-[#0A0E1A]">{BANK.accountName}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">BSB:</span>
-                      <strong className="text-[#0A0E1A] font-black">063-000</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.bsb || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Account Number:</span>
-                      <strong className="text-[#0A0E1A] font-black">1092 8841</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.accountNumber || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">PayID / OSKO:</span>
-                      <strong className="text-[#0A0E1A] font-black">accounts@opalchauffeurs.com.au</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.payId || NOT_CONFIGURED}</strong>
                     </div>
                   </div>
                 </div>
