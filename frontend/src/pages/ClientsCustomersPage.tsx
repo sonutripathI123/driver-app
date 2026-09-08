@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { bookingsApi, customersApi, invoicesApi } from '../services/api';
 import { Customer } from '../types';
+import { BANK, BANK_CONFIGURED, COMPANY, NOT_CONFIGURED } from '../config/company';
 import {
   Users,
   Building2,
@@ -282,6 +283,26 @@ export const ClientsCustomersPage: React.FC = () => {
   const totalLifetimeSpend = clients.reduce((sum, c) => sum + c.total_spent, 0);
   const totalOutstandingDebt = clients.reduce((sum, c) => sum + c.pending_balance, 0);
 
+  /**
+   * Remittance lines for an outgoing message.
+   *
+   * These used to be hardcoded as Commonwealth Bank BSB 063-000 / account
+   * 1092 8841 - an account that is not this business's. Every statement and
+   * every invoice sent from this screen was telling a real client to pay a
+   * stranger. Nothing is quoted now unless the details are configured.
+   */
+  const remittanceLines = (bullet: string): string => {
+    if (!BANK_CONFIGURED) return '';
+    const rows = [
+      `${bullet}Bank: ${BANK.name}`,
+      `${bullet}Account Name: ${BANK.accountName}`,
+      `${bullet}BSB: ${BANK.bsb}`,
+      `${bullet}Account: ${BANK.accountNumber}`,
+    ];
+    if (BANK.payId) rows.push(`${bullet}PayID: ${BANK.payId}`);
+    return rows.join('\n') + '\n\n';
+  };
+
   // WhatsApp Statement Dispatch
   const handleGenerateWhatsAppStatement = (client: VIPClient) => {
     const text =
@@ -290,14 +311,15 @@ export const ClientsCustomersPage: React.FC = () => {
       `👤 *Attn:* ${client.name}\n` +
       `💳 *Billing Terms:* ${client.billing_terms}\n` +
       `💰 *Total Outstanding Balance:* $${client.pending_balance.toFixed(2)} AUD (${client.unpaid_invoices_count} Invoices Pending)\n\n` +
-      `🏦 *Remittance Bank Details (EFT / OSKO):*\n` +
-      `• Bank: Commonwealth Bank of Australia\n` +
-      `• Account Name: Opal Chauffeurs Australia Pty Ltd\n` +
-      `• BSB: 063-000\n` +
-      `• Account: 1092 8841\n` +
-      `• PayID: accounts@opalchauffeurs.com.au\n\n` +
-      `📞 *Accounts Enquiries:* +61 432 000 718\n` +
-      `🌐 *Website:* https://www.opalchauffeurs.com.au\n\n` +
+      (BANK_CONFIGURED
+        ? `🏦 *Remittance Bank Details (EFT / OSKO):*
+` + remittanceLines('• ')
+        : '') +
+      `📞 *Accounts Enquiries:* ${COMPANY.phone}
+` +
+      `🌐 *Website:* https://www.${COMPANY.website}
+
+` +
       `✅ Thank you for traveling with Opal Chauffeurs Australia!`;
 
     window.open(
@@ -314,13 +336,13 @@ export const ClientsCustomersPage: React.FC = () => {
       `Client Account: ${client.company_name || client.name}\n` +
       `Total Outstanding Balance: $${client.pending_balance.toFixed(2)} AUD\n` +
       `Payment Terms: ${client.billing_terms}\n\n` +
-      `Remittance Bank EFT Transfer Details:\n` +
-      `Bank: Commonwealth Bank of Australia\n` +
-      `Account Name: Opal Chauffeurs Australia Pty Ltd\n` +
-      `BSB: 063-000\n` +
-      `Account Number: 1092 8841\n` +
-      `PayID: accounts@opalchauffeurs.com.au\n\n` +
-      `Kind Regards,\nAccounts & Dispatch\nOpal Chauffeurs Australia\nPhone: +61 432 000 718\nWeb: https://www.opalchauffeurs.com.au`
+      (BANK_CONFIGURED ? `Remittance Bank EFT Transfer Details:
+` + remittanceLines('') : '') +
+      `Kind Regards,
+Accounts & Dispatch
+${COMPANY.legalName}
+Phone: ${COMPANY.phone}
+Web: https://www.${COMPANY.website}`
     );
     window.open(`mailto:${client.email}?subject=${subject}&body=${body}`, '_blank');
   };
@@ -696,8 +718,13 @@ export const ClientsCustomersPage: React.FC = () => {
                                   `🧑‍✈️ *Chauffeur:* ${b.chauffeur}\n` +
                                   `💰 *Total Amount (Inc 10% GST):* $${b.fare.toFixed(2)} AUD\n` +
                                   `💳 *Payment Status:* ${b.payment_status} (${b.payment_method})\n\n` +
-                                  `🏦 *Bank EFT Remittance:* CBA (BSB: 063-000 • Acc: 1092 8841)\n` +
-                                  `📞 *Phone:* +61 432 000 718\n\n` +
+                                  (BANK_CONFIGURED
+                                    ? `🏦 *Bank EFT Remittance:* ${BANK.name} (BSB: ${BANK.bsb} • Acc: ${BANK.accountNumber})
+`
+                                    : '') +
+                                  `📞 *Phone:* ${COMPANY.phone}
+
+` +
                                   `✅ Thank you for traveling with Opal Chauffeurs Australia!`
                                 )}`}
                                 target="_blank"
@@ -722,11 +749,11 @@ export const ClientsCustomersPage: React.FC = () => {
                                   `Chauffeur: ${b.chauffeur} (${b.vehicle} - ${b.plate})\n` +
                                   `Total Fare (Inc 10% GST): $${b.fare.toFixed(2)} AUD\n` +
                                   `Payment Status: ${b.payment_status}\n\n` +
-                                  `Commonwealth Bank EFT Details:\n` +
-                                  `BSB: 063-000\n` +
-                                  `Account: 1092 8841\n` +
-                                  `PayID: accounts@opalchauffeurs.com.au\n\n` +
-                                  `Thank you for traveling with Opal Chauffeurs Australia.\nPhone: +61 432 000 718\nWeb: https://www.opalchauffeurs.com.au`
+                                  (BANK_CONFIGURED ? `Bank EFT Details:
+` + remittanceLines('') : '') +
+                                  `Thank you for traveling with ${COMPANY.legalName}.
+Phone: ${COMPANY.phone}
+Web: https://www.${COMPANY.website}`
                                 )}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
@@ -791,11 +818,13 @@ export const ClientsCustomersPage: React.FC = () => {
                       ● {previewBooking.booking.payment_status}
                     </span>
                   </div>
-                  <p className="text-sm font-black text-[#0A0E1A]">Opal Chauffeurs Australia Pty Ltd</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Trading as Opal Chauffeurs VIP Transport Network</p>
-                  <p className="text-[11px] font-mono text-[#0A0E1A] font-black">ABN: 45 123 456 789</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Melbourne VIC • Australia</p>
-                  <p className="text-[11px] text-[#0A0E1A] font-bold">Phone: +61 432 000 718 • accounts@opalchauffeurs.com.au</p>
+                  {/* Was hardcoded, and the ABN was invented ("45 123 456 789"),
+                      which makes the document invalid as a tax invoice. */}
+                  <p className="text-sm font-black text-[#0A0E1A]">{COMPANY.legalName}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">{COMPANY.tradingAs}</p>
+                  <p className="text-[11px] font-mono text-[#0A0E1A] font-black">ABN: {COMPANY.abn}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">{COMPANY.location}</p>
+                  <p className="text-[11px] text-[#0A0E1A] font-bold">Phone: {COMPANY.phone} • {COMPANY.email}</p>
                 </div>
 
                 <div className="sm:text-right space-y-1 bg-[#FFFFFF] p-3.5 rounded-2xl border border-[#E6D8C3] font-mono w-full sm:w-auto shadow-sm">
@@ -878,21 +907,27 @@ export const ClientsCustomersPage: React.FC = () => {
                     <CreditCard className="w-3.5 h-3.5 text-[#0A0E1A]" /> Remittance & EFT Payment Details
                   </span>
                   <div className="space-y-1 font-mono text-[#0A0E1A] font-bold">
+                    {!BANK_CONFIGURED && (
+                      <p className="text-[10px] font-sans font-bold text-[#B91C1C]">
+                        Remittance details are not configured. Do not send this invoice yet — a client paying
+                        against placeholder details pays the wrong account.
+                      </p>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Bank:</span>
-                      <strong className="text-[#0A0E1A] font-black">Commonwealth Bank of Australia</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.name || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Account Name:</span>
-                      <strong className="text-[#0A0E1A] font-black">Opal Chauffeurs Australia Pty Ltd</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.accountName}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">BSB:</span>
-                      <strong className="text-[#0A0E1A] font-black">063-000</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.bsb || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Account Number:</span>
-                      <strong className="text-[#0A0E1A] font-black">1092 8841</strong>
+                      <strong className="text-[#0A0E1A] font-black">{BANK.accountNumber || NOT_CONFIGURED}</strong>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-[#0A0E1A]">Reference:</span>

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { LuxuryCarCanvas } from '../components/3d/LuxuryCarCanvas';
 import { bookingsApi, customersApi, pricingApi } from '../services/api';
 import { Customer, VehicleCategory } from '../types';
+import { BANK, BANK_CONFIGURED, COMPANY } from '../config/company';
 import { triggerNativeNotification } from '../utils/notificationSound';
 import confetti from 'canvas-confetti';
 import {
@@ -551,18 +552,32 @@ export const QuoteBookingPage: React.FC = () => {
               {paymentMethodType === 'PAYID_EFT' && (
                 <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] text-[#0A0E1A] space-y-2 text-xs font-mono animate-in fade-in">
                   <span className="font-black font-sans block text-sm text-[#0A0E1A]">Instant OSKO / PayID Transfer Details</span>
-                  <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
-                    <span className="text-[#0A0E1A]">PayID / Email:</span>
-                    <strong className="text-[#0A0E1A]">book@opalchauffeurs.com.au</strong>
-                  </div>
-                  <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
-                    <span className="text-[#0A0E1A]">Bank:</span>
-                    <span className="font-black text-[#0A0E1A]">Commonwealth Bank (BSB: 063-000 • Acc: 1092 8841)</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-[#0A0E1A]">Payment Reference:</span>
-                    <strong className="text-[#0A0E1A] font-black">OPAL-TRANSFER</strong>
-                  </div>
+                  {/* These were invented — "Commonwealth Bank BSB 063-000 / Acc 1092
+                      8841" is not this business's account. A caller reading them
+                      down the phone would send the fare to a stranger. */}
+                  {BANK_CONFIGURED ? (
+                    <>
+                      <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
+                        <span className="text-[#0A0E1A]">PayID / Email:</span>
+                        <strong className="text-[#0A0E1A]">{BANK.payId || COMPANY.email}</strong>
+                      </div>
+                      <div className="flex justify-between border-b border-[#E6D8C3] pb-1">
+                        <span className="text-[#0A0E1A]">Bank:</span>
+                        <span className="font-black text-[#0A0E1A]">
+                          {BANK.name} (BSB: {BANK.bsb} • Acc: {BANK.accountNumber})
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">Payment Reference:</span>
+                        <strong className="text-[#0A0E1A] font-black">Booking number</strong>
+                      </div>
+                    </>
+                  ) : (
+                    <p className="font-sans font-bold text-[#B91C1C]">
+                      Remittance details are not configured. Do not quote bank details to this client until they are set —
+                      any figures shown here would be placeholders, and the payment would go to the wrong account.
+                    </p>
+                  )}
                 </div>
               )}
 
