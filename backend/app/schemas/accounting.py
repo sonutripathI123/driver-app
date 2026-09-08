@@ -43,6 +43,21 @@ class InvoiceRead(BaseModel):
     created_at: datetime
     updated_at: datetime
 
+    # Denormalised for the printed tax invoice. Without these the document had
+    # no buyer on it and fell back to "Private VIP Client" — and an invoice
+    # over $1,000 must identify the buyer to be a valid tax invoice.
+    customer_name: Optional[str] = None
+    customer_email: Optional[str] = None
+    customer_phone: Optional[str] = None
+    customer_company: Optional[str] = None
+    booking_number: Optional[str] = None
+    passenger_name: Optional[str] = None
+    route_summary: Optional[str] = None
+    journey_datetime: Optional[datetime] = None
+    vehicle_plate: Optional[str] = None
+    driver_name: Optional[str] = None
+    flight_number: Optional[str] = None
+
 
 class InvoiceListResponse(BaseModel):
     invoices: List[InvoiceRead]

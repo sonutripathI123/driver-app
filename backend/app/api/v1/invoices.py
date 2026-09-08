@@ -12,7 +12,7 @@ from app.schemas.accounting import (
     InvoiceListResponse,
     InvoiceRead,
 )
-from app.services.accounting_service import AccountingService
+from app.services.accounting_service import AccountingService, to_invoice_read
 
 router = APIRouter(prefix="/invoices", tags=["Invoicing & Tax (GST)"])
 
@@ -68,7 +68,7 @@ async def get_invoice(
     Get detailed tax invoice with line items and linked payment ledger transactions.
     Access: Staff
     """
-    return await AccountingService.get_invoice_by_id(db=db, invoice_id=invoice_id)
+    return to_invoice_read(await AccountingService.get_invoice_by_id(db=db, invoice_id=invoice_id))
 
 
 @router.post("/{invoice_id}/void", response_model=InvoiceRead, dependencies=[Depends(require_accountant)])

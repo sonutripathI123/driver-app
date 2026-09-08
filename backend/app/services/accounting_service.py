@@ -56,6 +56,39 @@ def calculate_australian_gst(gross_amount: float) -> Tuple[float, float]:
     return subtotal, gst
 
 
+def to_invoice_read(inv: Invoice) -> InvoiceRead:
+    """
+    Builds the API shape for an invoice, resolving the buyer and journey.
+
+    InvoiceRead previously exposed only customer_id, so the printed tax invoice
+    had no buyer on it and fell back to "Private VIP Client". An invoice over
+    $1,000 must identify the buyer to be a valid tax invoice.
+    """
+    data = InvoiceRead.model_validate(inv, from_attributes=True)
+
+    customer = getattr(inv, "customer", None)
+    if customer:
+        data.customer_name = customer.full_name
+        data.customer_email = customer.email
+        data.customer_phone = customer.phone
+        data.customer_company = customer.company_name
+
+    booking = getattr(inv, "booking", None)
+    if booking:
+        data.booking_number = booking.booking_number
+        data.passenger_name = booking.passenger_name or data.customer_name
+        legs = sorted(booking.legs or [], key=lambda l: l.leg_number)
+        if legs:
+            leg = legs[0]
+            data.route_summary = f"{leg.pickup_address} -> {leg.dropoff_address}"
+            data.journey_datetime = leg.pickup_datetime
+            data.vehicle_plate = leg.vehicle.registration_plate if leg.vehicle else None
+            data.driver_name = leg.driver.full_name if leg.driver else None
+            data.flight_number = leg.flight_number
+
+    return data
+
+
 class AccountingService:
     @staticmethod
     async def generate_invoice_number(db: AsyncSession) -> str:
@@ -211,7 +244,19 @@ class AccountingService:
         limit: int = 50
     ) -> InvoiceListResponse:
         """Queries tax invoices with filters and outstanding debt summation."""
-        stmt = select(Invoice).options(selectinload(Invoice.line_items), selectinload(Invoice.payments))
+        stmt = select(Invoice).options(
+            selectinload(Invoice.line_items),
+            selectinload(Invoice.payments),
+            selectinload(Invoice.customer),
+            # The leg's vehicle and driver are read when building the document;
+            # without eager loading that is a lazy load inside async context.
+            selectinload(Invoice.booking)
+            .selectinload(Booking.legs)
+            .selectinload(BookingLeg.vehicle),
+            selectinload(Invoice.booking)
+            .selectinload(Booking.legs)
+            .selectinload(BookingLeg.driver),
+        )
 
         if status_filter:
             stmt = stmt.where(Invoice.status == status_filter)
@@ -234,7 +279,7 @@ class AccountingService:
         total_balance = float(bal_res.scalar_one() or 0.0)
 
         return InvoiceListResponse(
-            invoices=invoices,
+            invoices=[to_invoice_read(inv) for inv in invoices],
             total_count=len(invoices),
             total_outstanding_balance=round(total_balance, 2)
         )
@@ -250,6 +295,11 @@ class AccountingService:
                 selectinload(Invoice.payments),
                 selectinload(Invoice.customer),
                 selectinload(Invoice.booking)
+                .selectinload(Booking.legs)
+                .selectinload(BookingLeg.vehicle),
+                selectinload(Invoice.booking)
+                .selectinload(Booking.legs)
+                .selectinload(BookingLeg.driver),
             )
         )
         res = await db.execute(stmt)
