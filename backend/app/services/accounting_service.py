@@ -471,7 +471,14 @@ class AccountingService:
             inv for inv in all_invoices
             if from_utc <= ensure_utc(inv.issue_date) <= to_utc
         ]
-        gross_sales = sum(inv.total_inc_gst for inv in filtered_invoices)
+        # Cash basis: only invoices with money against them are included, and a
+        # partially paid invoice contributes what was actually received. Summing
+        # total_inc_gst counted the full face value of a part-paid invoice, so
+        # GST was declared on money that had not arrived.
+        gross_sales = sum(
+            inv.total_inc_gst if inv.status == InvoiceStatus.PAID else (inv.amount_paid or 0.0)
+            for inv in filtered_invoices
+        )
         subtotal_sales, gst_collected = calculate_australian_gst(gross_sales)
 
         # Sum driver payouts
@@ -490,7 +497,10 @@ class AccountingService:
         net_margin = round(subtotal_sales - driver_payouts, 2)
 
         return TaxSummaryBASReport(
-            period_label=period_label,
+            # Say which basis these figures are on. Reporting $0 while a $640
+            # invoice sits unpaid is correct on a cash basis and alarming
+            # without the label.
+            period_label=f"{period_label} — cash basis (GST on payments received)",
             gross_sales_inc_gst=round(gross_sales, 2),
             gst_collected_10pct=gst_collected,
             net_sales_ex_gst=subtotal_sales,
