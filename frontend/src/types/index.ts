@@ -331,6 +331,31 @@ export interface ManagerNotificationSettings {
   alert_on_payment_received: boolean;
 }
 
+/** A reply delivered to the business mailbox by the provider's inbound webhook. */
+export interface InboundEmail {
+  id: string;
+  provider: string;
+  sender_email: string;
+  sender_name?: string | null;
+  recipient_email?: string | null;
+  subject?: string | null;
+  body_text?: string | null;
+  body_html?: string | null;
+  booking_id?: string | null;
+  booking_number?: string | null;
+  status: 'UNREAD' | 'READ' | 'ACTION_NEEDED' | 'REPLIED';
+  received_at: string;
+}
+
+/** Whether inbound mail is actually connected, so the UI need not guess. */
+export interface InboundMailboxStatus {
+  configured: boolean;
+  webhook_path: string;
+  total_messages: number;
+  unread_count: number;
+  detail: string;
+}
+
 export interface NotificationItem {
   id: string;
   booking_id?: string;

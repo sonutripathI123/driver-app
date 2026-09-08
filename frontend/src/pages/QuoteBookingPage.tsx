@@ -31,24 +31,34 @@ import {
 export const QuoteBookingPage: React.FC = () => {
   const [journeyType, setJourneyType] = useState<'ONE_WAY' | 'RETURN' | 'HOURLY'>('ONE_WAY');
   const [selectedCategory, setSelectedCategory] = useState<VehicleCategory>('SEDAN_EXECUTIVE');
-  const [pickupAddress, setPickupAddress] = useState('Crown Towers, 8 Whiteman St, Southbank VIC 3006');
-  const [dropoffAddress, setDropoffAddress] = useState('Melbourne Airport Terminal 2 (Tullamarine)');
-  const [pickupDate, setPickupDate] = useState('2026-08-28');
-  const [pickupTime, setPickupTime] = useState('09:30');
-  const [isAirport, setIsAirport] = useState(true);
-  const [flightNumber, setFlightNumber] = useState('QF400');
-  const [passengerName, setPassengerName] = useState('Alexander Vance');
-  const [passengerPhone, setPassengerPhone] = useState('+61 412 345 678');
-  const [passengerEmail, setPassengerEmail] = useState('alexander.vance@opalchauffeurs.com.au');
+  /**
+   * The form starts blank.
+   *
+   * Every field used to be pre-filled with a fabricated journey — passenger
+   * "Alexander Vance", flight QF400, Crown Towers to Melbourne Airport, a
+   * masked card number, expiry and CVC, and a corporate account code
+   * "CORP-RIO-880" that matches no account. Pressing Confirm without editing
+   * created a real booking for a passenger who does not exist, on a pickup
+   * date that had already passed.
+   */
+  const [pickupAddress, setPickupAddress] = useState('');
+  const [dropoffAddress, setDropoffAddress] = useState('');
+  const [pickupDate, setPickupDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [pickupTime, setPickupTime] = useState('');
+  const [isAirport, setIsAirport] = useState(false);
+  const [flightNumber, setFlightNumber] = useState('');
+  const [passengerName, setPassengerName] = useState('');
+  const [passengerPhone, setPassengerPhone] = useState('');
+  const [passengerEmail, setPassengerEmail] = useState('');
   const [paymentOption, setPaymentOption] = useState<'FULL' | 'DEPOSIT_25'>('FULL');
 
   // In-Form Real Payment Method State
   const [paymentMethodType, setPaymentMethodType] = useState<'CARD' | 'DIGITAL_WALLET' | 'PAYID_EFT' | 'CORPORATE_ACCOUNT'>('CARD');
-  const [cardNumber, setCardNumber] = useState('4532 •••• •••• 8892');
-  const [cardExpiry, setCardExpiry] = useState('09/28');
-  const [cardCvc, setCardCvc] = useState('841');
-  const [cardHolder, setCardHolder] = useState('Alexander Vance');
-  const [corporateAccountCode, setCorporateAccountCode] = useState('CORP-RIO-880');
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvc, setCardCvc] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [corporateAccountCode, setCorporateAccountCode] = useState('');
 
   // Booking Result Modal
   const [createdBookingNumber, setCreatedBookingNumber] = useState<string | null>(null);

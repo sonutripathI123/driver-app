@@ -30,7 +30,8 @@ import {
   AlertTriangle
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { notificationsApi } from '../services/api';
+import { automationsApi, bookingsApi, inboxApi, notificationsApi } from '../services/api';
+import { Booking, InboundEmail, InboundMailboxStatus } from '../types';
 
 export interface EmailLog {
   id: string;
@@ -49,17 +50,15 @@ export interface EmailLog {
   html_body?: string;
 }
 
-export interface InboundReply {
-  id: string;
-  sender_name: string;
-  sender_email: string;
-  booking_ref: string;
-  subject: string;
-  received_at: string;
-  message_content: string;
-  status: 'UNREAD' | 'REPLIED' | 'ACTION_NEEDED';
-  reply_history?: { sender: string; timestamp: string; text: string }[];
-}
+/**
+ * A thread in the inbox.
+ *
+ * This used to be a browser-local shape seeded with four invented threads —
+ * people who do not exist at riotinto.com, bhp.com and hsf.com.au. Replying
+ * to one sent a genuine email to a stranger's domain. It is now whatever the
+ * inbound webhook actually delivered.
+ */
+export type InboundReply = InboundEmail;
 
 export const EmailCommunicationsHubPage: React.FC = () => {
   const [activeSubTab, setActiveSubTab] = useState<'sent' | 'inbox' | 'templates' | 'automation'>('sent');
@@ -93,6 +92,9 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   // the hub always looked busy even though nothing had ever been sent.
   const [emailLogs, setEmailLogs] = useState<EmailLog[]>([]);
   const [logsError, setLogsError] = useState<string | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [mailboxStatus, setMailboxStatus] = useState<InboundMailboxStatus | null>(null);
+  const [inboxError, setInboxError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
@@ -104,6 +106,19 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     TAX_INVOICE: 'TAX_INVOICE',
     QUOTE_PROPOSAL: 'QUOTE_PROPOSAL',
     DIRECT_CUSTOM_EMAIL: 'CUSTOM_COMPOSED',
+  };
+
+  /** Server timestamps are ISO; the old sample threads carried prose like "Today at 02:40 PM". */
+  const fmtReceived = (iso: string) => {
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    return d.toLocaleString('en-AU', {
+      timeZone: 'Australia/Melbourne',
+      day: '2-digit',
+      month: 'short',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const stripHtml = (html: string) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -128,6 +143,14 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   const loadEmailLogs = async () => {
     setLoading(true);
     try {
+      // Bookings back the compose form's reference picker. It used to be a
+      // free-text box posted as booking_id, which is a foreign key, so any
+      // value typed into it made the send fail outright.
+      bookingsApi
+        .list(undefined, 200)
+        .then((page) => setBookings(page.bookings || []))
+        .catch(() => setBookings([]));
+
       const items = await notificationsApi.getNotificationLogs(100);
       setEmailLogs(
         (Array.isArray(items) ? items : [])
@@ -154,77 +177,49 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     loadEmailLogs();
   }, []);
 
-  // Inbound Replies State
-  const [inboundReplies, setInboundReplies] = useState<InboundReply[]>(() => {
-    const saved = localStorage.getItem('crown_inbound_replies_v1');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
+  // Inbound mailbox, read from the API. Nothing is seeded: an empty inbox
+  // means no mail has arrived, and the banner explains how to connect one.
+  const [inboundReplies, setInboundReplies] = useState<InboundReply[]>([]);
+
+  const loadInbox = async () => {
+    try {
+      const [status, threads] = await Promise.all([inboxApi.getStatus(), inboxApi.list(50)]);
+      setMailboxStatus(status);
+      setInboundReplies(threads || []);
+      setInboxError(null);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setInboundReplies([]);
+      setInboxError(
+        typeof detail === 'string'
+          ? detail
+          : err?.response
+            ? `Inbox unavailable (HTTP ${err.response.status}).`
+            : 'Cannot reach the Opal Cloud Engine.'
+      );
     }
-    return [
-      {
-        id: 'in-01',
-        sender_name: 'David Sterling',
-        sender_email: 'david.sterling@riotinto.com',
-        booking_ref: 'CCM-2026-9901',
-        subject: 'Re: Confirmed: Opal Chauffeurs VIP Transfer #CCM-2026-9901',
-        received_at: 'Today at 02:40 PM AEST',
-        status: 'UNREAD',
-        message_content: 'Hi Harps, thanks for the confirmation! Could you please ensure the chauffeur has an extra baby booster seat in the S-Class? We have our toddler with us.',
-        reply_history: [],
-      },
-      {
-        id: 'in-02',
-        sender_name: 'Elena Rostova',
-        sender_email: 'elena.rostova@prestige.com',
-        booking_ref: 'CCM-2026-5520',
-        subject: 'Re: Flight Advisory QF400 (+25m Delay)',
-        received_at: 'Yesterday at 06:45 PM AEST',
-        status: 'REPLIED',
-        message_content: 'Appreciate the proactive flight delay tracking! We just touched down on the tarmac. Will exit via Carousel 3 in 10 minutes.',
-        reply_history: [
-          {
-            sender: 'Harps Randhawa (Director)',
-            timestamp: 'Yesterday at 06:50 PM AEST',
-            text: 'Welcome to Melbourne Ms. Rostova! Chauffeur Sonu is standing by at Gate 2 with your name board. Safe travels.',
-          },
-        ],
-      },
-      {
-        id: 'in-03',
-        sender_name: 'Claire Redfield',
-        sender_email: 'claire.redfield@bhp.com',
-        booking_ref: 'CCM-2026-9940',
-        subject: 'Re: Tax Invoice & GST Statement #INV-2026-8801',
-        received_at: 'Yesterday at 05:15 PM AEST',
-        status: 'ACTION_NEEDED',
-        message_content: 'Received invoice thank you. Could you please also CC accounts-au@bhp.com on all future tax invoices so our finance department processes them automatically?',
-        reply_history: [],
-      },
-      {
-        id: 'in-04',
-        sender_name: 'Alexander Vance',
-        sender_email: 'a.vance@hsf.com.au',
-        booking_ref: 'CCM-2026-6641',
-        subject: 'Re: VIP Chauffeur Proposal: Herbert Smith Freehills',
-        received_at: '28 Aug 2026, 11:30 AM AEST',
-        status: 'REPLIED',
-        message_content: 'Quote approved. Please charge to our corporate account and assign the Mercedes V-Class with driver Sonu.',
-        reply_history: [
-          {
-            sender: 'Harps Randhawa (Director)',
-            timestamp: '28 Aug 2026, 11:45 AM AEST',
-            text: 'Booking confirmed and charged to HSF Corporate Account #HSF-771. Thank you Mr. Vance.',
-          },
-        ],
-      },
-    ];
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem('crown_inbound_replies_v1', JSON.stringify(inboundReplies));
-  }, [inboundReplies]);
+    loadInbox();
+  }, []);
+
+  /** Opening a thread marks it read for everyone, not just this browser. */
+  const handleOpenThread = async (thread: InboundReply) => {
+    setSelectedReplyThread(thread);
+    if (thread.status !== 'UNREAD') return;
+    try {
+      const updated = await inboxApi.updateStatus(thread.id, 'READ');
+      setInboundReplies((prev) => prev.map((t) => (t.id === thread.id ? updated : t)));
+      setSelectedReplyThread((prev) => (prev && prev.id === thread.id ? updated : prev));
+    } catch {
+      // Triage state is cosmetic; the message is still readable.
+    }
+  };
+
+  /** Replies already sent to this correspondent, from the real outbox. */
+  const repliesTo = (email: string) =>
+    emailLogs.filter((log) => log.recipient_email.toLowerCase() === email.toLowerCase());
 
   // Handle Send Custom Email
   const handleSendCustomEmail = async (e: React.FormEvent) => {
@@ -290,8 +285,9 @@ export const EmailCommunicationsHubPage: React.FC = () => {
       const notif = await notificationsApi.sendDirect({
         recipient: selectedReplyThread.sender_email,
         channel: 'EMAIL',
-        subject: `Re: ${selectedReplyThread.subject}`,
+        subject: `Re: ${selectedReplyThread.subject || '(no subject)'}`,
         message: quickReplyText.trim(),
+        booking_id: selectedReplyThread.booking_id || undefined,
       });
 
       if (notif?.status !== 'SENT') {
@@ -303,24 +299,15 @@ export const EmailCommunicationsHubPage: React.FC = () => {
         return;
       }
 
-      const newReplyItem = {
-        sender: 'Opal Chauffeurs Dispatch',
-        timestamp: new Date().toLocaleString('en-AU', { timeZone: 'Australia/Melbourne' }),
-        text: quickReplyText.trim(),
-      };
-
-      setInboundReplies((prev) =>
-        prev.map((thread) =>
-          thread.id === selectedReplyThread.id
-            ? { ...thread, status: 'REPLIED' as const, reply_history: [...(thread.reply_history || []), newReplyItem] }
-            : thread
-        )
-      );
-      setSelectedReplyThread((prev) =>
-        prev
-          ? { ...prev, status: 'REPLIED', reply_history: [...(prev.reply_history || []), newReplyItem] }
-          : null
-      );
+      // The thread is marked replied on the server, so a colleague looking at
+      // the same inbox can see it has been handled.
+      try {
+        const updated = await inboxApi.updateStatus(selectedReplyThread.id, 'REPLIED');
+        setInboundReplies((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        setSelectedReplyThread(updated);
+      } catch {
+        // The email went out; failing to re-label the thread is not worth an error.
+      }
 
       setQuickReplyText('');
       confetti({ particleCount: 70, spread: 50, origin: { y: 0.6 }, colors: ['#DFCAA8', '#38BDF8'] });
@@ -342,20 +329,24 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   // Template autofill
   const handleSelectTemplate = (templateKey: string) => {
     setComposeTemplate(templateKey);
+    // Placeholders in [BRACKETS], not invented specifics. This template used
+    // to prefill a real-looking confirmation naming a booking, a registration
+    // plate and a chauffeur. Sent without careful editing, the client
+    // received a confirmation for a journey nobody had booked.
     if (templateKey === 'BOOKING_CONFIRMATION') {
-      setComposeSubject('Confirmed: Opal Chauffeurs VIP Transfer Booking #CCM-2026-9901');
+      setComposeSubject('Confirmed: Opal Chauffeurs VIP Transfer Booking #[BOOKING NUMBER]');
       setComposeMessage(
-        `Dear Valued VIP Client,\n\nWe are pleased to confirm your upcoming executive chauffeur service with Opal Chauffeurs Australia.\n\n📍 Pickup Location: Melbourne Airport Terminal 2 (Meet & Greet)\n📍 Dropoff: Crown Towers Melbourne (8 Whiteman St, Southbank)\n🚘 Vehicle: Mercedes-Benz V-Class VIP (Rego: CPS711)\n🧑‍✈️ Lead Chauffeur: Harps Randhawa (+61 432 000 718)\n\nFlight tracking is active. Your chauffeur will be waiting in the arrival hall with your personalized digital nameboard.\n\nWarm regards,\nOpal Chauffeurs Australia Dispatch Team\nhttps://www.opalchauffeurs.com.au`
+        `Dear [CLIENT NAME],\n\nWe are pleased to confirm your executive chauffeur service with Opal Chauffeurs Australia.\n\nDate & time: [PICKUP DATE AND TIME]\nPickup: [PICKUP ADDRESS]\nDropoff: [DROPOFF ADDRESS]\nVehicle: [VEHICLE AND REGISTRATION]\nChauffeur: [CHAUFFEUR NAME AND PHONE]\n\nYour chauffeur will be waiting with your name board.\n\nWarm regards,\nOpal Chauffeurs Australia Dispatch Team\nhttps://www.opalchauffeurs.com.au`
       );
     } else if (templateKey === 'FLIGHT_DELAY') {
-      setComposeSubject('Flight Schedule Update: Opal Chauffeurs Pickup Adjusted for Flight QF400');
+      setComposeSubject('Flight schedule update — pickup adjusted for flight [FLIGHT NUMBER]');
       setComposeMessage(
-        `Dear Passenger,\n\nOur Automated Airport Flight Radar Engine has tracked an update for your incoming flight QF400.\n\nYour lead chauffeur has automatically rescheduled pickup to accommodate the updated arrival time with zero wait-time surcharge.\n\nTrack live chauffeur status or contact dispatch directly at book@opalchauffeurs.com.au.\n\nSafe flight,\nOpal Chauffeurs Operations`
+        `Dear [PASSENGER NAME],\n\nWe have tracked an update to your incoming flight [FLIGHT NUMBER].\n\nYour pickup has been rescheduled to [NEW PICKUP TIME] to match the updated arrival, with no wait-time surcharge.\n\nAny questions, reply to this email or contact dispatch at book@opalchauffeurs.com.au.\n\nSafe flight,\nOpal Chauffeurs Operations`
       );
     } else if (templateKey === 'TAX_INVOICE') {
-      setComposeSubject('Tax Invoice & Payment Receipt #INV-2026-8801 — Opal Chauffeurs Australia Pty Ltd');
+      setComposeSubject('Tax Invoice #[INVOICE NUMBER] — Opal Chauffeurs Australia Pty Ltd');
       setComposeMessage(
-        `Dear Accounts Department,\n\nPlease find attached the official Tax Invoice & GST Statement for recent executive chauffeur services.\n\nEntity: Opal Chauffeurs Australia Pty Ltd (ABN: 68 642 908 112)\nInvoice Reference: #INV-2026-8801\nTotal Amount: $460.00 AUD (Includes $41.82 GST)\nStatus: PAID IN FULL\n\nThank you for choosing Opal Chauffeurs.\nfinance@opalchauffeurs.com.au`
+        `Dear [ACCOUNTS CONTACT],\n\nPlease find the Tax Invoice and GST statement for recent chauffeur services.\n\nEntity: Opal Chauffeurs Australia Pty Ltd (ABN: 68 642 908 112)\nInvoice reference: #[INVOICE NUMBER]\nTotal: $[AMOUNT] AUD (includes $[GST] GST)\nStatus: [PAYMENT STATUS]\n\nThank you for choosing Opal Chauffeurs.\naccounts@opalchauffeurs.com.au`
       );
     } else {
       setComposeSubject('');
@@ -706,14 +697,33 @@ export const EmailCommunicationsHubPage: React.FC = () => {
       {/* ─────────────────────────────────────────────────────────────
           TAB 2: CLIENT INBOX & REPLIES
       ───────────────────────────────────────────────────────────── */}
-      {activeSubTab === 'inbox' && (
+      {activeSubTab === 'inbox' && inboxError && (
+        <div className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 mb-4 flex items-start gap-2.5 text-[#0A0E1A]">
+          <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0 mt-0.5" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-black">Inbox could not be loaded</p>
+            <p className="text-xs font-bold opacity-75 break-words">{inboxError}</p>
+          </div>
+          <button
+            onClick={loadInbox}
+            className="shrink-0 px-3.5 py-1.5 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {activeSubTab === 'inbox' && !inboxError && mailboxStatus && !mailboxStatus.configured && (
         <div className="rounded-2xl bg-[#FEF9C3] border border-[#DFCAA8] p-4 mb-4 flex items-start gap-2.5 text-[#0A0E1A]">
           <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-black">No mailbox is connected yet — these threads are sample data</p>
-            <p className="text-xs font-bold opacity-80">
-              Receiving client replies needs an inbound email webhook (Resend inbound or IMAP), which the
-              platform does not have. Replies you send from here <strong>are</strong> real outbound emails.
+          <div className="min-w-0">
+            <p className="text-sm font-black">Inbound mail is not connected yet</p>
+            <p className="text-xs font-bold opacity-80">{mailboxStatus.detail}</p>
+            <p className="text-[11px] font-mono font-black mt-1.5 break-all">
+              Webhook URL: {mailboxStatus.webhook_path}
+            </p>
+            <p className="text-xs font-bold opacity-80 mt-1">
+              Replies you send from here <strong>are</strong> real outbound emails and are recorded in the outbox.
             </p>
           </div>
         </div>
@@ -739,24 +749,31 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                 return (
                   <div
                     key={thread.id}
-                    onClick={() => setSelectedReplyThread(thread)}
+                    onClick={() => handleOpenThread(thread)}
                     className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
                       isSelected
                         ? 'bg-[#E0F2FE] border-[#7DD3FC] shadow-sm'
                         : 'bg-[#FFFFFF] border-[#E6D8C3] hover:bg-[#FAF6F0]'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <span className="font-black text-xs text-[#0A0E1A]">{thread.sender_name}</span>
-                      <span className="text-[10px] font-mono text-slate-600">{thread.received_at}</span>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-black text-xs text-[#0A0E1A] truncate">
+                        {thread.sender_name || thread.sender_email}
+                      </span>
+                      <span className="text-[10px] font-mono text-slate-600 shrink-0">
+                        {fmtReceived(thread.received_at)}
+                      </span>
                     </div>
                     <p className="text-xs font-bold text-[#0A0E1A] mt-1 truncate">{thread.subject}</p>
                     <p className="text-[11px] text-slate-700 font-semibold mt-1 line-clamp-2">
-                      {thread.message_content}
+                      {thread.body_text || '(no message body)'}
                     </p>
-                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#E6D8C3]">
-                      <span className="font-mono text-[10px] text-[#0A0E1A] font-black">
-                        Ref: {thread.booking_ref}
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-[#E6D8C3] gap-2">
+                      <span className="font-mono text-[10px] text-[#0A0E1A] font-black truncate">
+                        {/* Matched from the subject or body against a real
+                            booking. Unmatched stays unmatched rather than
+                            being attached to the wrong job. */}
+                        {thread.booking_number ? `Ref: ${thread.booking_number}` : 'No booking matched'}
                       </span>
                       <span
                         className={`px-2 py-0.5 rounded-full text-[9px] font-black border ${
@@ -773,6 +790,17 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                   </div>
                 );
               })}
+
+              {inboundReplies.length === 0 && !inboxError && (
+                <div className="p-6 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-center space-y-1">
+                  <p className="text-xs font-black text-[#0A0E1A]">No replies in the inbox.</p>
+                  <p className="text-[11px] text-slate-700 font-semibold">
+                    {mailboxStatus?.configured
+                      ? 'Client replies will appear here as they arrive.'
+                      : 'Connect inbound mail to see client replies here.'}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -782,18 +810,22 @@ export const EmailCommunicationsHubPage: React.FC = () => {
               <>
                 <div className="space-y-4">
                   {/* Thread Header */}
-                  <div className="flex items-start justify-between border-b border-[#E6D8C3] pb-4">
-                    <div>
+                  <div className="flex items-start justify-between border-b border-[#E6D8C3] pb-4 gap-3">
+                    <div className="min-w-0">
                       <h3 className="font-black text-base text-[#0A0E1A]">{selectedReplyThread.subject}</h3>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-[#0A0E1A]">
-                        <span className="font-black">From: {selectedReplyThread.sender_name}</span>
-                        <span className="font-mono text-slate-600">({selectedReplyThread.sender_email})</span>
+                      <div className="flex items-center gap-2 mt-1 text-xs text-[#0A0E1A] flex-wrap">
+                        <span className="font-black">From: {selectedReplyThread.sender_name || 'Unnamed sender'}</span>
+                        <span className="font-mono text-slate-600 break-all">({selectedReplyThread.sender_email})</span>
                       </div>
                       <span className="inline-block mt-1 px-2.5 py-0.5 rounded bg-[#FFFFFF] border border-[#DFCAA8] text-[10px] font-mono font-black text-[#0A0E1A]">
-                        Master Booking: {selectedReplyThread.booking_ref}
+                        {selectedReplyThread.booking_number
+                          ? `Booking: ${selectedReplyThread.booking_number}`
+                          : 'No booking matched to this thread'}
                       </span>
                     </div>
-                    <span className="text-xs font-mono text-slate-600 font-bold">{selectedReplyThread.received_at}</span>
+                    <span className="text-xs font-mono text-slate-600 font-bold shrink-0">
+                      {fmtReceived(selectedReplyThread.received_at)}
+                    </span>
                   </div>
 
                   {/* Initial Client Message Bubble */}
@@ -801,22 +833,34 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                     <div className="flex items-center justify-between">
                       <span className="font-black text-xs text-[#0A0E1A]">💬 Client Message:</span>
                     </div>
-                    <p className="text-xs text-[#0A0E1A] font-semibold leading-relaxed whitespace-pre-wrap">
-                      {selectedReplyThread.message_content}
+                    <p className="text-xs text-[#0A0E1A] font-semibold leading-relaxed whitespace-pre-wrap break-words">
+                      {selectedReplyThread.body_text || '(no message body)'}
                     </p>
                   </div>
 
-                  {/* Reply History If Any */}
-                  {selectedReplyThread.reply_history && selectedReplyThread.reply_history.length > 0 && (
+                  {/* Replies actually sent to this address, taken from the
+                      outbox rather than a browser-local history — so the
+                      provider's real delivery outcome is visible here too. */}
+                  {repliesTo(selectedReplyThread.sender_email).length > 0 && (
                     <div className="space-y-2.5">
-                      <span className="text-xs font-black text-[#0A0E1A] block">Dispatch Responses:</span>
-                      {selectedReplyThread.reply_history.map((rep, idx) => (
-                        <div key={idx} className="p-3.5 rounded-2xl bg-[#E0F2FE] border border-[#7DD3FC] ml-4 space-y-1">
-                          <div className="flex items-center justify-between text-[11px] font-black text-[#0A0E1A]">
-                            <span>✓ {rep.sender}</span>
-                            <span className="font-mono text-slate-600">{rep.timestamp}</span>
+                      <span className="text-xs font-black text-[#0A0E1A] block">Emails sent to this address:</span>
+                      {repliesTo(selectedReplyThread.sender_email).map((sent) => (
+                        <div
+                          key={sent.id}
+                          className="p-3.5 rounded-2xl bg-[#E0F2FE] border border-[#7DD3FC] ml-4 space-y-1"
+                        >
+                          <div className="flex items-center justify-between text-[11px] font-black text-[#0A0E1A] gap-2">
+                            <span className="truncate">
+                              {sent.status === 'SENT' ? '✓' : '✗'} {sent.subject}
+                            </span>
+                            <span className="font-mono text-slate-600 shrink-0">{sent.sent_at}</span>
                           </div>
-                          <p className="text-xs text-[#0A0E1A] font-semibold">{rep.text}</p>
+                          <p className="text-xs text-[#0A0E1A] font-semibold break-words">{sent.body_preview}</p>
+                          {sent.status !== 'SENT' && (
+                            <p className="text-[11px] font-black text-rose-800">
+                              Not delivered{sent.failure_reason ? `: ${sent.failure_reason}` : '.'}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -830,32 +874,43 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                   </label>
                   <textarea
                     rows={3}
-                    placeholder={`Reply to ${selectedReplyThread.sender_name}...`}
+                    placeholder={`Reply to ${selectedReplyThread.sender_name || selectedReplyThread.sender_email}...`}
                     value={quickReplyText}
                     onChange={(e) => setQuickReplyText(e.target.value)}
                     className="w-full p-3 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-xs text-[#0A0E1A] font-semibold focus:outline-none focus:border-[#0A0E1A]"
                   />
-                  <div className="flex items-center justify-between">
+                  {sendError && (
+                    <p className="text-[11px] font-black text-rose-800 break-words">{sendError}</p>
+                  )}
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2">
                       <button
                         type="button"
                         onClick={() =>
                           setQuickReplyText(
-                            `Hi ${selectedReplyThread.sender_name.split(' ')[0]},\n\nWe have received your request and updated your booking #${selectedReplyThread.booking_ref} accordingly. Chauffeur Harps is notified.\n\nBest regards,\nOpal Chauffeurs Dispatch`
+                            // Was: "Chauffeur Harps is notified" — a name the
+                            // sender had no reason to expect, asserted whether
+                            // or not any chauffeur had been told anything.
+                            `Hi ${(selectedReplyThread.sender_name || '').split(' ')[0] || 'there'},\n\nThank you for your message. We have received your request${
+                              selectedReplyThread.booking_number
+                                ? ` regarding booking #${selectedReplyThread.booking_number}`
+                                : ''
+                            } and will confirm shortly.\n\nBest regards,\nOpal Chauffeurs Dispatch`
                           )
                         }
                         className="px-2.5 py-1 rounded-lg bg-[#FFFFFF] hover-yellow border border-[#E6D8C3] text-[11px] font-black text-[#0A0E1A]"
                       >
-                        ⚡ Insert "Request Confirmed" Template
+                        ⚡ Insert acknowledgement
                       </button>
                     </div>
 
                     <button
                       onClick={handleSendQuickReply}
-                      className="px-5 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95"
+                      disabled={isSending || !quickReplyText.trim()}
+                      className="px-5 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 disabled:opacity-60"
                     >
                       <Send className="w-3.5 h-3.5" />
-                      <span>Send Client Reply</span>
+                      <span>{isSending ? 'Sending…' : 'Send Client Reply'}</span>
                     </button>
                   </div>
                 </div>
@@ -1216,14 +1271,19 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block font-black text-[#0A0E1A] mb-1">Booking Ref</label>
-                  <input
-                    type="text"
-                    placeholder="CCM-2026-9901"
+                  <label className="block font-black text-[#0A0E1A] mb-1">Link to Booking</label>
+                  <select
                     value={composeBookingRef}
                     onChange={(e) => setComposeBookingRef(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-xs font-mono font-black text-[#0A0E1A] focus:outline-none focus:border-[#0A0E1A]"
-                  />
+                  >
+                    <option value="">Not linked to a booking</option>
+                    {bookings.map((b) => (
+                      <option key={b.id} value={b.id}>
+                        {b.booking_number} — {b.passenger_name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 

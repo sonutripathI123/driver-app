@@ -31,6 +31,11 @@ class Settings(BaseSettings):
     # route refuses to run rather than running unprotected.
     AUTOMATIONS_CRON_TOKEN: str = ""
 
+    # Shared secret the email provider must present on the inbound webhook.
+    # Empty means inbound mail is switched off and the endpoint returns 503,
+    # rather than letting anyone post messages into the operator's inbox.
+    INBOUND_EMAIL_TOKEN: str = ""
+
     # Business identity used in automated notifications. These were previously
     # hardcoded across notification_service.py against three domains this
     # business does not own (chauffeurplatform.com, crownchauffeurs.com.au),

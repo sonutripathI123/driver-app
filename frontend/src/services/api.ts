@@ -14,6 +14,8 @@ import {
   User,
   Vehicle,
   VehicleUtilizationReport,
+  InboundEmail,
+  InboundMailboxStatus,
   ManagerNotificationSettings,
   NotificationItem,
 } from '../types';
@@ -474,6 +476,28 @@ export const notificationsApi = {
   },
   getNotificationLogs: async (limit = 50) => {
     const res = await apiClient.get<NotificationItem[]>(`/notifications/`, { params: { limit } });
+    return res.data;
+  },
+};
+
+/**
+ * The business mailbox.
+ *
+ * Inbound mail arrives through a provider webhook on the API, so the inbox is
+ * shared by every operator instead of living in one browser's localStorage,
+ * which is where the old fabricated threads were kept.
+ */
+export const inboxApi = {
+  getStatus: async () => {
+    const res = await apiClient.get<InboundMailboxStatus>(`/notifications/inbound/status`);
+    return res.data;
+  },
+  list: async (limit = 50) => {
+    const res = await apiClient.get<InboundEmail[]>(`/notifications/inbound`, { params: { limit } });
+    return res.data;
+  },
+  updateStatus: async (id: string, status: InboundEmail['status']) => {
+    const res = await apiClient.patch<InboundEmail>(`/notifications/inbound/${id}`, { status });
     return res.data;
   },
 };

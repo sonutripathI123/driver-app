@@ -1,17 +1,27 @@
-from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import desc, select
+import hmac
+from typing import Any, List, Optional
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.rbac import get_current_active_user, require_ops, require_staff
+from app.models.inbound_email import InboundEmail
 from app.models.notification import Notification
 from app.models.user import User
+from app.schemas.inbound_email import (
+    InboundEmailRead,
+    InboundEmailStatusUpdate,
+    InboundMailboxStatus,
+    InboundWebhookResult,
+)
 from app.schemas.notification import (
     ManagerNotificationSettings,
     NotificationRead,
     SendDirectMessageRequest,
     TestMobilePingRequest,
 )
+from app.services.inbound_email_service import InboundEmailService
 from app.services.notification_service import NotificationService
 
 from app.integrations.notifications.webpush_client import webpush_gateway
@@ -143,3 +153,127 @@ async def send_direct_message(
     await db.commit()
     await db.refresh(notif)
     return notif
+
+
+# --- Inbound mailbox -------------------------------------------------
+#
+# The Email Hub's inbox was four fabricated threads held in the operator's
+# browser. These endpoints back it with mail the provider actually delivered.
+
+
+WEBHOOK_PATH = "/api/v1/notifications/inbound/webhook"
+
+
+@router.post("/inbound/webhook", response_model=InboundWebhookResult)
+async def receive_inbound_email(
+    request: Request,
+    token: Optional[str] = Query(None, description="Shared secret, if not sent as a header"),
+    x_inbound_token: Optional[str] = Header(None, alias="X-Inbound-Token"),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Endpoint the email provider calls when a reply arrives.
+
+    Not behind the JWT — the provider has no login — so it is protected by a
+    shared secret in the X-Inbound-Token header or a ?token= query parameter.
+    Unset means inbound is off and the endpoint refuses everything, so an
+    unconfigured deployment cannot have messages injected into its inbox.
+    """
+    expected = (settings.INBOUND_EMAIL_TOKEN or "").strip()
+    if not expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Inbound email is not enabled. Set INBOUND_EMAIL_TOKEN to switch it on."
+        )
+
+    supplied = (x_inbound_token or token or "").strip()
+    if not supplied or not hmac.compare_digest(supplied, expected):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid inbound token."
+        )
+
+    try:
+        payload: Any = await request.json()
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Inbound payload was not valid JSON."
+        )
+
+    provider = (request.headers.get("user-agent") or "unknown").split("/")[0][:50]
+    try:
+        return await InboundEmailService.ingest_payload(db, payload, provider)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+
+
+@router.get("/inbound/status", response_model=InboundMailboxStatus, dependencies=[Depends(require_staff)])
+async def inbound_mailbox_status(db: AsyncSession = Depends(get_db)):
+    """
+    Whether inbound mail is wired up, and how much has arrived.
+    Access: Staff
+    """
+    configured = bool((settings.INBOUND_EMAIL_TOKEN or "").strip())
+
+    total = await db.scalar(select(func.count()).select_from(InboundEmail)) or 0
+    unread = await db.scalar(
+        select(func.count()).select_from(InboundEmail).where(InboundEmail.status == "UNREAD")
+    ) or 0
+
+    if configured:
+        detail = "Inbound mail is enabled. Replies appear here as the provider delivers them."
+    else:
+        detail = (
+            "Inbound mail is not connected. Set INBOUND_EMAIL_TOKEN on the API service, then point your "
+            "email provider's inbound parsing webhook at this path. Until then this inbox stays empty — "
+            "replies from clients go to your normal mailbox."
+        )
+
+    return InboundMailboxStatus(
+        configured=configured,
+        webhook_path=WEBHOOK_PATH,
+        total_messages=int(total),
+        unread_count=int(unread),
+        detail=detail,
+    )
+
+
+@router.get("/inbound", response_model=List[InboundEmailRead], dependencies=[Depends(require_staff)])
+async def list_inbound_emails(
+    status_filter: Optional[str] = Query(None, alias="status", description="UNREAD, READ, ACTION_NEEDED or REPLIED"),
+    booking_id: Optional[str] = Query(None),
+    limit: int = Query(50, ge=1, le=200),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Replies received at the business mailbox, newest first.
+    Access: Staff
+    """
+    stmt = select(InboundEmail)
+    if status_filter:
+        stmt = stmt.where(InboundEmail.status == status_filter.upper())
+    if booking_id:
+        stmt = stmt.where(InboundEmail.booking_id == booking_id)
+    stmt = stmt.order_by(desc(InboundEmail.received_at)).limit(limit)
+    res = await db.execute(stmt)
+    return list(res.scalars().all())
+
+
+@router.patch("/inbound/{inbound_id}", response_model=InboundEmailRead, dependencies=[Depends(require_staff)])
+async def update_inbound_email_status(
+    inbound_id: str,
+    payload: InboundEmailStatusUpdate,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Triage a thread: mark it read, needing action, or replied.
+    Access: Staff
+    """
+    record = await db.get(InboundEmail, inbound_id)
+    if not record:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Inbound message not found.")
+    record.status = payload.status
+    await db.commit()
+    await db.refresh(record)
+    return record
