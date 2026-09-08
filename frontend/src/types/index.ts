@@ -94,6 +94,9 @@ export interface Vehicle {
   passenger_capacity: number;
   luggage_capacity: number;
   is_active: boolean;
+  color?: string | null;
+  insurance_expiry?: string | null;
+  rego_expiry?: string | null;
   status?: string;
 }
 
@@ -112,8 +115,10 @@ export interface Partner {
   is_compliance_verified?: boolean;
   is_compliant?: boolean;
   public_liability_expiry?: string;
-  insurance_expiry?: string;
-  insurance_policy_number?: string;
+  insurance_expiry?: string | null;
+  insurance_policy_number?: string | null;
+  accreditation_expiry?: string | null;
+  notes?: string | null;
 }
 
 export interface PartnerJobOffer {

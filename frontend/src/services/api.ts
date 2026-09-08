@@ -137,9 +137,9 @@ export const authApi = {
 };
 
 export const bookingsApi = {
-  list: async (status?: string) => {
+  list: async (status?: string, limit?: number) => {
     const res = await apiClient.get<{ bookings: Booking[]; total: number; page_count: number }>(`/bookings/`, {
-      params: { status },
+      params: { status, limit },
     });
     return res.data;
   },
@@ -357,6 +357,10 @@ export const partnersApi = {
     const res = await apiClient.post<Partner>(`/partners/`, data);
     return res.data;
   },
+  update: async (partnerId: string, data: any) => {
+    const res = await apiClient.patch<Partner>(`/partners/${partnerId}`, data);
+    return res.data;
+  },
   checkCompliance: async (partnerId: string) => {
     const res = await apiClient.get(`/partners/${partnerId}/compliance-check`);
     return res.data;
@@ -423,6 +427,14 @@ export const fleetApi = {
   },
   getVehicles: async () => {
     const res = await apiClient.get<Vehicle[]>(`/vehicles/`);
+    return res.data;
+  },
+  createVehicle: async (data: any) => {
+    const res = await apiClient.post<Vehicle>(`/vehicles/`, data);
+    return res.data;
+  },
+  updateVehicle: async (vehicleId: string, data: any) => {
+    const res = await apiClient.patch<Vehicle>(`/vehicles/${vehicleId}`, data);
     return res.data;
   },
 };
