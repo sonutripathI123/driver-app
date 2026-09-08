@@ -107,15 +107,34 @@ class FlightTrackingService:
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
                 detail=flight_provider_status()
             )
-        flight_data = await provider.get_flight_status(
-            leg.flight_number,
-            leg.pickup_datetime.date()
-        )
+        # Deliberately no date. leg.pickup_datetime is UTC, but AeroDataBox
+        # matches a dated query against the airport's *local* date — a flight
+        # landing in Melbourne at 22:20 UTC is a local 08:20 the next morning,
+        # so passing the UTC date selected the previous day's occurrence and
+        # reported its delay (0 minutes) instead of the real one (26).
+        # The nearest-day form returns the current occurrence; the guard below
+        # rejects it if it is not actually near this pickup.
+        flight_data = await provider.get_flight_status(leg.flight_number)
         if not flight_data:
             reason = getattr(provider, "last_error", None)
             raise HTTPException(
                 status_code=status.HTTP_502_BAD_GATEWAY if reason else status.HTTP_404_NOT_FOUND,
                 detail=reason or f"Live flight data unavailable for '{leg.flight_number}'."
+            )
+
+        # Never reschedule from an occurrence that belongs to another journey.
+        # Without this, a flight number that last operated months ago would move
+        # a pickup to that date.
+        pickup_utc = ensure_utc(leg.pickup_datetime)
+        arrival_utc = ensure_utc(flight_data.estimated_arrival or flight_data.scheduled_arrival)
+        if abs((arrival_utc - pickup_utc).total_seconds()) > 36 * 3600:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=(
+                    f"The most recent {leg.flight_number} arrives "
+                    f"{arrival_utc.strftime('%d %b %H:%M UTC')}, which is not this pickup. "
+                    "No live occurrence matches this booking."
+                )
             )
 
         old_pickup = ensure_utc(leg.pickup_datetime)

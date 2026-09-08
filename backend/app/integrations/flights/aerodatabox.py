@@ -11,6 +11,39 @@ from app.integrations.flights.base import BaseFlightProvider, FlightData
 logger = logging.getLogger(__name__)
 
 
+def _select_segment(segments: List[Dict[str, Any]], flight_date: Optional[date]) -> Dict[str, Any]:
+    """
+    Picks the segment that actually arrives on the requested date.
+
+    A dated query uses dateLocalRole=Both, which matches a flight whose
+    *departure* or *arrival* local date falls on that day. A long haul such as
+    MH149 (Kuala Lumpur to Melbourne, departing the previous evening) therefore
+    returns two segments, and the first is the day before. Taking segments[0]
+    reported the wrong day's delay — 0 minutes instead of 26 — which would have
+    left a pickup unmoved for a flight that was late.
+
+    The pickup happens at the destination, so match on the arrival date,
+    preferring the airport's local date and falling back to UTC.
+    """
+    if not flight_date or len(segments) == 1:
+        return segments[0]
+
+    for key in ("local", "utc"):
+        for seg in segments:
+            stamp = ((seg.get("arrival") or {}).get("scheduledTime") or {}).get(key)
+            parsed = parse_dt(stamp)
+            if not parsed:
+                continue
+            # 'local' is the destination airport's own date, which is the one a
+            # dispatcher means; parse_dt normalises to UTC, so compare the raw
+            # local date text when we have it.
+            candidate = stamp.strip()[:10] if key == "local" else parsed.date().isoformat()
+            if candidate == flight_date.isoformat():
+                return seg
+
+    return segments[-1]
+
+
 class AeroDataBoxProvider(BaseFlightProvider):
     """
     AeroDataBox via RapidAPI.
@@ -84,7 +117,7 @@ class AeroDataBoxProvider(BaseFlightProvider):
             if not segments:
                 return None
 
-            seg = segments[0]
+            seg = _select_segment(segments, flight_date)
             arrival = seg.get("arrival") or {}
             departure = seg.get("departure") or {}
 
