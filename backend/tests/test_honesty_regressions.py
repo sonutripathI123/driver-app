@@ -344,3 +344,56 @@ async def test_lapsed_insurance_fails_the_partner_compliance_gate(
     assert check.status_code == 200
     assert check.json()["is_compliant"] is False
     assert check.json()["reasons"]
+
+
+# --- the seed admin must not ship a password from source control ------
+
+@pytest.mark.asyncio
+async def test_seed_admin_does_not_create_a_known_password_account(db_session):
+    """
+    A deploy that never set DEFAULT_ADMIN_PASSWORD used to get an ADMIN account
+    whose password was the value committed to the repo, so anyone who read the
+    source could sign in. With no password configured, nothing is seeded.
+    """
+    from app.core.config import settings as app_settings
+    from app.models.user import User
+    from app.services.auth_service import AuthService
+    from sqlalchemy import select
+
+    original = app_settings.DEFAULT_ADMIN_PASSWORD
+    app_settings.DEFAULT_ADMIN_PASSWORD = ""
+    try:
+        result = await AuthService.seed_default_admin(db_session)
+        assert result is None
+        rows = (await db_session.execute(
+            select(User).where(User.email == app_settings.DEFAULT_ADMIN_EMAIL.strip().lower())
+        )).scalar_one_or_none()
+        assert rows is None, "no admin should be seeded without an explicit password"
+    finally:
+        app_settings.DEFAULT_ADMIN_PASSWORD = original
+
+
+@pytest.mark.asyncio
+async def test_seed_admin_rotates_an_existing_weak_account(db_session):
+    """Setting a strong DEFAULT_ADMIN_PASSWORD rotates a pre-existing weak seed admin."""
+    from app.core.config import settings as app_settings
+    from app.core.security import hash_password, verify_password
+    from app.models.enums import UserRole
+    from app.models.user import User
+    from app.services.auth_service import AuthService
+
+    email = app_settings.DEFAULT_ADMIN_EMAIL.strip().lower()
+    db_session.add(User(
+        email=email, hashed_password=hash_password(AuthService._WEAK_SEED_PASSWORD),
+        full_name="Seed Admin", role=UserRole.ADMIN, is_active=True, is_verified=True,
+    ))
+    await db_session.commit()
+
+    original = app_settings.DEFAULT_ADMIN_PASSWORD
+    app_settings.DEFAULT_ADMIN_PASSWORD = "Rotated-Strong-Pw-2026!"
+    try:
+        admin = await AuthService.seed_default_admin(db_session)
+        assert not verify_password(AuthService._WEAK_SEED_PASSWORD, admin.hashed_password)
+        assert verify_password("Rotated-Strong-Pw-2026!", admin.hashed_password)
+    finally:
+        app_settings.DEFAULT_ADMIN_PASSWORD = original

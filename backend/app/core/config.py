@@ -76,7 +76,7 @@ class Settings(BaseSettings):
 
     # Default Seed Admin
     DEFAULT_ADMIN_EMAIL: str = "admin@chauffeurplatform.com"
-    DEFAULT_ADMIN_PASSWORD: str = "AdminSecurePassword123!"
+    DEFAULT_ADMIN_PASSWORD: str = ""  # must be set per-environment; empty = do not seed
     DEFAULT_ADMIN_NAME: str = "System Administrator"
 
     # Database
