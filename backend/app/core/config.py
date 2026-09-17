@@ -1,7 +1,24 @@
 import os
+from pathlib import Path
 from typing import List, Optional, Union
 from pydantic import AnyHttpUrl, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Mirror .env into os.environ as well.
+#
+# Pydantic reads .env into the Settings object, but a few integrations read
+# their config with os.getenv() directly (the Twilio SMS/WhatsApp client), and
+# pydantic does not populate os.environ. Without this, TWILIO_* placed in .env
+# are invisible to that client while SMTP_* (read via settings) work fine — a
+# confusing inconsistency. setdefault means a real process environment variable
+# still takes precedence over the file.
+_ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
+if _ENV_FILE.is_file():
+    for _line in _ENV_FILE.read_text(encoding="utf-8").splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith("#") and "=" in _line:
+            _key, _val = _line.split("=", 1)
+            os.environ.setdefault(_key.strip(), _val.strip())
 
 
 class Settings(BaseSettings):
