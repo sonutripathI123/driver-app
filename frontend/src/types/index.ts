@@ -331,10 +331,27 @@ export interface ManagerNotificationSettings {
   alert_on_payment_received: boolean;
 }
 
+export interface Mailbox {
+  id: string;
+  label: string;
+  email_address: string;
+  imap_host: string;
+  imap_port: number;
+  smtp_host: string;
+  smtp_port: number;
+  smtp_use_tls: boolean;
+  username: string;
+  is_active: boolean;
+  last_polled_at?: string | null;
+  last_poll_error?: string | null;
+  created_at: string;
+}
+
 /** A reply delivered to the business mailbox by the provider's inbound webhook. */
 export interface InboundEmail {
   id: string;
   provider: string;
+  mailbox_id?: string | null;
   sender_email: string;
   sender_name?: string | null;
   recipient_email?: string | null;

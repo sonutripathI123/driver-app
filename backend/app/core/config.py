@@ -58,6 +58,10 @@ class Settings(BaseSettings):
     # everything, so no one can create driver accounts without the link.
     DRIVER_SIGNUP_TOKEN: str = ""
 
+    # Optional Fernet key (urlsafe base64) for encrypting connected-mailbox
+    # passwords at rest. Empty => derived from JWT_SECRET_KEY (see core.crypto).
+    MAILBOX_ENCRYPTION_KEY: str = ""
+
     # Business identity used in automated notifications. These were previously
     # hardcoded across notification_service.py against three domains this
     # business does not own (chauffeurplatform.com, crownchauffeurs.com.au),

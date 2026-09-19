@@ -100,7 +100,7 @@ class InboundEmailService:
         return None, None
 
     @staticmethod
-    async def ingest_item(db: AsyncSession, item: Dict[str, Any], provider: str) -> Optional[InboundEmail]:
+    async def ingest_item(db: AsyncSession, item: Dict[str, Any], provider: str, mailbox_id: Optional[str] = None) -> Optional[InboundEmail]:
         """
         Store one inbound message. Returns None when it is a duplicate of one
         already stored, so a provider retry does not double up the inbox.
@@ -147,6 +147,7 @@ class InboundEmailService:
         record = InboundEmail(
             provider_message_id=message_id,
             provider=provider,
+            mailbox_id=mailbox_id,
             sender_email=sender_email,
             sender_name=sender_name,
             recipient_email=recipient_email,
@@ -162,7 +163,7 @@ class InboundEmailService:
         return record
 
     @staticmethod
-    async def ingest_payload(db: AsyncSession, payload: Any, provider: str) -> Dict[str, int]:
+    async def ingest_payload(db: AsyncSession, payload: Any, provider: str, mailbox_id: Optional[str] = None) -> Dict[str, int]:
         items = extract_items(payload)
         if not items:
             raise ValueError("The inbound payload contained no messages.")
@@ -172,7 +173,7 @@ class InboundEmailService:
         rejected = 0
         for item in items:
             try:
-                record = await InboundEmailService.ingest_item(db, item, provider)
+                record = await InboundEmailService.ingest_item(db, item, provider, mailbox_id=mailbox_id)
             except ValueError:
                 rejected += 1
                 continue

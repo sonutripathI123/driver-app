@@ -15,6 +15,7 @@ import {
   Vehicle,
   VehicleUtilizationReport,
   InboundEmail,
+  Mailbox,
   InboundMailboxStatus,
   ManagerNotificationSettings,
   NotificationItem,
@@ -516,6 +517,45 @@ export const inboxApi = {
   },
   updateStatus: async (id: string, status: InboundEmail['status']) => {
     const res = await apiClient.patch<InboundEmail>(`/notifications/inbound/${id}`, { status });
+    return res.data;
+  },
+};
+
+export const mailboxesApi = {
+  list: async () => {
+    const res = await apiClient.get<Mailbox[]>(`/mailboxes/`);
+    return res.data;
+  },
+  create: async (data: any) => {
+    const res = await apiClient.post<Mailbox>(`/mailboxes/`, data);
+    return res.data;
+  },
+  update: async (id: string, data: any) => {
+    const res = await apiClient.patch<Mailbox>(`/mailboxes/${id}`, data);
+    return res.data;
+  },
+  remove: async (id: string) => {
+    const res = await apiClient.delete(`/mailboxes/${id}`);
+    return res.data;
+  },
+  test: async (id: string) => {
+    const res = await apiClient.post<{ imap_ok: boolean; smtp_ok: boolean; detail: string }>(`/mailboxes/${id}/test`);
+    return res.data;
+  },
+  poll: async (id: string) => {
+    const res = await apiClient.post(`/mailboxes/${id}/poll`);
+    return res.data;
+  },
+  pollAll: async () => {
+    const res = await apiClient.post(`/mailboxes/poll-all`);
+    return res.data;
+  },
+  listInbound: async (id: string, limit = 50) => {
+    const res = await apiClient.get(`/mailboxes/${id}/inbound`, { params: { limit } });
+    return res.data;
+  },
+  reply: async (id: string, payload: { to_email: string; subject: string; message: string; booking_id?: string; inbound_id?: string }) => {
+    const res = await apiClient.post<NotificationItem>(`/mailboxes/${id}/reply`, payload);
     return res.data;
   },
 };

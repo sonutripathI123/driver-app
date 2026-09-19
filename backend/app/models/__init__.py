@@ -6,6 +6,7 @@ from app.models.booking_leg import BookingLeg
 from app.models.customer import Customer
 from app.models.driver import Driver
 from app.models.inbound_email import InboundEmail
+from app.models.mailbox import Mailbox
 from app.models.enums import (
     AuditAction,
     BookingSource,
@@ -33,6 +34,7 @@ from app.models.vehicle import Vehicle
 __all__ = [
     "AppSetting",
     "InboundEmail",
+    "Mailbox",
     "Base",
     "User",
     "Customer",

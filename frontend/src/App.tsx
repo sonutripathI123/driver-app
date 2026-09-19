@@ -14,6 +14,7 @@ import { AnalyticsProfitPage } from './pages/AnalyticsProfitPage';
 import { PartnersFleetPage } from './pages/PartnersFleetPage';
 import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
 import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
+import { EmailBookingWorkflowPage } from './pages/EmailBookingWorkflowPage';
 import { LoginPage } from './pages/LoginPage';
 import { DriverApplyPage } from './pages/DriverApplyPage';
 import { dispatchApi } from './services/api';
@@ -123,6 +124,8 @@ const AuthenticatedApp: React.FC = () => {
         return <NotificationsHubPage />;
       case 'email-hub':
         return <EmailCommunicationsHubPage />;
+      case 'email-workflow':
+        return <EmailBookingWorkflowPage />;
       case 'flights':
         return <FlightRadarPage />;
       case 'invoicing':

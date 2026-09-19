@@ -14,7 +14,8 @@ import {
   UserCheck,
   LogOut,
   KeyRound,
-  X
+  X,
+  Inbox,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ChangePasswordModal } from '../ChangePasswordModal';
@@ -27,6 +28,7 @@ export type NavTab =
   | 'clients'
   | 'notifications'
   | 'email-hub'
+  | 'email-workflow'
   | 'flights'
   | 'invoicing'
   | 'analytics'
@@ -80,6 +82,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'email-hub', label: 'Email & Dispatch Comms', icon: Mail, badge: 'SMTP', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
+        { id: 'email-workflow', label: 'Email Booking Workflow', icon: Inbox, badge: 'Inbox', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
       ],

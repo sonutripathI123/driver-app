@@ -29,6 +29,18 @@ async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
         # A flight provider outage must not stop the payment and handover jobs.
         logger.error(f"[CRON FLIGHTS] polling failed: {ex}")
 
+    # Poll every connected mailbox for new enquiries so the email-to-booking
+    # inbox stays current without a separate cron. An IMAP outage on one
+    # mailbox is logged and skipped, never stopping the rest of the run.
+    try:
+        from app.services.mailbox_service import MailboxService
+        mb_results = await MailboxService.poll_all(db=db)
+        pulled = sum(r.get("stored", 0) for r in mb_results)
+        if pulled:
+            logger.info(f"[CRON MAILBOX] pulled {pulled} new email(s) across {len(mb_results)} mailbox(es)")
+    except Exception as ex:
+        logger.error(f"[CRON MAILBOX] polling failed: {ex}")
+
     s1 = await AutomationService.process_balance_chasing(db=db)
     s2 = await AutomationService.process_pre_trip_confirmation_reminders(db=db)
     s3 = await AutomationService.process_pre_trip_handovers(db=db)

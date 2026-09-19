@@ -53,6 +53,8 @@ class InboundEmail(Base):
 
     # Resolved from the subject line where a booking number appears in it, so
     # a reply can be read next to the job it is about.
+    # Which connected mailbox received this (null for the legacy single-inbox webhook).
+    mailbox_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
     booking_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
     booking_number: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
 
