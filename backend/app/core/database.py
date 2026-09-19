@@ -35,12 +35,21 @@ elif db_url.startswith("postgresql"):
     db_url = db_url.split("?", 1)[0]
     connect_args["ssl"] = "require"
 
-engine = create_async_engine(
-    db_url,
+engine_kwargs = dict(
     echo=False,
     future=True,
-    connect_args=connect_args
+    connect_args=connect_args,
 )
+if not db_url.startswith("sqlite"):
+    # Managed Postgres (Neon/Render/Supabase) closes idle connections after a
+    # few minutes. Without these the pool hands out a dead socket and the first
+    # request after an idle spell dies with asyncpg "connection is closed" (a
+    # 500). pool_pre_ping checks the connection is alive before use and silently
+    # reconnects; pool_recycle retires connections before the server drops them.
+    engine_kwargs["pool_pre_ping"] = True
+    engine_kwargs["pool_recycle"] = 280
+
+engine = create_async_engine(db_url, **engine_kwargs)
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,

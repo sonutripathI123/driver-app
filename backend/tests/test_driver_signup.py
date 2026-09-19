@@ -98,6 +98,22 @@ async def test_duplicate_licence_on_apply_is_refused(client: AsyncClient):
 
 
 @pytest.mark.asyncio
+async def test_duplicate_email_on_apply_is_refused_cleanly(client: AsyncClient):
+    """Re-applying with the same email (already a driver) must be a 400, not a 500."""
+    original = settings.DRIVER_SIGNUP_TOKEN
+    settings.DRIVER_SIGNUP_TOKEN = TOKEN
+    try:
+        first = {**APPLICATION, "email": "dupemail@corp.example.com", "license_number": "EMAIL-LIC-1"}
+        second = {**APPLICATION, "email": "dupemail@corp.example.com", "license_number": "EMAIL-LIC-2"}
+        assert (await client.post(f"/api/v1/drivers/apply?token={TOKEN}", json=first)).status_code == 201
+        clash = await client.post(f"/api/v1/drivers/apply?token={TOKEN}", json=second)
+        assert clash.status_code == 400
+        assert "already registered" in clash.json()["detail"]
+    finally:
+        settings.DRIVER_SIGNUP_TOKEN = original
+
+
+@pytest.mark.asyncio
 async def test_signup_link_endpoint(client: AsyncClient, ops_user: User):
     h = auth_header(ops_user)
     original = settings.DRIVER_SIGNUP_TOKEN

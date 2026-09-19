@@ -1,6 +1,7 @@
 from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy import or_, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.security import hash_password
 from app.models.driver import Driver
@@ -86,6 +87,15 @@ class DriverService:
             existing_user = user_res.scalar_one_or_none()
 
             if existing_user:
+                # This login already exists. If it is already tied to a driver
+                # profile, a second signup would collide on the unique user_id,
+                # so refuse it with a clear message instead of a 500.
+                already = await DriverService.get_by_user_id(db, existing_user.id)
+                if already:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail=f"A driver is already registered with the email '{norm_email}'.",
+                    )
                 if existing_user.role != UserRole.DRIVER:
                     existing_user.role = UserRole.DRIVER
                 user_id = existing_user.id
@@ -119,7 +129,16 @@ class DriverService:
             notes=driver_in.notes
         )
         db.add(driver)
-        await db.commit()
+        try:
+            await db.commit()
+        except IntegrityError:
+            # A unique constraint (email/license/user_id) raced or collided;
+            # surface it as a clean 400 rather than an internal server error.
+            await db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="A driver with this email or license is already registered.",
+            )
         await db.refresh(driver)
         return driver
 
