@@ -32,6 +32,7 @@ import {
   Download,
   Receipt,
   AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 
 interface ClientBookingHistory {
@@ -303,6 +304,27 @@ export const ClientsCustomersPage: React.FC = () => {
     return rows.join('\n') + '\n\n';
   };
 
+  const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+
+  const handleDeleteClient = async (client: VIPClient) => {
+    const ok = window.confirm(
+      `Delete client "${client.name}"?
+
+This cannot be undone. A client with existing bookings or invoices cannot be deleted — remove those first.`
+    );
+    if (!ok) return;
+    setDeletingClientId(client.id);
+    try {
+      await customersApi.remove(client.id);
+      setClients((prev) => prev.filter((c) => c.id !== client.id));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Could not delete this client.');
+    } finally {
+      setDeletingClientId(null);
+    }
+  };
+
   // WhatsApp Statement Dispatch
   const handleGenerateWhatsAppStatement = (client: VIPClient) => {
     const text =
@@ -560,6 +582,17 @@ Web: https://www.${COMPANY.website}`
                       >
                         <Mail className="w-3.5 h-3.5 text-[#0A0E1A]" />
                         <span className="hidden sm:inline">Email</span>
+                      </button>
+
+                      {/* Delete client */}
+                      <button
+                        onClick={() => handleDeleteClient(client)}
+                        disabled={deletingClientId === client.id}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#B91C1C] border border-[#FECACA] text-xs font-black transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+                        title="Delete this client"
+                      >
+                        <Trash2 className="w-3.5 h-3.5 text-[#B91C1C]" />
+                        <span className="hidden sm:inline">{deletingClientId === client.id ? 'Deleting…' : 'Delete'}</span>
                       </button>
                     </div>
                   </td>

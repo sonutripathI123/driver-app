@@ -12,7 +12,9 @@ from tests.conftest import auth_header
 
 @pytest.mark.asyncio
 async def test_airport_to_city_all_inclusive_rule(db_session: AsyncSession):
-    now = datetime.now(timezone.utc)
+    # Pinned to a fixed daytime so the 23:00-05:00 late-night surcharge (which
+    # would make exact-fare assertions flaky by wall-clock) never applies.
+    now = datetime.now(timezone.utc).replace(hour=14, minute=0, second=0, microsecond=0)
     quote_in = QuoteRequest(
         pickup_address="Melbourne Airport (MEL), Terminal 2",
         dropoff_address="Collins St, Melbourne CBD VIC 3000",
@@ -125,7 +127,9 @@ async def test_instant_booking_eligibility_and_verification_gate(db_session: Asy
 
 @pytest.mark.asyncio
 async def test_quote_acceptance_converts_to_master_booking(db_session: AsyncSession):
-    now = datetime.now(timezone.utc)
+    # Pinned to a fixed daytime so the 23:00-05:00 late-night surcharge (which
+    # would make exact-fare assertions flaky by wall-clock) never applies.
+    now = datetime.now(timezone.utc).replace(hour=14, minute=0, second=0, microsecond=0)
     quote = await QuoteService.create_quote(
         db_session,
         QuoteRequest(
@@ -157,7 +161,9 @@ async def test_quote_acceptance_converts_to_master_booking(db_session: AsyncSess
 
 @pytest.mark.asyncio
 async def test_quote_api_flow(client: AsyncClient):
-    now = datetime.now(timezone.utc)
+    # Pinned to a fixed daytime so the 23:00-05:00 late-night surcharge (which
+    # would make exact-fare assertions flaky by wall-clock) never applies.
+    now = datetime.now(timezone.utc).replace(hour=14, minute=0, second=0, microsecond=0)
     payload = {
         "pickup_address": "Crown Towers Melbourne",
         "dropoff_address": "Melbourne Airport (MEL)",

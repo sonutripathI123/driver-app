@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Send,
   UserPlus,
-  Check
+  Check,
+  Trash2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -79,6 +80,27 @@ export const BookingsOperatePage: React.FC = () => {
    * "VIC-DA-88" for anyone who left the field empty, which is a compliance
    * record, and an email guessed from the person's name.
    */
+  const [deletingBookingId, setDeletingBookingId] = useState<string | null>(null);
+
+  const handleDeleteBooking = async (b: Booking) => {
+    const ok = window.confirm(
+      `Delete booking ${b.booking_number}?
+
+This removes the whole booking — all its legs, its invoice, payments and notifications. This cannot be undone.`
+    );
+    if (!ok) return;
+    setDeletingBookingId(b.id);
+    try {
+      await bookingsApi.remove(b.id);
+      setBookings((prev) => prev.filter((x) => x.id !== b.id));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Could not delete this booking.');
+    } finally {
+      setDeletingBookingId(null);
+    }
+  };
+
   const handleSaveNewDriver = async (e: React.FormEvent) => {
     e.preventDefault();
     setDriverFormError(null);
@@ -520,13 +542,23 @@ export const BookingsOperatePage: React.FC = () => {
                             +${margin.toFixed(2)} ({marginPct.toFixed(0)}%)
                           </span>
                         </td>
-                        <td className="py-4 px-4 text-right">
-                          <button
-                            onClick={() => handleOpenAllocation(b, leg)}
-                            className="px-3.5 py-2 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
-                          >
-                            Dispatch / Offload
-                          </button>
+                        <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => handleOpenAllocation(b, leg)}
+                              className="px-3.5 py-2 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
+                            >
+                              Dispatch / Offload
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBooking(b)}
+                              disabled={deletingBookingId === b.id}
+                              className="px-2.5 py-2 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#B91C1C] border border-[#FECACA] text-xs font-black transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                              title="Delete this booking"
+                            >
+                              <Trash2 className="w-3.5 h-3.5 text-[#B91C1C]" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );

@@ -159,6 +159,10 @@ export const bookingsApi = {
     });
     return res.data;
   },
+  remove: async (bookingId: string) => {
+    const res = await apiClient.delete(`/bookings/${bookingId}`);
+    return res.data;
+  },
 };
 
 export interface LiveActivityItem {
@@ -320,6 +324,10 @@ export const customersApi = {
     const res = await apiClient.post<Customer>(`/customers/`, payload);
     return res.data;
   },
+  remove: async (id: string) => {
+    const res = await apiClient.delete(`/customers/${id}`);
+    return res.data;
+  },
 };
 
 export const invoicesApi = {
@@ -476,6 +484,10 @@ export const notificationsApi = {
   },
   getNotificationLogs: async (limit = 50) => {
     const res = await apiClient.get<NotificationItem[]>(`/notifications/`, { params: { limit } });
+    return res.data;
+  },
+  remove: async (id: string) => {
+    const res = await apiClient.delete(`/notifications/${id}`);
     return res.data;
   },
 };

@@ -27,7 +27,8 @@ import {
   Car,
   Receipt,
   Download,
-  AlertTriangle
+  AlertTriangle,
+  Trash2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { automationsApi, bookingsApi, inboxApi, notificationsApi } from '../services/api';
@@ -220,6 +221,22 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   /** Replies already sent to this correspondent, from the real outbox. */
   const repliesTo = (email: string) =>
     emailLogs.filter((log) => log.recipient_email.toLowerCase() === email.toLowerCase());
+
+  const [deletingEmailId, setDeletingEmailId] = useState<string | null>(null);
+
+  const handleDeleteEmailLog = async (id: string) => {
+    if (!window.confirm('Delete this email from the outbox log? This cannot be undone.')) return;
+    setDeletingEmailId(id);
+    try {
+      await notificationsApi.remove(id);
+      setEmailLogs((prev) => prev.filter((l) => l.id !== id));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Could not delete this email record.');
+    } finally {
+      setDeletingEmailId(null);
+    }
+  };
 
   // Handle Send Custom Email
   const handleSendCustomEmail = async (e: React.FormEvent) => {
@@ -678,12 +695,22 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                       </td>
 
                       <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <button
-                          onClick={() => setViewingEmail(log)}
-                          className="px-3 py-1.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white text-xs font-black transition-all shadow-sm"
-                        >
-                          View HTML
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => setViewingEmail(log)}
+                            className="px-3 py-1.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white text-xs font-black transition-all shadow-sm"
+                          >
+                            View HTML
+                          </button>
+                          <button
+                            onClick={() => handleDeleteEmailLog(log.id)}
+                            disabled={deletingEmailId === log.id}
+                            className="px-2.5 py-1.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] border border-[#FECACA] text-[#B91C1C] text-xs font-black transition-all shadow-sm disabled:opacity-50"
+                            title="Delete this email record"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

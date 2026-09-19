@@ -19,6 +19,7 @@ import {
   Mail,
   RefreshCw,
   LoaderCircle,
+  Trash2,
 } from 'lucide-react';
 
 /**
@@ -206,6 +207,22 @@ export const NotificationsHubPage: React.FC = () => {
       setScanResult({ ok: false, text: apiErrorText(err, 'The scanner did not run.') });
     } finally {
       setScanning(false);
+    }
+  };
+
+  const [deletingLogId, setDeletingLogId] = useState<string | null>(null);
+
+  const handleDeleteLog = async (id: string) => {
+    if (!window.confirm('Delete this outbox record? This cannot be undone.')) return;
+    setDeletingLogId(id);
+    try {
+      await notificationsApi.remove(id);
+      setNotificationLogs((prev) => prev.filter((n) => n.id !== id));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Could not delete this record.');
+    } finally {
+      setDeletingLogId(null);
     }
   };
 
@@ -756,8 +773,8 @@ export const NotificationsHubPage: React.FC = () => {
                     )}
                   </div>
 
-                  {!look.delivered && (
-                    <div className="shrink-0 flex items-center gap-2 pt-2 md:pt-0">
+                  <div className="shrink-0 flex items-center gap-2 pt-2 md:pt-0">
+                    {!look.delivered && (
                       <a
                         href={manualUrl}
                         target="_blank"
@@ -767,8 +784,17 @@ export const NotificationsHubPage: React.FC = () => {
                         {isEmail ? <Mail className="w-3.5 h-3.5 text-white" /> : <MessageSquare className="w-3.5 h-3.5 text-white" />}
                         <span>Send manually ➔</span>
                       </a>
-                    </div>
-                  )}
+                    )}
+                    <button
+                      onClick={() => handleDeleteLog(log.id)}
+                      disabled={deletingLogId === log.id}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-950 hover:bg-rose-900 text-rose-200 border border-rose-500 font-bold text-[11px] transition-all disabled:opacity-50"
+                      title="Delete this record"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>{deletingLogId === log.id ? '…' : 'Delete'}</span>
+                    </button>
+                  </div>
                 </div>
               );
             })

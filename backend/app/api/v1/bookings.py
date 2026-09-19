@@ -1,14 +1,17 @@
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import delete as sa_delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.rbac import (
     get_current_active_user,
+    require_admin,
     require_dispatcher,
     require_ops,
     require_staff,
 )
 from app.models.enums import BookingSource, BookingStatus, LegStatus, PaymentStatus, UserRole
+from app.models.booking import Booking
 from app.models.user import User
 from app.schemas.booking import (
     BookingCancelRequest,
@@ -314,3 +317,45 @@ async def update_booking_leg_status(
         actor=current_user
     )
     return leg
+
+
+@router.delete("/{booking_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_admin)])
+async def delete_booking(
+    booking_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Permanently delete a booking and everything attached to it.
+
+    Legs, payments, notifications and audit logs cascade with the booking.
+    Its invoices are removed explicitly here (the FK only nulls them), so no
+    orphaned invoice is left behind. Destructive and irreversible.
+    Access: ADMIN only.
+    """
+    from app.models.audit import AuditLog
+    from app.models.booking_leg import BookingLeg
+    from app.models.invoice import Invoice, InvoiceLineItem
+    from app.models.notification import Notification
+    from app.models.payment import PaymentTransaction
+
+    booking = await BookingService.get_booking_by_id(db, booking_id)
+    if not booking:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking not found.")
+
+    number = booking.booking_number
+
+    # Delete children explicitly rather than leaning on ORM cascade, which under
+    # async needs the relationships loaded, and on the SET-NULL foreign keys
+    # (invoices, notifications) which would orphan those rows instead of
+    # removing them. This is deterministic on both SQLite and Postgres.
+    inv_ids = (await db.execute(select(Invoice.id).where(Invoice.booking_id == booking_id))).scalars().all()
+    if inv_ids:
+        await db.execute(sa_delete(InvoiceLineItem).where(InvoiceLineItem.invoice_id.in_(inv_ids)))
+        await db.execute(sa_delete(Invoice).where(Invoice.id.in_(inv_ids)))
+    await db.execute(sa_delete(Notification).where(Notification.booking_id == booking_id))
+    await db.execute(sa_delete(PaymentTransaction).where(PaymentTransaction.booking_id == booking_id))
+    await db.execute(sa_delete(AuditLog).where(AuditLog.booking_id == booking_id))
+    await db.execute(sa_delete(BookingLeg).where(BookingLeg.booking_id == booking_id))
+    await db.execute(sa_delete(Booking).where(Booking.id == booking_id))
+    await db.commit()
+    return {"status": "deleted", "booking_id": booking_id, "booking_number": number}

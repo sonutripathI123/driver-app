@@ -294,3 +294,21 @@ async def update_inbound_email_status(
     await db.commit()
     await db.refresh(record)
     return record
+
+
+@router.delete("/{notification_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_ops)])
+async def delete_notification(
+    notification_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Delete one outbox record (SMS, WhatsApp, email or push).
+    A leaf record, so this is a plain hard delete.
+    Access: ADMIN, OPERATIONS_MANAGER.
+    """
+    notif = await db.get(Notification, notification_id)
+    if not notif:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Notification not found.")
+    await db.delete(notif)
+    await db.commit()
+    return {"status": "deleted", "notification_id": notification_id}

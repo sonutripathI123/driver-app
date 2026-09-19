@@ -2,7 +2,8 @@ from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
-from app.core.rbac import require_ops
+from sqlalchemy import func, select
+from app.core.rbac import require_admin, require_ops
 from app.schemas.customer import (
     CustomerCreate,
     CustomerLookupResponse,
@@ -112,3 +113,42 @@ async def update_customer(
         customer_id=customer_id,
         customer_update=customer_update
     )
+
+
+@router.delete("/{customer_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_admin)])
+async def delete_customer(
+    customer_id: str,
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Delete a client from the CRM.
+
+    Blocked while the client still has bookings or invoices — those carry a
+    RESTRICT foreign key, and silently cascading them would wipe a real
+    client's financial history on one stray click. Delete their bookings
+    first (which also removes the invoices), then the client.
+    Access: ADMIN only.
+    """
+    from app.models.booking import Booking
+    from app.models.customer import Customer
+    from app.models.invoice import Invoice
+
+    customer = await db.get(Customer, customer_id)
+    if not customer:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client not found.")
+
+    bookings = await db.scalar(select(func.count()).select_from(Booking).where(Booking.customer_id == customer_id)) or 0
+    invoices = await db.scalar(select(func.count()).select_from(Invoice).where(Invoice.customer_id == customer_id)) or 0
+    if bookings or invoices:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                f"This client has {int(bookings)} booking(s) and {int(invoices)} invoice(s). "
+                "Delete those first, then the client can be removed."
+            ),
+        )
+
+    name = customer.full_name
+    await db.delete(customer)
+    await db.commit()
+    return {"status": "deleted", "customer_id": customer_id, "name": name}
