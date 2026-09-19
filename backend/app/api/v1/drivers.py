@@ -173,6 +173,20 @@ async def get_driver(
     return driver
 
 
+@router.delete("/{driver_id}", status_code=status.HTTP_200_OK, dependencies=[Depends(require_ops)])
+async def delete_driver(
+    driver_id: str,
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Remove a driver from the roster (and their portal login).
+    Refused with 409 while the driver has a live trip in hand.
+    Access: ADMIN, OPERATIONS_MANAGER
+    """
+    name = await DriverService.delete_driver(db, driver_id)
+    return {"status": "deleted", "driver_id": driver_id, "full_name": name}
+
+
 @router.patch("/{driver_id}", response_model=DriverRead, dependencies=[Depends(require_ops)])
 async def update_driver(
     driver_id: str,

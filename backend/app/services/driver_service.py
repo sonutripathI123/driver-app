@@ -193,6 +193,52 @@ class DriverService:
         return driver
 
     @staticmethod
+    async def delete_driver(db: AsyncSession, driver_id: str) -> str:
+        """
+        Remove a driver from the roster.
+
+        Refused while the driver has a live job in hand, so a trip in progress
+        is never orphaned. Otherwise past legs are un-assigned (kept for the
+        record), the linked portal login is removed, and the driver deleted.
+        """
+        from app.models.booking_leg import BookingLeg
+        from app.models.enums import LegStatus
+
+        driver = await DriverService.get_by_id(db, driver_id)
+        if not driver:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Driver not found",
+            )
+
+        active = {
+            LegStatus.ALLOCATED, LegStatus.DISPATCHED, LegStatus.EN_ROUTE,
+            LegStatus.ARRIVED, LegStatus.PICKED_UP,
+        }
+        legs = (await db.execute(
+            select(BookingLeg).where(BookingLeg.driver_id == driver_id)
+        )).scalars().all()
+        if any(leg.status in active for leg in legs):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This driver has a live trip in hand. Reassign or complete it before deleting.",
+            )
+
+        # Un-assign historical legs so the booking history survives the driver.
+        for leg in legs:
+            leg.driver_id = None
+
+        name = driver.full_name
+        user_id = driver.user_id
+        await db.delete(driver)
+        if user_id:
+            user = await db.get(User, user_id)
+            if user:
+                await db.delete(user)
+        await db.commit()
+        return name
+
+    @staticmethod
     async def update_status(
         db: AsyncSession,
         driver_id: str,

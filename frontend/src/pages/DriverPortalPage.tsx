@@ -22,7 +22,9 @@ import {
   AlertCircle,
   Share2,
   Copy,
-  Check
+  Check,
+  Trash2,
+  Users as UsersIcon
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -122,6 +124,38 @@ export const DriverPortalPage: React.FC = () => {
   const [signupLink, setSignupLink] = useState<string | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
+  // Staff-only roster management. Same gating: getDrivers is staff-only, so a
+  // driver's portal simply never receives a roster to render.
+  const [roster, setRoster] = useState<Driver[] | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  const loadRoster = async () => {
+    try {
+      const drivers = await fleetApi.getDrivers();
+      setRoster(Array.isArray(drivers) ? drivers : []);
+    } catch {
+      setRoster(null); // not staff, or unreachable — hide the card
+    }
+  };
+
+  const handleDeleteDriver = async (d: Driver) => {
+    if (deletingId) return;
+    if (!window.confirm(`Remove "${d.full_name}" from the roster? Their driver login will also be deleted. This cannot be undone.`)) {
+      return;
+    }
+    setDeletingId(d.id);
+    try {
+      await fleetApi.deleteDriver(d.id);
+      setRoster((prev) => (prev ? prev.filter((x) => x.id !== d.id) : prev));
+      showToast(`🗑️ "${d.full_name}" removed from the roster.`);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      showToast(`⚠️ ${typeof detail === 'string' ? detail : 'Could not delete this driver.'}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   useEffect(() => {
     let cancelled = false;
     fleetApi
@@ -131,6 +165,7 @@ export const DriverPortalPage: React.FC = () => {
         if (res.enabled && res.url) setSignupLink(window.location.origin + res.url);
       })
       .catch(() => {});
+    loadRoster();
     return () => {
       cancelled = true;
     };
@@ -289,6 +324,60 @@ export const DriverPortalPage: React.FC = () => {
           </p>
         </div>
       )}
+      {/* Staff: full driver roster with delete */}
+      {roster && (
+        <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-4 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#0D1322] border border-[#DFCAA8] flex items-center justify-center shrink-0">
+              <UsersIcon className="w-4 h-4 text-[#DFCAA8]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white">Driver roster ({roster.length})</h3>
+              <p className="text-[11px] text-slate-400 font-semibold">
+                Every registered chauffeur. Remove one that is no longer working with you.
+              </p>
+            </div>
+          </div>
+
+          {roster.length === 0 ? (
+            <p className="text-xs text-slate-400 font-semibold py-2">
+              No drivers on the roster yet. Share the signup link above to onboard your first chauffeur.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {roster.map((d) => (
+                <div
+                  key={d.id}
+                  className="flex items-center justify-between gap-3 p-3 rounded-xl bg-[#0D1322] border border-[#1F2E4D]"
+                >
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white truncate">{d.full_name}</span>
+                      {!d.is_active && (
+                        <span className="px-1.5 py-0.5 rounded text-[9px] font-bold bg-[#2A1214] text-red-300 border border-red-800">
+                          INACTIVE
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-400 font-mono truncate">
+                      {d.email} • {d.phone} • Lic: {d.license_number}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDeleteDriver(d)}
+                    disabled={deletingId === d.id}
+                    title="Remove driver"
+                    className="shrink-0 p-2 rounded-xl bg-[#06090F] border border-red-900 text-red-400 hover:bg-red-950 hover:text-red-300 disabled:opacity-50 transition-colors"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Toast Alert Banner */}
       {toastMessage && (
         <div className="fixed top-4 right-4 sm:right-8 z-50 max-w-md bg-[#121A2D] border-2 border-amber-400 text-amber-300 p-3.5 rounded-2xl shadow-2xl shadow-amber-500/20 text-xs font-bold flex items-center justify-between gap-3 animate-in slide-in-from-top duration-300">

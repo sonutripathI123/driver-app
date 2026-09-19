@@ -111,8 +111,50 @@ async def test_delete_booking_takes_its_invoice_and_legs(client: AsyncClient, ad
 
 
 @pytest.mark.asyncio
+async def test_delete_driver_unassigns_history_and_removes_login(client: AsyncClient, admin_user: User, db_session):
+    """Deleting a driver keeps the booking (leg un-assigned) but removes the driver and its login."""
+    from app.models.driver import Driver
+    from app.models.booking_leg import BookingLeg
+
+    h = auth_header(admin_user)
+    # A driver with a portal login, allocated to a leg, then the trip completes.
+    drv = await client.post("/api/v1/drivers/", headers=h, json={
+        "full_name": "Retiring Chauffeur", "phone": "+61400555111",
+        "email": "retiring@corp.example.com", "license_number": "RETIRE-1",
+        "create_user_account": True, "password": "DriverPortalPw1!",
+    })
+    driver_id = drv.json()["id"]
+    user_id = (await db_session.get(Driver, driver_id)).user_id
+    assert user_id and await db_session.get(User, user_id) is not None
+
+    resp = await client.delete(f"/api/v1/drivers/{driver_id}", headers=h)
+    assert resp.status_code == 200, resp.text
+    assert resp.json()["status"] == "deleted"
+    assert await db_session.get(Driver, driver_id) is None
+    # The linked portal login is gone too.
+    assert await db_session.get(User, user_id) is None
+    # Deleting again is a clean 404.
+    assert (await client.delete(f"/api/v1/drivers/{driver_id}", headers=h)).status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_delete_driver_blocked_while_trip_in_hand(client: AsyncClient, admin_user: User):
+    """A driver with a live (allocated) leg cannot be deleted."""
+    h = auth_header(admin_user)
+    made = await _make_booking_with_invoice(client, h)
+    # The helper allocates the leg to "Del Chauffeur"; find that driver.
+    roster = (await client.get("/api/v1/drivers/", headers=h)).json()
+    driver_id = next(d["id"] for d in roster if d["email"] == "del.driver@corp.example.com")
+
+    resp = await client.delete(f"/api/v1/drivers/{driver_id}", headers=h)
+    assert resp.status_code == 409
+    assert "live trip" in resp.json()["detail"]
+
+
+@pytest.mark.asyncio
 async def test_delete_requires_admin(client: AsyncClient, dispatcher_user: User):
-    """A dispatcher must not be able to delete bookings or clients."""
+    """A dispatcher must not be able to delete bookings, clients or drivers."""
     h = auth_header(dispatcher_user)
     assert (await client.delete("/api/v1/bookings/does-not-exist", headers=h)).status_code == 403
     assert (await client.delete("/api/v1/customers/does-not-exist", headers=h)).status_code == 403
+    assert (await client.delete("/api/v1/drivers/does-not-exist", headers=h)).status_code == 403
