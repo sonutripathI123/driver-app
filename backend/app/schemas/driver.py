@@ -51,3 +51,20 @@ class DriverRead(DriverBase):
     default_vehicle: Optional[VehicleRead] = None
     created_at: datetime
     updated_at: datetime
+
+
+class DriverApplication(BaseModel):
+    """Public self-registration payload from the shared signup link."""
+    full_name: str = Field(..., min_length=2, max_length=255)
+    phone: str = Field(..., min_length=6, max_length=50)
+    email: EmailStr
+    license_number: str = Field(..., min_length=3, max_length=50)
+    password: str = Field(..., min_length=8, max_length=128)
+    accreditation_number: Optional[str] = Field(None, max_length=50)
+    notes: Optional[str] = None
+
+
+class DriverSignupLinkResponse(BaseModel):
+    enabled: bool
+    url: Optional[str] = None
+    detail: str

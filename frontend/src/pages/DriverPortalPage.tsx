@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { driverPortalApi } from '../services/api';
+import { driverPortalApi, fleetApi } from '../services/api';
 import { Booking, BookingLeg, Driver } from '../types';
 import confetti from 'canvas-confetti';
 import {
@@ -19,7 +19,10 @@ import {
   LogOut,
   Calendar,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Share2,
+  Copy,
+  Check
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -113,6 +116,36 @@ export const DriverPortalPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isStepping, setIsStepping] = useState(false);
+
+  // Staff-only signup link. The endpoint is staff-gated, so a real driver
+  // viewing their portal gets a 403 and this card simply never appears.
+  const [signupLink, setSignupLink] = useState<string | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fleetApi
+      .getDriverSignupLink()
+      .then((res) => {
+        if (cancelled) return;
+        if (res.enabled && res.url) setSignupLink(window.location.origin + res.url);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const copySignupLink = async () => {
+    if (!signupLink) return;
+    try {
+      await navigator.clipboard.writeText(signupLink);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2500);
+    } catch {
+      // Clipboard blocked (insecure context) — the input is selectable as fallback.
+    }
+  };
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -222,6 +255,40 @@ export const DriverPortalPage: React.FC = () => {
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-5 pb-12">
+      {/* Staff: shareable driver self-signup link */}
+      {signupLink && (
+        <div className="rounded-2xl bg-[#121A2D] border border-[#DFCAA8] p-4 sm:p-5 space-y-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-[#0D1322] border border-[#DFCAA8] flex items-center justify-center shrink-0">
+              <Share2 className="w-4 h-4 text-[#DFCAA8]" />
+            </div>
+            <div>
+              <h3 className="text-sm font-black text-white">Driver self-signup link</h3>
+              <p className="text-[11px] text-slate-400 font-semibold">
+                Share this with a new chauffeur. They fill the form and appear in the roster automatically.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              readOnly
+              value={signupLink}
+              onFocus={(e) => e.currentTarget.select()}
+              className="flex-1 px-3 py-2.5 rounded-xl bg-[#0D1322] border border-[#1F2E4D] text-white text-xs font-mono focus:border-[#DFCAA8] focus:outline-none"
+            />
+            <button
+              onClick={copySignupLink}
+              className="px-4 py-2.5 rounded-xl bg-[#DFCAA8] hover:bg-[#C2A16B] text-[#0A0E1A] font-black text-xs flex items-center justify-center gap-1.5 transition-all shrink-0"
+            >
+              {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+              {linkCopied ? 'Copied!' : 'Copy link'}
+            </button>
+          </div>
+          <p className="text-[10px] text-slate-500 font-semibold">
+            Anyone with this link can register as a driver, so share it only with people you intend to onboard.
+          </p>
+        </div>
+      )}
       {/* Toast Alert Banner */}
       {toastMessage && (
         <div className="fixed top-4 right-4 sm:right-8 z-50 max-w-md bg-[#121A2D] border-2 border-amber-400 text-amber-300 p-3.5 rounded-2xl shadow-2xl shadow-amber-500/20 text-xs font-bold flex items-center justify-between gap-3 animate-in slide-in-from-top duration-300">

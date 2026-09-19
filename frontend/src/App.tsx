@@ -15,6 +15,7 @@ import { PartnersFleetPage } from './pages/PartnersFleetPage';
 import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
 import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
 import { LoginPage } from './pages/LoginPage';
+import { DriverApplyPage } from './pages/DriverApplyPage';
 import { dispatchApi } from './services/api';
 import { triggerNativeNotification } from './utils/notificationSound';
 
@@ -146,12 +147,18 @@ const AuthenticatedApp: React.FC = () => {
 const isDirectDriverLink =
   window.location.pathname.includes('/driver') || window.location.search.includes('view=driver');
 
+// Public driver self-registration link (/apply?token=…). No login required.
+const isDriverApplyLink = window.location.pathname.replace(/\/+$/, '').endsWith('/apply');
+
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isBootstrapping, currentRole } = useAuth();
 
   // Staff only: the live feed is a staff endpoint, so polling it as a
   // chauffeur would just 403 every interval.
   useLiveTripWatcher(isAuthenticated && currentRole !== 'DRIVER');
+
+  // The public signup form is shown to anyone with the link, logged in or not.
+  if (isDriverApplyLink) return <DriverApplyPage />;
 
   if (isBootstrapping) return <BootSplash />;
   if (!isAuthenticated) return <LoginPage />;

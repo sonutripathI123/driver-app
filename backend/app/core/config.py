@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     # rather than letting anyone post messages into the operator's inbox.
     INBOUND_EMAIL_TOKEN: str = ""
 
+    # Shared secret embedded in the public driver self-signup link. Empty means
+    # the signup link is disabled and the public apply endpoint refuses
+    # everything, so no one can create driver accounts without the link.
+    DRIVER_SIGNUP_TOKEN: str = ""
+
     # Business identity used in automated notifications. These were previously
     # hardcoded across notification_service.py against three domains this
     # business does not own (chauffeurplatform.com, crownchauffeurs.com.au),

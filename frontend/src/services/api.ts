@@ -435,6 +435,12 @@ export const fleetApi = {
     const res = await apiClient.get<Driver[]>(`/drivers/`);
     return res.data;
   },
+  getDriverSignupLink: async () => {
+    const res = await apiClient.get<{ enabled: boolean; url: string | null; detail: string }>(
+      `/drivers/signup-link`
+    );
+    return res.data;
+  },
   getVehicles: async () => {
     const res = await apiClient.get<Vehicle[]>(`/vehicles/`);
     return res.data;

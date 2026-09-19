@@ -1,6 +1,8 @@
+import hmac
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
 from app.core.database import get_db
 from app.core.rbac import (
     get_current_active_user,
@@ -11,8 +13,10 @@ from app.core.rbac import (
 from app.models.enums import DriverStatus, UserRole
 from app.models.user import User
 from app.schemas.driver import (
+    DriverApplication,
     DriverCreate,
     DriverRead,
+    DriverSignupLinkResponse,
     DriverStatusUpdate,
     DriverUpdate,
 )
@@ -57,6 +61,83 @@ async def create_driver(
         db=db,
         driver_in=driver_in
     )
+
+
+@router.get("/signup-link", response_model=DriverSignupLinkResponse, dependencies=[Depends(require_ops)])
+async def get_driver_signup_link():
+    """
+    The shareable self-signup link for drivers, if enabled.
+
+    Returns a relative path with the secret token; the frontend prefixes its
+    own origin. Staff-only, since the token is what protects the public form.
+    Access: ADMIN, OPERATIONS_MANAGER.
+    """
+    token = (settings.DRIVER_SIGNUP_TOKEN or "").strip()
+    if not token:
+        return DriverSignupLinkResponse(
+            enabled=False,
+            url=None,
+            detail="Driver self-signup is off. Set DRIVER_SIGNUP_TOKEN to enable the link.",
+        )
+    return DriverSignupLinkResponse(
+        enabled=True,
+        url=f"/apply?token={token}",
+        detail="Share this link with a driver. They fill the form and appear in the roster.",
+    )
+
+
+@router.post("/apply", response_model=dict, status_code=status.HTTP_201_CREATED)
+async def driver_self_apply(
+    payload: DriverApplication,
+    token: Optional[str] = Query(None, description="Signup token from the shared link"),
+    x_signup_token: Optional[str] = Header(None, alias="X-Signup-Token"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Public driver self-registration from the shared link.
+
+    Not behind the JWT (the applicant has no login yet), so it is gated by the
+    signup token carried in the link. With DRIVER_SIGNUP_TOKEN unset the
+    endpoint refuses everything, so driver accounts cannot be created without
+    the link. Creates an active driver with a portal login using the password
+    the applicant chose; a vehicle is assigned later by staff.
+    """
+    expected = (settings.DRIVER_SIGNUP_TOKEN or "").strip()
+    if not expected:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Driver self-signup is not enabled.",
+        )
+    supplied = (x_signup_token or token or "").strip()
+    if not supplied or not hmac.compare_digest(supplied, expected):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or missing signup link token.")
+
+    from datetime import datetime, timezone
+
+    note = (payload.notes or "").strip()
+    stamp = datetime.now(timezone.utc).strftime("%d %b %Y")
+    signup_note = f"Self-registered via signup link on {stamp}." + (f" {note}" if note else "")
+
+    driver_in = DriverCreate(
+        full_name=payload.full_name.strip(),
+        phone=payload.phone.strip(),
+        email=payload.email,
+        license_number=payload.license_number.strip(),
+        accreditation_number=(payload.accreditation_number or None),
+        status=DriverStatus.OFF_DUTY,
+        rating=5.0,
+        is_active=True,
+        notes=signup_note,
+        create_user_account=True,
+        password=payload.password,
+    )
+    driver = await DriverService.create_driver(db, driver_in)
+    # Public response: confirm only, do not leak the roster record.
+    return {
+        "status": "registered",
+        "message": "You are on the roster. Sign in to the driver app with your email and the password you just set.",
+        "full_name": driver.full_name,
+    }
 
 
 @router.get("/{driver_id}", response_model=DriverRead)
