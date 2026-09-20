@@ -41,7 +41,14 @@ class StripeGateway:
         description = f"Chauffeur Booking {booking_number} - {payment_type.replace('_', ' ').title()}"
 
         if not self.is_live:
-            # Deterministic mock checkout session for test environments
+            if not getattr(settings, "STRIPE_ALLOW_MOCK", False):
+                # Never hand back a fake checkout URL in production: a customer
+                # clicking it would not actually pay. Fail loudly (caller → 503).
+                raise RuntimeError(
+                    "Stripe is not configured (STRIPE_SECRET_KEY missing), so a "
+                    "real checkout session cannot be created."
+                )
+            # Test/dev mock only (STRIPE_ALLOW_MOCK).
             mock_session_id = f"cs_test_{uuid.uuid4().hex[:16]}"
             mock_intent_id = f"pi_test_{uuid.uuid4().hex[:16]}"
             return {
@@ -97,7 +104,15 @@ class StripeGateway:
         Verifies Stripe cryptographic webhook signature and parses the event.
         """
         if not self.is_live or not self.webhook_secret or self.webhook_secret.startswith("whsec_placeholder"):
-            # Mock / development payload parsing
+            if not getattr(settings, "STRIPE_ALLOW_MOCK", False):
+                # Refuse to trust an unsigned event in production. Parsing it
+                # blindly would let anyone POST a forged "payment completed" and
+                # mark any booking paid.
+                raise ValueError(
+                    "Stripe webhook secret is not configured; refusing to trust "
+                    "an unsigned webhook event."
+                )
+            # Test/dev mock only (STRIPE_ALLOW_MOCK).
             try:
                 return json.loads(payload_bytes.decode("utf-8"))
             except Exception:
@@ -122,7 +137,14 @@ class StripeGateway:
         """
         Executes a full or partial refund via Stripe.
         """
-        if not self.is_live or not payment_intent_id:
+        if not self.is_live:
+            if not getattr(settings, "STRIPE_ALLOW_MOCK", False):
+                # Never report a refund as succeeded when no money actually moved.
+                raise RuntimeError(
+                    "Stripe is not configured (STRIPE_SECRET_KEY missing), so a "
+                    "real refund cannot be processed. Record a manual refund instead."
+                )
+            # Test/dev mock only (STRIPE_ALLOW_MOCK).
             mock_refund_id = f"re_test_{uuid.uuid4().hex[:16]}"
             return {
                 "id": mock_refund_id,
@@ -132,6 +154,11 @@ class StripeGateway:
                 "payment_intent": payment_intent_id or "pi_mock",
                 "reason": reason
             }
+        if not payment_intent_id:
+            raise ValueError(
+                "This booking has no Stripe payment to refund. Record a manual "
+                "refund instead."
+            )
 
         kwargs: Dict[str, Any] = {
             "payment_intent": payment_intent_id,

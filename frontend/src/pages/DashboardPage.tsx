@@ -343,7 +343,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             className="w-full md:w-auto flex items-center justify-center gap-2.5 px-5 py-3 rounded-2xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs shadow-md hover:scale-[1.02] transition-all"
           >
             <Clock className="w-4 h-4 text-white" />
-            <span>Review Pending Queue (2)</span>
+            <span>Review Pending Queue ({pendingRides})</span>
             <ArrowRight className="w-3.5 h-3.5 ml-0.5 text-white" />
           </button>
         </div>
@@ -459,8 +459,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         {/* Right: 3D Holographic Dispatch Radar & Airspace (5 Cols) */}
         <div className="lg:col-span-5 h-[360px] sm:h-[400px] lg:h-[440px] w-full min-w-0 overflow-hidden">
           <RadarGlobeCanvas
-            activeFlightsCount={6}
-            activeDriversCount={12}
+            activeFlightsCount={airportFlights.length}
+            activeDriversCount={activeDrivers}
             onOpenFlightModal={() => setActiveModal('FLIGHTS')}
           />
         </div>
@@ -516,7 +516,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
               <div className="flex items-center justify-between md:justify-end gap-3 w-full md:w-auto shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E6D8C3]">
                 <div className="text-left md:text-right font-mono min-w-0">
                   <span className="font-black text-[#0A0E1A] text-xs sm:text-sm block">${b.total_fare.toFixed(2)} AUD</span>
-                  <span className="text-[10px] text-[#0A0E1A] font-black block">Net: +${(b.total_fare / 1.1 - 160).toFixed(2)}</span>
+                  <span className="text-[10px] text-[#0A0E1A] font-black block">Ex GST: ${(b.total_fare / 1.1).toFixed(2)}</span>
                 </div>
 
                 <button
@@ -576,23 +576,12 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              {/* Inflow Channels */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Revenue By Booking Channel</h3>
-                <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <span className="text-[#0A0E1A] font-bold">🌐 Online Passenger Website Bookings (28 trips)</span>
-                    <span className="font-mono font-black text-[#0A0E1A]">$11,240.00 AUD (60.9%)</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <span className="text-[#0A0E1A] font-bold">🏢 Corporate Invoiced Accounts (B2B Multi-Leg)</span>
-                    <span className="font-mono font-black text-[#0A0E1A]">$5,480.00 AUD (29.7%)</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <span className="text-[#0A0E1A] font-bold">📞 Concierge Phone Quotes & Custom Charters</span>
-                    <span className="font-mono font-black text-[#0A0E1A]">$1,730.00 AUD (9.4%)</span>
-                  </div>
-                </div>
+              {/* Detailed revenue-by-channel and per-invoice breakdowns are
+                  computed server-side and shown in the Invoicing/Analytics
+                  reports. Inventing a split here would not reconcile with the
+                  real totals above, so we point to the source instead. */}
+              <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-xs font-bold text-[#0A0E1A]">
+                Detailed revenue-by-channel and per-invoice breakdowns are in the GST Invoicing Hub and Profit Analytics reports.
               </div>
             </div>
 
@@ -645,7 +634,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
                 <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
                   <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Total Direct Fleet Costs</span>
-                  <div className="text-xl font-black font-mono text-[#0A0E1A]">-$8,970.00 AUD</div>
+                  <div className="text-xl font-black font-mono text-[#0A0E1A]">-${(netRev - netProfit).toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD</div>
                 </div>
                 <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-1 shadow-sm text-[#0A0E1A]">
                   <span className="text-[10px] uppercase font-bold text-[#0A0E1A]">Net Profit (+{profitMargin.toFixed(1)}%)</span>
@@ -653,32 +642,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
               </div>
 
-              {/* Profit by Vehicle Class */}
-              <div className="space-y-2">
-                <h3 className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider">Profit Margin By Vehicle Class</h3>
-                <div className="space-y-2 text-xs">
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <div>
-                      <span className="font-black text-[#0A0E1A] block">Executive Sedan (BMW 7 / Mercedes E)</span>
-                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $4,210 • Driver Payouts: $1,800</span>
-                    </div>
-                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,027.27 (52.9% Margin)</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <div>
-                      <span className="font-black text-[#0A0E1A] block">Premium Sedan (Mercedes S-Class S450)</span>
-                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $6,800 • Driver Payouts: $3,100</span>
-                    </div>
-                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$3,081.82 (49.8% Margin)</span>
-                  </div>
-                  <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] flex justify-between items-center shadow-sm text-[#0A0E1A]">
-                    <div>
-                      <span className="font-black text-[#0A0E1A] block">Luxury SUV & Minibus (V-Class / Sprinter)</span>
-                      <span className="text-[10px] text-[#0A0E1A] font-bold">Revenue: $7,440 • Driver Payouts: $4,070</span>
-                    </div>
-                    <span className="font-mono font-black text-[#0A0E1A] text-sm">+$2,693.64 (39.8% Margin)</span>
-                  </div>
-                </div>
+              {/* Per-vehicle-class profit is computed from completed trips in
+                  the Profit Analytics report (Revenue by Fleet Class). Inventing
+                  per-class figures here would not match, so we point there. */}
+              <div className="p-3.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-xs font-bold text-[#0A0E1A]">
+                Per-vehicle-class profit and margin are in the Profit Analytics report (Revenue by Fleet Class), computed from completed trips.
               </div>
             </div>
 
@@ -739,10 +707,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     {tab === 'ALL'
                       ? `All (${bookingRows.length})`
                       : tab === 'COMPLETED'
-                      ? 'Completed (32)'
+                      ? `Completed (${bookingRows.filter((r) => r.status === 'COMPLETED').length})`
                       : tab === 'IN_PROGRESS'
-                      ? 'In Progress (4)'
-                      : 'Pending Review (2)'}
+                      ? `In Progress (${bookingRows.filter((r) => r.status === 'IN_PROGRESS' || r.status === 'ALLOCATED').length})`
+                      : `Pending Review (${bookingRows.filter((r) => r.status === 'PENDING').length})`}
                   </button>
                 ))}
               </div>
@@ -898,10 +866,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                     {tab === 'ALL'
                       ? `All Drivers (${driverRows.length})`
                       : tab === 'AVAILABLE'
-                      ? '🟢 Free / Khali (4)'
+                      ? `🟢 Free / Khali (${driverRows.filter((r) => r.status === 'AVAILABLE').length})`
                       : tab === 'ON_TRIP'
-                      ? '🟡 On Active Trip (3)'
-                      : '⚪ Off Duty (1)'}
+                      ? `🟡 On Active Trip (${driverRows.filter((r) => r.status === 'ON_TRIP').length})`
+                      : `⚪ Off Duty (${driverRows.filter((r) => r.status === 'OFF_DUTY').length})`}
                   </button>
                 ))}
               </div>
@@ -994,7 +962,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
             {/* Modal Footer */}
             <div className="p-4 border-t border-[#E6D8C3] bg-[#FAF6F0] flex justify-between items-center text-[#0A0E1A]">
-              <span className="text-xs text-[#0A0E1A] font-bold">4 Drivers Available for Immediate Dispatch</span>
+              <span className="text-xs text-[#0A0E1A] font-bold">{availableDrivers} Driver{availableDrivers === 1 ? '' : 's'} Available for Immediate Dispatch</span>
               <button
                 onClick={() => {
                   setActiveModal(null);
@@ -1021,7 +989,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                 </div>
                 <div>
                   <h2 className="text-base sm:text-lg font-black text-[#0A0E1A]">Live Airport Flight Radar & Customer Delays</h2>
-                  <p className="text-xs text-[#0A0E1A] font-bold">Real-time FlightAware radar tracking with customer delay compensation</p>
+                  <p className="text-xs text-[#0A0E1A] font-bold">Airport pickups you hold, with automated pickup rescheduling when a flight provider is connected</p>
                 </div>
               </div>
               <button
@@ -1040,10 +1008,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                   <Filter className="w-3.5 h-3.5 text-[#0A0E1A]" /> Filter:
                 </span>
                 <span className="px-3 py-1 rounded-xl bg-[#FFFFFF] text-[#0A0E1A] text-xs font-black border border-[#DFCAA8]">
-                  ✈️ 6 Active Flights Tracked
+                  ✈️ {airportFlights.length} Airport Pickup{airportFlights.length === 1 ? '' : 's'}
                 </span>
                 <span className="px-3 py-1 rounded-xl bg-[#FFFFFF] text-[#0A0E1A] text-xs font-black border border-[#DFCAA8]">
-                  🚨 3 Delayed Flights
+                  🚨 {airportFlights.filter((f) => f.delayMinutes > 0).length} With Recorded Delay
                 </span>
               </div>
 
@@ -1095,7 +1063,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
                           </span>
                         ) : f.delayMinutes < 0 ? (
                           <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8]">
-                            🟢 EARLY (-10 MIN)
+                            🟢 EARLY ({f.delayMinutes} MIN)
                           </span>
                         ) : (
                           <span className="px-3 py-1 rounded-full text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8]">

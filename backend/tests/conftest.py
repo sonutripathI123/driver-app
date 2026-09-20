@@ -5,8 +5,13 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from app.core.config import settings as app_settings
 from app.core.database import Base, get_db
 from app.core.security import create_access_token, hash_password
+
+# The Stripe flows are exercised through the mock gateway in tests; production
+# keeps STRIPE_ALLOW_MOCK False so it never fabricates a payment result.
+app_settings.STRIPE_ALLOW_MOCK = True
 from app.models.enums import UserRole
 from app.models.user import User
 from app.services import flight_service

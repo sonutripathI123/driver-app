@@ -74,7 +74,6 @@ export const QuoteBookingPage: React.FC = () => {
       .then((rows: Customer[]) => setCorporateAccounts(rows.filter((c) => c.company_name)))
       .catch(() => setCorporateAccounts([]));
   }, []);
-  const [createdInvoiceNumber, setCreatedInvoiceNumber] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Dynamic Fare Estimation Formula
@@ -107,7 +106,6 @@ export const QuoteBookingPage: React.FC = () => {
     setBookingError(null);
 
     const paidAmount = paymentOption === 'DEPOSIT_25' ? fare.deposit : fare.gross;
-    const invoiceNum = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
     try {
       const payload = {
@@ -139,7 +137,6 @@ export const QuoteBookingPage: React.FC = () => {
       // would hand the client a number that matches no booking.
       const bNumber = res.booking_number;
       setCreatedBookingNumber(bNumber);
-      setCreatedInvoiceNumber(invoiceNum);
 
       // Trigger Web Audio Chime, Device Vibration, and Browser Push Notification
       await triggerNativeNotification(
@@ -668,8 +665,8 @@ export const QuoteBookingPage: React.FC = () => {
 
             <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] text-left space-y-2 text-xs text-[#0A0E1A]">
               <div className="flex justify-between">
-                <span className="text-[#0A0E1A] font-bold">Tax Invoice Number:</span>
-                <span className="font-mono font-black text-[#0A0E1A]">{createdInvoiceNumber}</span>
+                <span className="text-[#0A0E1A] font-bold">Booking Reference:</span>
+                <span className="font-mono font-black text-[#0A0E1A]">{createdBookingNumber}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#0A0E1A] font-bold">Passenger:</span>

@@ -136,7 +136,18 @@ class Settings(BaseSettings):
     # External Integrations (Optional)
     STRIPE_SECRET_KEY: Optional[str] = None
     STRIPE_WEBHOOK_SECRET: Optional[str] = None
+    # Test/dev only. When True and no real Stripe key is set, the gateway uses a
+    # mock checkout/refund and parses unsigned webhooks (for the test suite).
+    # MUST stay False in production, otherwise a forged webhook could mark a
+    # booking paid and a refund could report success without money moving.
+    STRIPE_ALLOW_MOCK: bool = False
     AEROAPI_KEY: Optional[str] = None
+
+    # Google Maps Platform (Directions + Geocoding). Without this the route
+    # distance/duration/tolls behind every quote fall back to a rough estimate,
+    # so real fares need this key set. Must be exposed here or the maps client's
+    # getattr(settings, "GOOGLE_MAPS_API_KEY") never sees a value from .env.
+    GOOGLE_MAPS_API_KEY: Optional[str] = None
 
     # Live flight tracking.
     # FLIGHT_PROVIDER: flightaware | aerodatabox | aviationstack | auto

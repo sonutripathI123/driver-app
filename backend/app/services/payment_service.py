@@ -66,17 +66,26 @@ class PaymentService:
             )
 
         # Create Stripe Checkout Session
-        customer_email = booking.passenger_email or (booking.customer.email if booking.customer else "customer@example.com")
-        session_info = await stripe_gateway.create_checkout_session(
-            booking_id=booking.id,
-            booking_number=booking.booking_number,
-            customer_email=customer_email,
-            amount=amount,
-            currency=booking.currency,
-            payment_type=payment_type,
-            success_url=req.success_url,
-            cancel_url=req.cancel_url
-        )
+        customer_email = booking.passenger_email or (booking.customer.email if booking.customer else None)
+        if not customer_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="This booking has no passenger or customer email to send the payment receipt to.",
+            )
+        try:
+            session_info = await stripe_gateway.create_checkout_session(
+                booking_id=booking.id,
+                booking_number=booking.booking_number,
+                customer_email=customer_email,
+                amount=amount,
+                currency=booking.currency,
+                payment_type=payment_type,
+                success_url=req.success_url,
+                cancel_url=req.cancel_url
+            )
+        except (RuntimeError, ValueError) as exc:
+            # Stripe not configured — never fabricate a checkout URL.
+            raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
 
         # Log pending transaction in payment ledger
         tx_id = str(uuid.uuid4())
@@ -338,13 +347,28 @@ class PaymentService:
         res = await db.execute(stmt)
         stripe_tx = res.scalars().first()
 
-        # Call Stripe Refund Gateway
+        # Call Stripe Refund Gateway only when there is a real Stripe payment to
+        # reverse. A booking paid manually/offline has no payment intent; its
+        # refund is a bookkeeping entry (money returned outside the system), not
+        # a fabricated Stripe "succeeded" result.
         intent_id = stripe_tx.stripe_payment_intent_id if stripe_tx else None
-        refund_res = await stripe_gateway.create_refund(
-            payment_intent_id=intent_id,
-            amount=refund_amount,
-            reason="requested_by_customer"
-        )
+        if intent_id:
+            try:
+                refund_res = await stripe_gateway.create_refund(
+                    payment_intent_id=intent_id,
+                    amount=refund_amount,
+                    reason="requested_by_customer"
+                )
+            except (RuntimeError, ValueError) as exc:
+                raise HTTPException(status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail=str(exc))
+        else:
+            refund_res = {
+                "status": "manual",
+                "amount": int(round(refund_amount * 100)),
+                "currency": booking.currency.lower(),
+                "payment_intent": None,
+                "reason": "manual_offline_refund",
+            }
 
         # Record Refund Transaction in Ledger
         tx_id = str(uuid.uuid4())

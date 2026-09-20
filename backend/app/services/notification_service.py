@@ -657,7 +657,7 @@ class NotificationService:
                     <p style="margin: 0 0 10px 0;"><strong>Destination:</strong> {leg.dropoff_address}</p>
                     <p style="margin: 0 0 10px 0;"><strong>Vehicle Category:</strong> {leg.vehicle_category.value if hasattr(leg.vehicle_category, 'value') else leg.vehicle_category}</p>
                     {f'<p style="margin: 0 0 10px 0; color: #a78bfa;"><strong>Airport Flight:</strong> {leg.flight_number} (Live Radar Tracked)</p>' if leg.flight_number else ''}
-                    <p style="margin: 0;"><strong>Payment Status:</strong> <span style="color: #4ade80;">PAID / CONFIRMED</span></p>
+                    <p style="margin: 0;"><strong>Payment Status:</strong> <span style="color: {'#4ade80' if (booking.balance_amount or 0) <= 0 else '#fbbf24'};">{'PAID IN FULL' if (booking.balance_amount or 0) <= 0 else f'BALANCE DUE: ${booking.balance_amount:,.2f} AUD'}</span></p>
                 </div>
                 <div style="background-color: #064e3b; border-left: 4px solid #10b981; padding: 12px 16px; border-radius: 6px; margin: 20px 0;">
                     <p style="margin: 0; color: #a7f3d0; font-size: 13px;">
