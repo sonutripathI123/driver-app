@@ -562,6 +562,12 @@ export const mailboxesApi = {
     const res = await apiClient.post<NotificationItem>(`/mailboxes/${id}/reply`, payload);
     return res.data;
   },
+  draftReply: async (id: string, inboundId: string) => {
+    const res = await apiClient.post<{ subject: string; message: string; to_email: string }>(
+      `/mailboxes/${id}/inbound/${inboundId}/draft-reply`
+    );
+    return res.data;
+  },
 };
 
 export const automationsApi = {

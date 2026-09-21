@@ -169,6 +169,54 @@ async def test_inbound_is_tagged_and_filtered_by_mailbox(client: AsyncClient, ad
 
 
 @pytest.mark.asyncio
+async def test_ai_draft_reply_uses_claude(client: AsyncClient, admin_user: User, db_session, monkeypatch):
+    h = auth_header(admin_user)
+    mid = (await _create(client, h)).json()["id"]
+    from app.models.inbound_email import InboundEmail
+    thread = InboundEmail(
+        provider="imap", mailbox_id=mid, sender_email="jane@corp.example.com",
+        sender_name="Jane", subject="Airport transfer quote", body_text="How much to the airport?",
+        status="UNREAD",
+    )
+    db_session.add(thread)
+    await db_session.commit()
+    await db_session.refresh(thread)
+
+    async def fake_ai(system_prompt, user_text):
+        assert "How much to the airport?" in user_text  # the enquiry is fed to the model
+        return "Dear Jane, thank you for your enquiry. Could you share the date and pickup address?"
+
+    monkeypatch.setattr(MailboxService, "_generate_ai_reply", staticmethod(fake_ai))
+    resp = await client.post(f"/api/v1/mailboxes/{mid}/inbound/{thread.id}/draft-reply", headers=h)
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert body["subject"].startswith("Re:")
+    assert "Jane" in body["message"]
+    assert body["to_email"] == "jane@corp.example.com"
+
+
+@pytest.mark.asyncio
+async def test_ai_draft_returns_503_when_unconfigured(client: AsyncClient, admin_user: User, db_session):
+    """With no ANTHROPIC_API_KEY the draft endpoint refuses — never a fabricated reply."""
+    from app.core.config import settings as app_settings
+    original = app_settings.ANTHROPIC_API_KEY
+    app_settings.ANTHROPIC_API_KEY = ""
+    try:
+        h = auth_header(admin_user)
+        mid = (await _create(client, h)).json()["id"]
+        from app.models.inbound_email import InboundEmail
+        thread = InboundEmail(provider="imap", mailbox_id=mid, sender_email="x@corp.example.com",
+                              subject="Hi", body_text="hello", status="UNREAD")
+        db_session.add(thread)
+        await db_session.commit()
+        await db_session.refresh(thread)
+        resp = await client.post(f"/api/v1/mailboxes/{mid}/inbound/{thread.id}/draft-reply", headers=h)
+        assert resp.status_code == 503
+    finally:
+        app_settings.ANTHROPIC_API_KEY = original
+
+
+@pytest.mark.asyncio
 async def test_mailbox_writes_require_ops(client: AsyncClient, dispatcher_user: User):
     h = auth_header(dispatcher_user)
     assert (await _create(client, h)).status_code == 403

@@ -15,6 +15,7 @@ import {
   X,
   PlugZap,
   CalendarPlus,
+  Sparkles,
 } from 'lucide-react';
 
 /**
@@ -69,6 +70,10 @@ export const EmailBookingWorkflowPage: React.FC = () => {
   const [replySubject, setReplySubject] = useState('');
   const [sending, setSending] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
+  // AI-drafted reply
+  const [drafting, setDrafting] = useState(false);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [aiDrafts, setAiDrafts] = useState<Record<string, { subject: string; message: string }>>({});
 
   // manage mailboxes modal
   const [manageOpen, setManageOpen] = useState(false);
@@ -140,11 +145,50 @@ export const EmailBookingWorkflowPage: React.FC = () => {
     }
   };
 
+  const generateDraft = async (t: InboundEmail, force = false) => {
+    if (!selectedId) return;
+    // Reuse an existing draft for this thread unless a fresh one is asked for.
+    if (!force && aiDrafts[t.id]) {
+      setReplySubject(aiDrafts[t.id].subject);
+      setReplyText(aiDrafts[t.id].message);
+      return;
+    }
+    setDrafting(true);
+    setDraftError(null);
+    try {
+      const d = await mailboxesApi.draftReply(selectedId, t.id);
+      setAiDrafts((prev) => ({ ...prev, [t.id]: { subject: d.subject, message: d.message } }));
+      // Only fill if the operator is still looking at this same thread.
+      setSelectedThread((cur) => {
+        if (cur && cur.id === t.id) {
+          setReplySubject(d.subject);
+          setReplyText(d.message);
+        }
+        return cur;
+      });
+    } catch (err: any) {
+      setDraftError(apiError(err, 'AI draft failed.'));
+    } finally {
+      setDrafting(false);
+    }
+  };
+
   const openThread = async (t: InboundEmail) => {
     setSelectedThread(t);
-    setReplyText('');
     setReplyError(null);
-    setReplySubject(`Re: ${t.subject || '(no subject)'}`);
+    setDraftError(null);
+    // If we already drafted this thread, restore it; otherwise auto-draft a
+    // reply with the Claude API (unless it's already been replied to).
+    if (aiDrafts[t.id]) {
+      setReplySubject(aiDrafts[t.id].subject);
+      setReplyText(aiDrafts[t.id].message);
+    } else {
+      setReplyText('');
+      setReplySubject(`Re: ${t.subject || '(no subject)'}`);
+      if (t.status !== 'REPLIED') {
+        generateDraft(t);
+      }
+    }
   };
 
   const handleReply = async () => {
@@ -401,10 +445,24 @@ export const EmailBookingWorkflowPage: React.FC = () => {
 
                     {/* Reply */}
                     <div className="space-y-2">
-                      <label className={lbl}>Reply from {selectedMailbox.email_address}</label>
+                      <div className="flex items-center justify-between gap-2">
+                        <label className={lbl}>Reply from {selectedMailbox.email_address}</label>
+                        <button
+                          type="button"
+                          onClick={() => generateDraft(selectedThread, true)}
+                          disabled={drafting}
+                          title="Draft a reply with Claude AI"
+                          className="px-2.5 py-1 rounded-lg bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-[#FAF6F0] font-black text-[10px] flex items-center gap-1.5 shadow-sm disabled:opacity-60"
+                        >
+                          {drafting ? <LoaderCircle className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5 text-[#DFCAA8]" />}
+                          {drafting ? 'Drafting…' : (aiDrafts[selectedThread.id] ? 'Regenerate AI draft' : 'Draft with AI')}
+                        </button>
+                      </div>
+                      {drafting && <p className="text-[11px] font-bold text-slate-600">Claude is drafting a reply from this enquiry — you can edit it before sending.</p>}
+                      {draftError && <p className="text-[11px] font-black text-rose-800 break-words">AI draft: {draftError}</p>}
                       <input className={fld} value={replySubject} onChange={(e) => setReplySubject(e.target.value)} placeholder="Subject" />
                       <textarea rows={5} className={fld} value={replyText} onChange={(e) => setReplyText(e.target.value)}
-                        placeholder="Type your reply — send a quote, a payment code, or a confirmation…" />
+                        placeholder="Type your reply — or use “Draft with AI” to auto-write one from the enquiry…" />
                       {replyError && <p className="text-[11px] font-black text-rose-800 break-words">{replyError}</p>}
                       <div className="flex items-center justify-between gap-2">
                         <button onClick={() => openBookingFromThread(selectedThread)}

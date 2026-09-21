@@ -25,6 +25,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import settings
 from app.core.crypto import decrypt_secret, encrypt_secret
 from app.models.mailbox import Mailbox
 from app.models.notification import Notification
@@ -259,6 +260,73 @@ class MailboxService:
         for mb in await MailboxService.list_mailboxes(db, active_only=True):
             results.append(await MailboxService.poll_mailbox(db, mb))
         return results
+
+    # ------------------------------------------------------------------ AI draft
+
+    @staticmethod
+    async def _generate_ai_reply(system_prompt: str, user_text: str) -> str:
+        """Call the Claude API to draft a reply. Isolated so tests can stub it."""
+        key = (settings.ANTHROPIC_API_KEY or "").strip()
+        if not key:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="AI drafting is not configured. Set ANTHROPIC_API_KEY in .env.",
+            )
+        try:
+            import anthropic
+        except ImportError:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="The 'anthropic' package is not installed on the server.",
+            )
+        client = anthropic.AsyncAnthropic(api_key=key)
+        try:
+            msg = await client.messages.create(
+                model=settings.ANTHROPIC_MODEL,
+                max_tokens=1024,
+                system=system_prompt,
+                messages=[{"role": "user", "content": user_text}],
+            )
+        except Exception as exc:  # network / auth / rate limit — surface honestly
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail=f"Claude API error: {exc}",
+            )
+        return "".join(
+            getattr(b, "text", "") for b in msg.content if getattr(b, "type", None) == "text"
+        ).strip()
+
+    @staticmethod
+    async def draft_reply(db: AsyncSession, mailbox_id: str, inbound_id: str) -> Dict[str, Any]:
+        """Draft an email reply to one enquiry with the Claude API."""
+        mb = await MailboxService.get(db, mailbox_id)
+        from app.models.inbound_email import InboundEmail
+        thread = await db.get(InboundEmail, inbound_id)
+        if not thread or thread.mailbox_id != mb.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Enquiry not found for this mailbox.")
+
+        system_prompt = (
+            f"You are the reservations assistant for {settings.COMPANY_NAME}, a premium "
+            f"chauffeur and airport transfer service in Melbourne, Australia. Write a warm, "
+            f"professional, concise reply to the customer's email below, ready for a human to "
+            f"review and send. Guidelines: be courteous and specific to what they asked; if they "
+            f"want a quote but details are missing, politely ask for the pickup date, time, "
+            f"pickup and drop-off addresses, and number of passengers; do NOT invent an exact "
+            f"price or confirm a booking that has not been made; keep it under ~150 words; sign "
+            f"off as 'The {settings.COMPANY_NAME} Team'. Reply with ONLY the email body text — "
+            f"no subject line, no 'Here is a draft' preamble, no markdown."
+        )
+        user_text = (
+            f"From: {thread.sender_name or ''} <{thread.sender_email}>\n"
+            f"Subject: {thread.subject or '(no subject)'}\n\n"
+            f"{thread.body_text or '(no body text)'}"
+        )
+        body = await MailboxService._generate_ai_reply(system_prompt, user_text)
+
+        subject = (thread.subject or "").strip()
+        if not subject.lower().startswith("re:"):
+            subject = f"Re: {subject}".strip()
+        return {"subject": subject, "message": body, "to_email": thread.sender_email}
 
     # ------------------------------------------------------------------ reply
 

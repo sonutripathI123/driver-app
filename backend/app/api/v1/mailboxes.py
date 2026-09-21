@@ -86,6 +86,16 @@ async def list_mailbox_inbound(
     return list((await db.execute(stmt)).scalars().all())
 
 
+@router.post("/{mailbox_id}/inbound/{inbound_id}/draft-reply", dependencies=[Depends(require_ops)])
+async def draft_ai_reply(mailbox_id: str, inbound_id: str, db: AsyncSession = Depends(get_db)):
+    """
+    Draft a reply to this enquiry with the Claude API, for the operator to review
+    and edit before sending. Returns {subject, message, to_email}. 503 if no
+    ANTHROPIC_API_KEY is configured — never a fabricated reply. Access: ADMIN, OPS.
+    """
+    return await MailboxService.draft_reply(db, mailbox_id, inbound_id)
+
+
 @router.post("/{mailbox_id}/reply", response_model=NotificationRead, dependencies=[Depends(require_ops)])
 async def reply_from_mailbox(mailbox_id: str, payload: MailboxReplyRequest, db: AsyncSession = Depends(get_db)):
     """

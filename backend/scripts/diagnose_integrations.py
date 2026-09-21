@@ -216,6 +216,21 @@ def check_stripe():
         line(WARN, "Mode", "not configured - checkout/refund return 503, unsigned webhooks refused (honest, no fabrication)")
 
 
+def check_claude():
+    header("CLAUDE API (AI-drafted email replies)")
+    key = getattr(settings, "ANTHROPIC_API_KEY", None)
+    line(INFO, "ANTHROPIC_MODEL", getattr(settings, "ANTHROPIC_MODEL", "(unset)"))
+    if not key:
+        line(WARN, "ANTHROPIC_API_KEY", "(not set) - AI draft replies OFF (endpoint returns 503)")
+        return
+    line(OK, "ANTHROPIC_API_KEY", mask(key))
+    try:
+        import anthropic  # noqa: F401
+        line(OK, "anthropic package", "installed")
+    except ImportError:
+        line(FAIL, "anthropic package", "NOT installed - run pip install -r requirements.txt")
+
+
 def check_tokens():
     header("PUBLIC-ENDPOINT TOKENS")
     line(OK if settings.AUTOMATIONS_CRON_TOKEN else WARN, "AUTOMATIONS_CRON_TOKEN",
@@ -238,6 +253,7 @@ def main():
     check_flight()
     check_webpush()
     check_stripe()
+    check_claude()
     check_tokens()
     print("\nDone. [FAIL] = must fix before handover, [WARN] = feature off/attention, [info]/[ OK ] = fine.\n")
 

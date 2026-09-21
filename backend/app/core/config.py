@@ -143,6 +143,13 @@ class Settings(BaseSettings):
     STRIPE_ALLOW_MOCK: bool = False
     AEROAPI_KEY: Optional[str] = None
 
+    # Claude API (Anthropic) — used to auto-draft email replies in the Email
+    # Booking Workflow. Without a key the AI-draft endpoint returns 503 (no
+    # fabricated reply). ANTHROPIC_MODEL lets you switch models without a
+    # code change (e.g. claude-sonnet-5 or claude-haiku-4-5 to cut cost).
+    ANTHROPIC_API_KEY: Optional[str] = None
+    ANTHROPIC_MODEL: str = "claude-opus-5"
+
     # Google Maps Platform (Directions + Geocoding). Without this the route
     # distance/duration/tolls behind every quote fall back to a rough estimate,
     # so real fares need this key set. Must be exposed here or the maps client's
