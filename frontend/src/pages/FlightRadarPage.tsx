@@ -200,23 +200,27 @@ export const FlightRadarPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Automated Rescheduling Action Box */}
+            {/* Pickup impact — advisory only. This is a status lookup, not tied
+                to a booking, so nothing is rescheduled or messaged here. */}
             <div className="p-4 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] space-y-2 text-[#0A0E1A]">
               <div className="flex items-center gap-2 text-[#0A0E1A] font-black text-xs">
                 <AlertTriangle className="w-4 h-4 text-[#0A0E1A] shrink-0" />
-                <span>Automated Pickup Reschedule Trigger:</span>
+                <span>Pickup impact</span>
               </div>
               <p className="text-[#0A0E1A] text-xs leading-relaxed font-bold">
-                {flightData.delay_minutes > 0 ? (
+                {flightData.delay_minutes >= 15 ? (
                   <>
-                    Flight delayed by <strong>{flightData.delay_minutes} mins</strong>. Chauffeur pickup automatically shifted to{' '}
-                    <strong className="text-[#0A0E1A] font-mono font-black">{flightData.rescheduled_pickup_time}</strong>.
-                    Passenger and driver SMS alerts dispatched.
+                    Flight delayed by <strong>{flightData.delay_minutes} mins</strong>. For a booking on this flight,
+                    dispatch will auto-shift the pickup to ~30 min after the new landing time and alert the passenger,
+                    driver and manager. Apply it from the booking on the Live Operate Board.
+                  </>
+                ) : flightData.delay_minutes > 0 ? (
+                  <>
+                    Delayed <strong>{flightData.delay_minutes} mins</strong> — within the buffer, so no pickup change is needed.
                   </>
                 ) : (
                   <>
-                    Flight is running <strong>100% on schedule</strong>. Chauffeur pickup scheduled for{' '}
-                    <strong className="text-[#0A0E1A] font-mono font-black">{flightData.rescheduled_pickup_time}</strong>.
+                    Flight is <strong>on schedule</strong> — no pickup change needed.
                   </>
                 )}
               </p>

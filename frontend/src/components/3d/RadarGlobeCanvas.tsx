@@ -145,7 +145,7 @@ export const RadarGlobeCanvas: React.FC<RadarGlobeProps> = ({
 
         <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full bg-slate-900/85 backdrop-blur border border-emerald-500/30 text-[11px] text-emerald-300 pointer-events-auto">
           <ShieldCheck className="w-3 h-3" />
-          <span>FlightAware Active</span>
+          <span>Live Radar Active</span>
         </div>
       </div>
 
