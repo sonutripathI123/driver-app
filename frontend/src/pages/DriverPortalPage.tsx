@@ -114,6 +114,7 @@ export const DriverPortalPage: React.FC = () => {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const [profile, setProfile] = useState<ChauffeurProfileItem | null>(null);
+  const [earnings, setEarnings] = useState<{ total_earnings: number; total_completed_trips: number; pending_payout_amount: number } | null>(null);
   const [trips, setTrips] = useState<DriverTripItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -189,11 +190,19 @@ export const DriverPortalPage: React.FC = () => {
 
   const loadManifest = async () => {
     try {
-      const [me, jobs] = await Promise.all([
+      const [me, jobs, earn] = await Promise.all([
         driverPortalApi.getProfile(),
         driverPortalApi.getManifest('ALL'),
+        driverPortalApi.getEarnings().catch(() => null),
       ]);
       const jobList = Array.isArray(jobs) ? jobs : [];
+      if (earn) {
+        setEarnings({
+          total_earnings: earn.total_earnings ?? 0,
+          total_completed_trips: earn.total_completed_trips ?? 0,
+          pending_payout_amount: earn.pending_payout_amount ?? 0,
+        });
+      }
       // The plate that matters is the one on the job in hand; a driver's
       // "default vehicle" is often unset because allocation is per leg.
       const jobVehicle = jobList.find((j: any) => IN_HAND.includes(j.status) && j.vehicle_plate);
@@ -416,6 +425,36 @@ export const DriverPortalPage: React.FC = () => {
         <span className="px-3 py-1.5 rounded-xl bg-[#121A2D] border border-[#DFCAA8] text-white text-xs font-bold hidden sm:inline-block">
           🟢 Connected Live
         </span>
+      </div>
+
+      {/* All-time summary: name, total earnings and total jobs so far */}
+      <div className="rounded-2xl bg-[#0D1322] border border-[#1F2E4D] p-4 space-y-3">
+        <p className="text-xs font-black text-white">
+          Welcome, <span className="text-[#DFCAA8]">{currentDriver.name}</span>
+        </p>
+        <div className="grid grid-cols-3 gap-2.5">
+          <div className="p-3 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-center">
+            <div className="text-[9px] uppercase font-black text-slate-300 tracking-wider">Total Earnings</div>
+            <div className="text-base sm:text-lg font-black font-mono text-white mt-0.5">
+              ${(earnings?.total_earnings ?? 0).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-[9px] font-bold text-slate-400 mt-0.5">AUD, all time</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-center">
+            <div className="text-[9px] uppercase font-black text-slate-300 tracking-wider">Total Trips</div>
+            <div className="text-base sm:text-lg font-black font-mono text-white mt-0.5">
+              {earnings?.total_completed_trips ?? 0}
+            </div>
+            <div className="text-[9px] font-bold text-slate-400 mt-0.5">completed</div>
+          </div>
+          <div className="p-3 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-center">
+            <div className="text-[9px] uppercase font-black text-slate-300 tracking-wider">Pending Payout</div>
+            <div className="text-base sm:text-lg font-black font-mono text-white mt-0.5">
+              ${(earnings?.pending_payout_amount ?? 0).toLocaleString('en-AU', { minimumFractionDigits: 2 })}
+            </div>
+            <div className="text-[9px] font-bold text-slate-400 mt-0.5">not yet settled</div>
+          </div>
+        </div>
       </div>
 
       {/* Manifest status: a chauffeur must never be left guessing whether
