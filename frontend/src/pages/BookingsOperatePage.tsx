@@ -416,20 +416,20 @@ This removes the whole booking — all its legs, its invoice, payments and notif
             <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
 
-          {/* Table / Kanban View Toggle */}
-          <div className="flex p-1 bg-[#06090F] rounded-xl border border-[#1E2738]">
+          {/* Table / Kanban View Toggle — text always dark; only background changes */}
+          <div className="flex p-1 bg-[#FAF6F0] rounded-xl border border-[#E6D8C3]">
             <button
               onClick={() => setViewMode('table')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
-                viewMode === 'table' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover-yellow font-bold'
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-black text-[#0A0E1A] transition-all ${
+                viewMode === 'table' ? 'bg-[#FFFFFF] border border-[#DFCAA8] shadow' : 'hover:bg-[#FFFFFF]'
               }`}
             >
               Table View
             </button>
             <button
               onClick={() => setViewMode('kanban')}
-              className={`px-3.5 py-1.5 rounded-lg text-xs transition-all ${
-                viewMode === 'kanban' ? 'bg-[#FAF6F0] text-[#0A0E1A] font-black shadow' : 'text-white hover-sky font-bold'
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-black text-[#0A0E1A] transition-all ${
+                viewMode === 'kanban' ? 'bg-[#FFFFFF] border border-[#DFCAA8] shadow' : 'hover:bg-[#FFFFFF]'
               }`}
             >
               Kanban Board
