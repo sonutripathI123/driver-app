@@ -84,6 +84,7 @@ export const EmailBookingWorkflowPage: React.FC = () => {
   const [testResult, setTestResult] = useState<Record<string, string>>({});
   const [testingId, setTestingId] = useState<string | null>(null);
   const [linkEdits, setLinkEdits] = useState<Record<string, string>>({});
+  const [pwEdits, setPwEdits] = useState<Record<string, string>>({});
 
   // booking-from-enquiry modal
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -256,6 +257,23 @@ export const EmailBookingWorkflowPage: React.FC = () => {
       setNotice(`Booking link saved for ${m.label}.`);
     } catch (err: any) {
       alert(apiError(err, 'Could not save the booking link.'));
+    }
+  };
+
+  const updateMailboxPassword = async (m: Mailbox) => {
+    const pw = (pwEdits[m.id] ?? '').trim();
+    if (!pw) return;
+    setTestingId(m.id);
+    try {
+      await mailboxesApi.update(m.id, { password: pw });
+      const r = await mailboxesApi.test(m.id);
+      setTestResult((prev) => ({ ...prev, [m.id]: r.imap_ok && r.smtp_ok ? '✓ Both IMAP & SMTP connected' : `✗ ${r.detail}` }));
+      setPwEdits((prev) => ({ ...prev, [m.id]: '' }));
+      await loadMailboxes();
+    } catch (err: any) {
+      setTestResult((prev) => ({ ...prev, [m.id]: '✗ ' + apiError(err, 'Update/test failed') }));
+    } finally {
+      setTestingId(null);
     }
   };
 
@@ -542,6 +560,22 @@ export const EmailBookingWorkflowPage: React.FC = () => {
                       <button onClick={() => saveBookingLink(m)}
                         className="shrink-0 px-2 py-1 rounded-lg bg-[#06090F] text-white text-[10px] font-black border border-[#DFCAA8]">
                         Save link
+                      </button>
+                    </div>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <input
+                        type="password"
+                        className="flex-1 min-w-0 px-2 py-1 rounded-lg bg-[#FAF6F0] border border-[#E6D8C3] text-[10px] font-mono text-[#0A0E1A]"
+                        placeholder="New app-password (paste to refresh a revoked one)"
+                        value={pwEdits[m.id] ?? ''}
+                        onChange={(e) => setPwEdits((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                      />
+                      <button
+                        onClick={() => updateMailboxPassword(m)}
+                        disabled={testingId === m.id || !(pwEdits[m.id] ?? '').trim()}
+                        className="shrink-0 px-2 py-1 rounded-lg bg-[#06090F] text-white text-[10px] font-black border border-[#DFCAA8] disabled:opacity-50 flex items-center gap-1"
+                      >
+                        {testingId === m.id ? <LoaderCircle className="w-3 h-3 animate-spin" /> : null} Update & test
                       </button>
                     </div>
                   </div>
