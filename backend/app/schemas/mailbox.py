@@ -14,6 +14,7 @@ class MailboxBase(BaseModel):
     smtp_use_tls: bool = True
     username: str = Field(..., min_length=1, max_length=320, description="Usually the full email address")
     is_active: bool = True
+    booking_form_url: Optional[str] = Field(None, max_length=500, description="This website's public booking-form link, sent to the customer in a reply")
 
 
 class MailboxCreate(MailboxBase):
@@ -30,6 +31,7 @@ class MailboxUpdate(BaseModel):
     smtp_use_tls: Optional[bool] = None
     username: Optional[str] = Field(None, min_length=1, max_length=320)
     is_active: Optional[bool] = None
+    booking_form_url: Optional[str] = Field(None, max_length=500)
     # Provide only to change it; omitted leaves the stored password untouched.
     password: Optional[str] = Field(None, min_length=1, max_length=512)
 
@@ -48,6 +50,7 @@ class MailboxRead(BaseModel):
     smtp_use_tls: bool
     username: str
     is_active: bool
+    booking_form_url: Optional[str] = None
     last_polled_at: Optional[datetime] = None
     last_poll_error: Optional[str] = None
     created_at: datetime

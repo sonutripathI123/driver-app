@@ -342,6 +342,7 @@ export interface Mailbox {
   smtp_use_tls: boolean;
   username: string;
   is_active: boolean;
+  booking_form_url?: string | null;
   last_polled_at?: string | null;
   last_poll_error?: string | null;
   created_at: string;

@@ -51,6 +51,7 @@ const EMPTY_MAILBOX = {
   smtp_use_tls: true,
   username: '',
   password: '',
+  booking_form_url: '',
 };
 
 export const EmailBookingWorkflowPage: React.FC = () => {
@@ -464,6 +465,18 @@ export const EmailBookingWorkflowPage: React.FC = () => {
                       <textarea rows={5} className={fld} value={replyText} onChange={(e) => setReplyText(e.target.value)}
                         placeholder="Type your reply — or use “Draft with AI” to auto-write one from the enquiry…" />
                       {replyError && <p className="text-[11px] font-black text-rose-800 break-words">{replyError}</p>}
+                      {selectedMailbox.booking_form_url && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const link = selectedMailbox.booking_form_url as string;
+                            setReplyText((prev) => (prev.includes(link) ? prev : `${prev.trimEnd()}\n\nBook & pay securely here: ${link}`));
+                          }}
+                          className="px-3 py-2 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A] font-black text-[11px] flex items-center gap-1.5 shadow-sm"
+                        >
+                          <PlugZap className="w-3.5 h-3.5" /> Insert booking form link
+                        </button>
+                      )}
                       <div className="flex items-center justify-between gap-2">
                         <button onClick={() => openBookingFromThread(selectedThread)}
                           className="px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A] font-black text-xs flex items-center gap-1.5 shadow-sm">
@@ -538,6 +551,12 @@ export const EmailBookingWorkflowPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className={lbl}>Username *</label><input className={fld} required value={newMailbox.username} onChange={(e) => setNewMailbox({ ...newMailbox, username: e.target.value })} placeholder="usually the full email" /></div>
                 <div><label className={lbl}>Password / app-password *</label><input className={fld} required type="password" value={newMailbox.password} onChange={(e) => setNewMailbox({ ...newMailbox, password: e.target.value })} placeholder="stored encrypted" /></div>
+              </div>
+              <div>
+                <label className={lbl}>Booking form link (this website's booking page)</label>
+                <input className={fld} type="url" value={newMailbox.booking_form_url}
+                  onChange={(e) => setNewMailbox({ ...newMailbox, booking_form_url: e.target.value })}
+                  placeholder="https://www.yourwebsite.com  (sent to the customer in replies)" />
               </div>
               <label className="flex items-center gap-2 text-xs font-bold">
                 <input type="checkbox" checked={newMailbox.smtp_use_tls} onChange={(e) => setNewMailbox({ ...newMailbox, smtp_use_tls: e.target.checked })} />

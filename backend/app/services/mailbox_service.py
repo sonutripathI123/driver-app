@@ -103,6 +103,7 @@ class MailboxService:
             username=payload.username.strip(),
             encrypted_password=encrypt_secret(payload.password),
             is_active=payload.is_active,
+            booking_form_url=(payload.booking_form_url or "").strip() or None,
         )
         db.add(mb)
         await db.commit()
@@ -305,16 +306,23 @@ class MailboxService:
         if not thread or thread.mailbox_id != mb.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Enquiry not found for this mailbox.")
 
+        booking_line = ""
+        if mb.booking_form_url:
+            booking_line = (
+                f" Near the end, invite them to complete their booking and payment on our "
+                f"secure booking form and include this exact link on its own line: "
+                f"{mb.booking_form_url}"
+            )
         system_prompt = (
-            f"You are the reservations assistant for {settings.COMPANY_NAME}, a premium "
-            f"chauffeur and airport transfer service in Melbourne, Australia. Write a warm, "
-            f"professional, concise reply to the customer's email below, ready for a human to "
-            f"review and send. Guidelines: be courteous and specific to what they asked; if they "
-            f"want a quote but details are missing, politely ask for the pickup date, time, "
+            f"You are the reservations assistant for {mb.label or settings.COMPANY_NAME}, a "
+            f"premium chauffeur and airport transfer service in Melbourne, Australia. Write a "
+            f"warm, professional, concise reply to the customer's email below, ready for a human "
+            f"to review and send. Guidelines: be courteous and specific to what they asked; if "
+            f"they want a quote but details are missing, politely ask for the pickup date, time, "
             f"pickup and drop-off addresses, and number of passengers; do NOT invent an exact "
             f"price or confirm a booking that has not been made; keep it under ~150 words; sign "
-            f"off as 'The {settings.COMPANY_NAME} Team'. Reply with ONLY the email body text — "
-            f"no subject line, no 'Here is a draft' preamble, no markdown."
+            f"off as 'The {mb.label or settings.COMPANY_NAME} Team'.{booking_line} Reply with "
+            f"ONLY the email body text — no subject line, no 'Here is a draft' preamble, no markdown."
         )
         user_text = (
             f"From: {thread.sender_name or ''} <{thread.sender_email}>\n"

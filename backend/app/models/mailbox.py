@@ -43,6 +43,11 @@ class Mailbox(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # The public booking-form link for the website this mailbox belongs to.
+    # Sent to the customer in a reply so they finish the booking + pay on the
+    # site that already handles it. Each mailbox (website) has its own.
+    booking_form_url: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+
     # Highest IMAP UID already ingested, so a poll only fetches newer mail and
     # never re-imports the existing inbox.
     last_uid: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
