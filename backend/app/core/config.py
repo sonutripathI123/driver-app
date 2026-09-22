@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     COMPANY_ABN: str = "68 642 908 112"
     COMPANY_WEBSITE: str = "https://www.opalchauffeurs.com.au"
 
+    # Public URL of this dashboard, used in the link sent to a chauffeur when a
+    # job is allocated to them (they log in and land on their driver portal).
+    PUBLIC_APP_URL: str = "https://admin.chaufr.au"
+
     # Outbound Email.
     # EMAIL_PROVIDER selects the transport: "resend", "brevo" or "smtp". Leave
     # it as "auto" to use whichever one is configured. With nothing configured

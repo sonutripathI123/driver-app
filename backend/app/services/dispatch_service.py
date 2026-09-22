@@ -227,6 +227,14 @@ class DispatchService:
             booking_id=booking.id
         )
 
+        # Notify the assigned chauffeur directly (SMS + email) with a link to
+        # their driver dashboard, so they know the job is theirs immediately.
+        try:
+            await NotificationService.send_driver_allocation_notice(db, booking, leg, driver_obj)
+        except Exception:
+            # A notification hiccup must never fail the allocation itself.
+            pass
+
         await db.commit()
         await db.refresh(leg)
         return leg

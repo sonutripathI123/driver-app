@@ -369,6 +369,69 @@ class NotificationService:
         return notifs
 
     @staticmethod
+    async def send_driver_allocation_notice(
+        db: AsyncSession,
+        booking: Booking,
+        leg: BookingLeg,
+        driver,
+    ) -> List[Notification]:
+        """
+        On allocation, tell the assigned chauffeur they have the job — SMS + email
+        — with a link to their driver dashboard (they sign in and see only their
+        own trips).
+        """
+        notifs: List[Notification] = []
+        if not driver:
+            return notifs
+
+        url = (settings.PUBLIC_APP_URL or "").rstrip("/")
+        cust_name, _, cust_phone = get_customer_contact(booking)
+        pickup_str = (
+            leg.pickup_datetime.strftime("%d %b %Y at %I:%M %p AEST")
+            if leg.pickup_datetime else "Scheduled time"
+        )
+        passenger = booking.passenger_name or cust_name
+
+        if getattr(driver, "phone", None):
+            sms = (
+                f"Opal Chauffeurs: New job assigned to you. Booking #{booking.booking_number} — "
+                f"pickup {pickup_str} at {leg.pickup_address}. Passenger: {passenger}. "
+                f"Open your driver dashboard: {url}"
+            )
+            notifs.append(await NotificationService.record_and_dispatch_sms(
+                db, driver.phone, "DRIVER_ALLOCATION_SMS", sms, booking.id
+            ))
+
+        if getattr(driver, "email", None):
+            rows: List[Tuple[str, str]] = [
+                ("Booking", f"#{booking.booking_number}"),
+                ("Pickup", pickup_str),
+                ("From", leg.pickup_address),
+                ("To", leg.dropoff_address),
+                ("Passenger", passenger),
+                ("Your payout", f"${(leg.allocation_cost or 0):,.2f} AUD"),
+            ]
+            html = NotificationService.build_branded_email(
+                heading="New job assigned to you",
+                intro=(
+                    f"Hi {driver.full_name}, a new chauffeur job has been allocated to you. "
+                    f"Open your dashboard to see the full details and update the trip status as you go."
+                ),
+                rows=rows,
+                footer_note=(
+                    f"Open your driver dashboard and sign in with your email: "
+                    f"<a href=\"{url}\" style=\"color:#0A0E1A;font-weight:800;\">{url}</a>"
+                ),
+            )
+            notifs.append(await NotificationService.record_and_dispatch_email(
+                db, driver.email, "DRIVER_ALLOCATION_EMAIL",
+                f"New job assigned — #{booking.booking_number} | Opal Chauffeurs",
+                html, booking.id
+            ))
+
+        return notifs
+
+    @staticmethod
     def build_branded_email(
         heading: str,
         intro: str,
