@@ -82,6 +82,47 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
   const [driverFilter, setDriverFilter] = useState<'ALL' | 'AVAILABLE' | 'ON_TRIP' | 'OFF_DUTY'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Reporting period for the revenue/profit/bookings cards. The backend windows
+  // the summary by booking created_at; this lets the user switch the window.
+  type PeriodKey = '30D' | '1M' | '2M' | '3M' | '6M' | '12M';
+  const PERIODS: { key: PeriodKey; label: string }[] = [
+    { key: '30D', label: '30 Days' },
+    { key: '1M', label: '1 Month' },
+    { key: '2M', label: '2 Months' },
+    { key: '3M', label: '3 Months' },
+    { key: '6M', label: '6 Months' },
+    { key: '12M', label: '12 Months' },
+  ];
+  const [periodKey, setPeriodKey] = useState<PeriodKey>('30D');
+  const [summaryLoading, setSummaryLoading] = useState(false);
+
+  const rangeFor = (key: PeriodKey): { from: string; to: string } => {
+    const to = new Date();
+    to.setDate(to.getDate() + 1); // include everything up to end of today
+    const from = new Date();
+    if (key === '30D') from.setDate(from.getDate() - 30);
+    else from.setMonth(from.getMonth() - Number(key.replace('M', '')));
+    return { from: from.toISOString(), to: to.toISOString() };
+  };
+
+  const changePeriod = async (key: PeriodKey) => {
+    setPeriodKey(key);
+    setSummaryLoading(true);
+    try {
+      const range = rangeFor(key);
+      const sumData = await analyticsApi.getDashboardSummary(range.from, range.to);
+      setSummary(sumData);
+      setLoadError(null);
+    } catch (err: any) {
+      setLoadError(
+        err?.response?.data?.detail ||
+          (err?.response ? `Live data unavailable (HTTP ${err.response.status}).` : 'Cannot reach the Opal Cloud Engine.')
+      );
+    } finally {
+      setSummaryLoading(false);
+    }
+  };
+
   // Sample detailed booking audit records
   // Both tables below are derived from the bookings and driver roster already
   // loaded from the API. They were previously ~265 lines of invented rows —
@@ -203,8 +244,9 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
     setIsLoading(true);
     setLoadError(null);
     try {
+      const range = rangeFor(periodKey);
       const [sumData, bData, driverData] = await Promise.all([
-        analyticsApi.getDashboardSummary(),
+        analyticsApi.getDashboardSummary(range.from, range.to),
         bookingsApi.list(),
         fleetApi.getDrivers(),
       ]);
@@ -347,6 +389,28 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
             <ArrowRight className="w-3.5 h-3.5 ml-0.5 text-white" />
           </button>
         </div>
+      </div>
+
+      {/* Reporting period filter — drives the revenue/profit/bookings cards */}
+      <div className="flex items-center gap-2 flex-wrap rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] px-4 py-3 shadow-sm">
+        <span className="text-xs font-black text-[#0A0E1A] uppercase tracking-wider mr-1">Reporting period:</span>
+        {PERIODS.map((p) => (
+          <button
+            key={p.key}
+            onClick={() => changePeriod(p.key)}
+            className={`px-3 py-1.5 rounded-xl text-xs font-black border transition-all ${
+              periodKey === p.key
+                ? 'bg-[#06090F] text-white border-[#DFCAA8] shadow-md'
+                : 'bg-[#FFFFFF] text-[#0A0E1A] border-[#E6D8C3] hover:bg-[#FAF6F0]'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+        {summaryLoading && <LoaderCircle className="w-4 h-4 text-[#7B6035] animate-spin ml-1" />}
+        <span className="text-[10px] text-[#0A0E1A] font-bold ml-auto opacity-70">
+          Revenue, profit & rides cards {periodKey === '30D' ? 'last 30 days' : `last ${periodKey.replace('M', '')} month(s)`} ke hisaab se
+        </span>
       </div>
 
       {/* 2. 4 Interactive Clickable Metric Cards */}
