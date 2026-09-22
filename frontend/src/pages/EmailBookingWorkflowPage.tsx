@@ -83,6 +83,7 @@ export const EmailBookingWorkflowPage: React.FC = () => {
   const [mailboxError, setMailboxError] = useState<string | null>(null);
   const [testResult, setTestResult] = useState<Record<string, string>>({});
   const [testingId, setTestingId] = useState<string | null>(null);
+  const [linkEdits, setLinkEdits] = useState<Record<string, string>>({});
 
   // booking-from-enquiry modal
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -244,6 +245,17 @@ export const EmailBookingWorkflowPage: React.FC = () => {
       setTestResult((prev) => ({ ...prev, [id]: '✗ ' + apiError(err, 'Test failed') }));
     } finally {
       setTestingId(null);
+    }
+  };
+
+  const saveBookingLink = async (m: Mailbox) => {
+    const url = (linkEdits[m.id] ?? m.booking_form_url ?? '').trim();
+    try {
+      await mailboxesApi.update(m.id, { booking_form_url: url });
+      await loadMailboxes();
+      setNotice(`Booking link saved for ${m.label}.`);
+    } catch (err: any) {
+      alert(apiError(err, 'Could not save the booking link.'));
     }
   };
 
@@ -520,6 +532,18 @@ export const EmailBookingWorkflowPage: React.FC = () => {
                     <p className="text-xs font-black truncate">{m.label} <span className="font-mono font-bold text-slate-600">· {m.email_address}</span></p>
                     <p className="text-[10px] text-slate-600 font-mono">IMAP {m.imap_host}:{m.imap_port} · SMTP {m.smtp_host}:{m.smtp_port}</p>
                     {testResult[m.id] && <p className={`text-[10px] font-black mt-0.5 ${testResult[m.id].startsWith('✓') ? 'text-emerald-800' : 'text-rose-800'}`}>{testResult[m.id]}</p>}
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <input
+                        className="flex-1 min-w-0 px-2 py-1 rounded-lg bg-[#FAF6F0] border border-[#E6D8C3] text-[10px] font-mono text-[#0A0E1A]"
+                        placeholder="Booking form link (https://…)"
+                        value={linkEdits[m.id] ?? m.booking_form_url ?? ''}
+                        onChange={(e) => setLinkEdits((prev) => ({ ...prev, [m.id]: e.target.value }))}
+                      />
+                      <button onClick={() => saveBookingLink(m)}
+                        className="shrink-0 px-2 py-1 rounded-lg bg-[#06090F] text-white text-[10px] font-black border border-[#DFCAA8]">
+                        Save link
+                      </button>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     <button onClick={() => handleTestMailbox(m.id)} disabled={testingId === m.id}
