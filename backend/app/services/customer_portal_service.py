@@ -130,6 +130,67 @@ class CustomerPortalService:
         )
 
     @staticmethod
+    async def _compute_fare(db: AsyncSession, req):
+        """Real route + fare for a customer's chosen trip (Google Maps on prod)."""
+        from app.integrations.maps import map_provider
+        from app.models.enums import VehicleCategory
+        from app.services.pricing_service import PricingEngine
+        try:
+            cat = VehicleCategory(req.vehicle_category)
+        except Exception:
+            cat = VehicleCategory.SEDAN_PREMIUM
+        route = await map_provider.calculate_route(req.pickup_address, req.dropoff_address)
+        option = await PricingEngine.calculate_category_fare(
+            db, cat, route, req.pickup_datetime, req.pickup_address, req.dropoff_address
+        )
+        return option, route, cat
+
+    @staticmethod
+    async def quote(db: AsyncSession, req):
+        from app.schemas.customer_portal import CustomerQuoteResponse
+        option, route, cat = await CustomerPortalService._compute_fare(db, req)
+        return CustomerQuoteResponse(
+            total_fare=round(option.total_fare, 2),
+            distance_km=route.distance_km,
+            vehicle_category=cat.value,
+        )
+
+    @staticmethod
+    async def create_booking(db: AsyncSession, customer: Customer, req):
+        from app.models.enums import BookingSource
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        option, route, cat = await CustomerPortalService._compute_fare(db, req)
+        booking_in = BookingCreate(
+            customer_id=customer.id,
+            customer_name=customer.full_name,
+            customer_email=customer.email,
+            customer_phone=customer.phone,
+            source=BookingSource.APP,
+            total_fare=round(option.total_fare, 2),
+            deposit_percentage=100.0,
+            pricing_breakdown=option.pricing_breakdown,
+            passenger_name=customer.full_name,
+            passenger_phone=customer.phone,
+            passenger_email=customer.email,
+            passenger_count=req.passenger_count,
+            luggage_count=req.luggage_count,
+            legs=[BookingLegCreate(
+                leg_number=1,
+                pickup_address=req.pickup_address,
+                dropoff_address=req.dropoff_address,
+                pickup_datetime=req.pickup_datetime,
+                distance_km=route.distance_km,
+                duration_minutes=route.duration_minutes,
+                vehicle_category=cat,
+                is_airport_pickup=req.is_airport_pickup,
+                flight_number=(req.flight_number or None),
+            )],
+        )
+        return await BookingService.create_booking(db, booking_in)
+
+    @staticmethod
     async def get_bookings(db: AsyncSession, customer: Customer) -> List[CustomerBookingItem]:
         bookings = await CustomerPortalService._bookings(db, customer.id)
         items: List[CustomerBookingItem] = []

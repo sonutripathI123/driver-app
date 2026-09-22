@@ -304,6 +304,14 @@ export const customerPortalApi = {
     const res = await apiClient.get(`/customer-portal/bookings`);
     return res.data;
   },
+  quote: async (payload: any) => {
+    const res = await apiClient.post(`/customer-portal/quote`, payload);
+    return res.data;
+  },
+  book: async (payload: any) => {
+    const res = await apiClient.post(`/customer-portal/book`, payload);
+    return res.data;
+  },
 };
 
 export const flightsApi = {

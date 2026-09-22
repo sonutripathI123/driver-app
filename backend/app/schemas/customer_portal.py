@@ -31,6 +31,32 @@ class CustomerBookingItem(BaseModel):
     created_at: Optional[datetime] = None
 
 
+class CustomerQuoteRequest(BaseModel):
+    pickup_address: str = Field(..., min_length=3, max_length=500)
+    dropoff_address: str = Field(..., min_length=3, max_length=500)
+    pickup_datetime: datetime
+    vehicle_category: str = "SEDAN_PREMIUM"
+    passenger_count: int = Field(1, ge=1, le=50)
+    luggage_count: int = Field(0, ge=0, le=50)
+    is_airport_pickup: bool = False
+    flight_number: Optional[str] = None
+
+
+class CustomerQuoteResponse(BaseModel):
+    total_fare: float
+    currency: str = "AUD"
+    distance_km: Optional[float] = None
+    vehicle_category: str
+
+
+class CustomerBookResponse(BaseModel):
+    booking_number: str
+    total_fare: float
+    currency: str = "AUD"
+    status: str
+    message: str
+
+
 class CustomerPortalProfile(BaseModel):
     id: str
     full_name: str

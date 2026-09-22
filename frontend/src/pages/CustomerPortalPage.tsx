@@ -1,7 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import { customerPortalApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { LoaderCircle, LogOut, CalendarDays, MapPin, AlertCircle, Car } from 'lucide-react';
+import { LoaderCircle, LogOut, CalendarDays, MapPin, AlertCircle, Car, Plus, CheckCircle2, X } from 'lucide-react';
+
+const VEHICLE_OPTIONS = [
+  { value: 'SEDAN_EXECUTIVE', label: 'Executive Sedan' },
+  { value: 'SEDAN_PREMIUM', label: 'Premium Sedan' },
+  { value: 'SUV_PREMIUM', label: 'Luxury SUV' },
+  { value: 'PEOPLE_MOVER', label: 'People Mover / Van' },
+  { value: 'MINIBUS', label: 'Minibus / Sprinter' },
+];
+
+const EMPTY_FORM = {
+  pickup_address: '',
+  dropoff_address: '',
+  pickup_date: '',
+  pickup_time: '',
+  vehicle_category: 'SEDAN_PREMIUM',
+  passenger_count: 1,
+  luggage_count: 0,
+  is_airport_pickup: false,
+  flight_number: '',
+};
 
 interface CustomerProfile {
   id: string;
@@ -45,6 +65,60 @@ export const CustomerPortalPage: React.FC = () => {
   const [bookings, setBookings] = useState<CustomerBooking[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Re-book form (Phase 2)
+  const [formOpen, setFormOpen] = useState(false);
+  const [form, setForm] = useState({ ...EMPTY_FORM });
+  const [quoting, setQuoting] = useState(false);
+  const [quote, setQuote] = useState<{ total_fare: number; currency: string; distance_km?: number } | null>(null);
+  const [booking, setBooking] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [booked, setBooked] = useState<{ booking_number: string; total_fare: number } | null>(null);
+
+  const pickupIso = () => (form.pickup_date && form.pickup_time ? `${form.pickup_date}T${form.pickup_time}:00` : '');
+  const payload = () => ({
+    pickup_address: form.pickup_address.trim(),
+    dropoff_address: form.dropoff_address.trim(),
+    pickup_datetime: new Date(pickupIso()).toISOString(),
+    vehicle_category: form.vehicle_category,
+    passenger_count: Number(form.passenger_count) || 1,
+    luggage_count: Number(form.luggage_count) || 0,
+    is_airport_pickup: form.is_airport_pickup,
+    flight_number: form.flight_number.trim() || undefined,
+  });
+  const formReady = form.pickup_address.trim() && form.dropoff_address.trim() && form.pickup_date && form.pickup_time;
+
+  const getQuote = async () => {
+    if (!formReady) return;
+    setQuoting(true);
+    setFormError(null);
+    setQuote(null);
+    try {
+      const q = await customerPortalApi.quote(payload());
+      setQuote(q);
+    } catch (err: any) {
+      setFormError(err?.response?.data?.detail || 'Could not price this trip. Check the addresses.');
+    } finally {
+      setQuoting(false);
+    }
+  };
+
+  const confirmBooking = async () => {
+    if (!formReady) return;
+    setBooking(true);
+    setFormError(null);
+    try {
+      const res = await customerPortalApi.book(payload());
+      setBooked({ booking_number: res.booking_number, total_fare: res.total_fare });
+      setForm({ ...EMPTY_FORM });
+      setQuote(null);
+      await load();
+    } catch (err: any) {
+      setFormError(err?.response?.data?.detail || 'Could not create the booking.');
+    } finally {
+      setBooking(false);
+    }
+  };
 
   const load = async () => {
     try {
@@ -151,10 +225,101 @@ export const CustomerPortalPage: React.FC = () => {
           </div>
         )}
 
-        <p className="text-[10px] text-slate-500 text-center font-semibold pt-2">
-          Need a new trip? Reply to your booking email or call us — direct re-booking from here is coming soon.
-        </p>
       </div>
+
+      {/* Floating "Book a new trip" button */}
+      {!formOpen && !booked && (
+        <button
+          onClick={() => { setFormOpen(true); setFormError(null); setQuote(null); }}
+          className="fixed bottom-5 right-5 px-5 py-3 rounded-2xl bg-[#DFCAA8] hover:bg-[#C2A16B] text-[#0A0E1A] font-black text-sm flex items-center gap-2 shadow-2xl"
+        >
+          <Plus className="w-5 h-5" /> Book a new trip
+        </button>
+      )}
+
+      {/* Booking success */}
+      {booked && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+          <div className="w-full max-w-sm bg-[#0D1322] border border-[#1F2E4D] rounded-3xl p-6 text-center space-y-3">
+            <CheckCircle2 className="w-11 h-11 text-emerald-400 mx-auto" />
+            <h3 className="text-base font-black text-white">Booking received</h3>
+            <p className="text-xs font-semibold text-slate-300">
+              Reference <span className="font-mono text-[#DFCAA8]">{booked.booking_number}</span> · ${booked.total_fare.toFixed(2)} AUD.
+              We'll confirm the details with you shortly.
+            </p>
+            <button onClick={() => setBooked(null)} className="mt-1 px-5 py-2.5 rounded-xl bg-[#DFCAA8] text-[#0A0E1A] font-black text-xs">Done</button>
+          </div>
+        </div>
+      )}
+
+      {/* Re-book form */}
+      {formOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+          <div className="w-full max-w-lg bg-[#0D1322] border border-[#1F2E4D] rounded-3xl p-5 sm:p-6 space-y-3 my-6">
+            <div className="flex items-center justify-between border-b border-[#1F2E4D] pb-3">
+              <h3 className="text-base font-black text-white">Book a new trip</h3>
+              <button onClick={() => setFormOpen(false)} className="p-1.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white"><X className="w-4 h-4" /></button>
+            </div>
+
+            <label className="text-[10px] uppercase font-black text-slate-300 block">Pickup location</label>
+            <input className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.pickup_address} onChange={(e) => { setForm({ ...form, pickup_address: e.target.value }); setQuote(null); }} placeholder="Pickup address" />
+            <label className="text-[10px] uppercase font-black text-slate-300 block">Drop-off location</label>
+            <input className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.dropoff_address} onChange={(e) => { setForm({ ...form, dropoff_address: e.target.value }); setQuote(null); }} placeholder="Destination address" />
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="text-[10px] uppercase font-black text-slate-300 block">Date</label>
+                <input type="date" className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.pickup_date} onChange={(e) => { setForm({ ...form, pickup_date: e.target.value }); setQuote(null); }} />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-black text-slate-300 block">Time</label>
+                <input type="time" className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.pickup_time} onChange={(e) => { setForm({ ...form, pickup_time: e.target.value }); setQuote(null); }} />
+              </div>
+            </div>
+
+            <label className="text-[10px] uppercase font-black text-slate-300 block">Vehicle</label>
+            <select className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.vehicle_category} onChange={(e) => { setForm({ ...form, vehicle_category: e.target.value }); setQuote(null); }}>
+              {VEHICLE_OPTIONS.map((v) => <option key={v.value} value={v.value}>{v.label}</option>)}
+            </select>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <div>
+                <label className="text-[10px] uppercase font-black text-slate-300 block">Passengers</label>
+                <input type="number" min={1} className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.passenger_count} onChange={(e) => setForm({ ...form, passenger_count: Number(e.target.value) })} />
+              </div>
+              <div>
+                <label className="text-[10px] uppercase font-black text-slate-300 block">Bags</label>
+                <input type="number" min={0} className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.luggage_count} onChange={(e) => setForm({ ...form, luggage_count: Number(e.target.value) })} />
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-xs font-bold text-slate-200">
+              <input type="checkbox" checked={form.is_airport_pickup} onChange={(e) => { setForm({ ...form, is_airport_pickup: e.target.checked }); setQuote(null); }} />
+              Airport transfer
+            </label>
+            {form.is_airport_pickup && (
+              <input className="w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white text-sm" value={form.flight_number} onChange={(e) => setForm({ ...form, flight_number: e.target.value })} placeholder="Flight number (e.g. QF400)" />
+            )}
+
+            {quote && (
+              <div className="p-3 rounded-xl bg-[#121A2D] border border-[#DFCAA8] flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-300">Estimated fare{quote.distance_km ? ` · ~${quote.distance_km} km` : ''}</span>
+                <span className="text-lg font-black font-mono text-white">${quote.total_fare.toFixed(2)} AUD</span>
+              </div>
+            )}
+            {formError && <p className="text-[11px] font-black text-rose-300">{formError}</p>}
+
+            <div className="flex items-center gap-2 pt-1">
+              <button onClick={getQuote} disabled={!formReady || quoting} className="flex-1 py-2.5 rounded-xl bg-[#121A2D] border border-[#DFCAA8] text-white font-black text-xs flex items-center justify-center gap-1.5 disabled:opacity-50">
+                {quoting ? <LoaderCircle className="w-4 h-4 animate-spin" /> : null} See price
+              </button>
+              <button onClick={confirmBooking} disabled={!formReady || booking} className="flex-1 py-2.5 rounded-xl bg-[#DFCAA8] hover:bg-[#C2A16B] text-[#0A0E1A] font-black text-xs flex items-center justify-center gap-1.5 disabled:opacity-50">
+                {booking ? <LoaderCircle className="w-4 h-4 animate-spin" /> : null} Confirm booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

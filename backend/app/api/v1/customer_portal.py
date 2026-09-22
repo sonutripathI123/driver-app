@@ -8,7 +8,10 @@ from app.core.rbac import get_current_active_user, require_customer, require_ops
 from app.models.user import User
 from app.schemas.customer_portal import (
     CustomerBookingItem,
+    CustomerBookResponse,
     CustomerPortalProfile,
+    CustomerQuoteRequest,
+    CustomerQuoteResponse,
     CustomerSetPasswordRequest,
     CustomerSetPasswordResponse,
 )
@@ -49,6 +52,29 @@ async def get_my_bookings(
     """The signed-in customer's own bookings, newest first."""
     customer = await CustomerPortalService.get_customer_by_user(db, current_user)
     return await CustomerPortalService.get_bookings(db, customer)
+
+
+@router.post("/quote", response_model=CustomerQuoteResponse, dependencies=[Depends(require_customer)])
+async def customer_quote(payload: CustomerQuoteRequest, db: AsyncSession = Depends(get_db)):
+    """Price a trip for the customer before they confirm (real route + fare)."""
+    return await CustomerPortalService.quote(db, payload)
+
+
+@router.post("/book", response_model=CustomerBookResponse, dependencies=[Depends(require_customer)])
+async def customer_book(
+    payload: CustomerQuoteRequest,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """The signed-in customer books a new trip for themselves; it enters the normal pipeline."""
+    customer = await CustomerPortalService.get_customer_by_user(db, current_user)
+    booking = await CustomerPortalService.create_booking(db, customer, payload)
+    return CustomerBookResponse(
+        booking_number=booking.booking_number,
+        total_fare=booking.total_fare,
+        status=booking.status.value if hasattr(booking.status, "value") else str(booking.status),
+        message="Your booking is in. We'll confirm the details with you shortly.",
+    )
 
 
 @router.get("/setup-link/{customer_id}", dependencies=[Depends(require_ops)])
