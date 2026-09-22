@@ -439,7 +439,7 @@ Web: https://www.${COMPANY.website}`
           <span className="text-2xl font-mono font-black text-[#0A0E1A] block">
             ${totalLifetimeSpend.toLocaleString('en-AU', { minimumFractionDigits: 2 })} AUD
           </span>
-          <span className="text-[11px] text-[#0A0E1A] font-bold block">Across 120+ Completed Journeys</span>
+          <span className="text-[11px] text-[#0A0E1A] font-bold block">Total paid across all clients</span>
         </div>
 
         <div className="glass-panel p-5 rounded-2xl border-[#E6D8C3] shadow-lg space-y-1 text-[#0A0E1A]">
