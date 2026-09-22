@@ -13,8 +13,7 @@ import { InvoicingTaxPage } from './pages/InvoicingTaxPage';
 import { AnalyticsProfitPage } from './pages/AnalyticsProfitPage';
 import { PartnersFleetPage } from './pages/PartnersFleetPage';
 import { ClientsCustomersPage } from './pages/ClientsCustomersPage';
-import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
-import { EmailBookingWorkflowPage } from './pages/EmailBookingWorkflowPage';
+import { EmailHubPage } from './pages/EmailHubPage';
 import { LoginPage } from './pages/LoginPage';
 import { DriverApplyPage } from './pages/DriverApplyPage';
 import { CustomerPortalPage } from './pages/CustomerPortalPage';
@@ -124,10 +123,8 @@ const AuthenticatedApp: React.FC = () => {
         return <ClientsCustomersPage />;
       case 'notifications':
         return <NotificationsHubPage />;
-      case 'email-hub':
-        return <EmailCommunicationsHubPage />;
-      case 'email-workflow':
-        return <EmailBookingWorkflowPage />;
+      case 'email':
+        return <EmailHubPage />;
       case 'flights':
         return <FlightRadarPage />;
       case 'invoicing':

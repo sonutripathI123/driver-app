@@ -10,7 +10,6 @@ import {
   Users,
   Car,
   Bell,
-  Mail,
   UserCheck,
   LogOut,
   KeyRound,
@@ -27,8 +26,7 @@ export type NavTab =
   | 'driver-portal'
   | 'clients'
   | 'notifications'
-  | 'email-hub'
-  | 'email-workflow'
+  | 'email'
   | 'flights'
   | 'invoicing'
   | 'analytics'
@@ -81,8 +79,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'driver-portal', label: 'Driver Mobile PWA', icon: Smartphone, badge: 'App', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'clients', label: 'Client & Customer Details', icon: UserCheck, badge: 'Clients', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
-        { id: 'email-hub', label: 'Email & Dispatch Comms', icon: Mail, badge: 'SMTP', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
-        { id: 'email-workflow', label: 'Email Booking Workflow', icon: Inbox, badge: 'Inbox', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
+        { id: 'email', label: 'Email Inbox & Comms', icon: Inbox, badge: 'Email', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
       ],
