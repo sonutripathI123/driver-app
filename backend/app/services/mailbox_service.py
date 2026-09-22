@@ -306,13 +306,9 @@ class MailboxService:
         if not thread or thread.mailbox_id != mb.id:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Enquiry not found for this mailbox.")
 
-        booking_line = ""
-        if mb.booking_form_url:
-            booking_line = (
-                f" Near the end, invite them to complete their booking and payment on our "
-                f"secure booking form and include this exact link on its own line: "
-                f"{mb.booking_form_url}"
-            )
+        # Deliberately NOT included: the booking-form link. The operator decides
+        # per enquiry whether to add it, via the "Insert booking form link"
+        # button — the draft never adds it automatically.
         system_prompt = (
             f"You are the reservations assistant for {mb.label or settings.COMPANY_NAME}, a "
             f"premium chauffeur and airport transfer service in Melbourne, Australia. Write a "
@@ -320,9 +316,10 @@ class MailboxService:
             f"to review and send. Guidelines: be courteous and specific to what they asked; if "
             f"they want a quote but details are missing, politely ask for the pickup date, time, "
             f"pickup and drop-off addresses, and number of passengers; do NOT invent an exact "
-            f"price or confirm a booking that has not been made; keep it under ~150 words; sign "
-            f"off as 'The {mb.label or settings.COMPANY_NAME} Team'.{booking_line} Reply with "
-            f"ONLY the email body text — no subject line, no 'Here is a draft' preamble, no markdown."
+            f"price or confirm a booking that has not been made; do NOT include any booking link "
+            f"or URL; keep it under ~150 words; sign off as 'The {mb.label or settings.COMPANY_NAME} "
+            f"Team'. Reply with ONLY the email body text — no subject line, no 'Here is a draft' "
+            f"preamble, no markdown."
         )
         user_text = (
             f"From: {thread.sender_name or ''} <{thread.sender_email}>\n"
