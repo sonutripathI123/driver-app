@@ -354,7 +354,7 @@ export const AnalyticsProfitPage: React.FC = () => {
               <p className="text-xs text-[#0A0E1A] font-bold">Hover pillars for interactive daily financial breakdown</p>
             </div>
             <span className="text-xs font-mono text-[#0A0E1A] font-black bg-[#FFFFFF] px-2.5 py-1 rounded-lg border border-[#DFCAA8]">
-              51.4% Avg Net Margin
+              {profitReport ? profitReport.average_margin_pct.toFixed(1) : '0.0'}% Avg Net Margin
             </span>
           </div>
 
@@ -470,7 +470,11 @@ export const AnalyticsProfitPage: React.FC = () => {
 
           <div className="p-4 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-xs text-[#0A0E1A] font-bold space-y-1 shadow-sm">
             <span className="font-black text-[#0A0E1A] block">Fleet ROI Insight:</span>
-            <p>Mercedes S-Class Executive Sedan represents the highest gross margin contribution (58.2%).</p>
+            <p>
+              {fleetShare.length > 0
+                ? `${fleetShare[0].name} leads fleet usage with ${fleetShare[0].pct}% of completed trips.`
+                : 'No completed trips yet — fleet insights appear once trips are recorded.'}
+            </p>
           </div>
         </div>
       </div>

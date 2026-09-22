@@ -129,7 +129,7 @@ class AnalyticsService:
                 BookingLeg.pickup_datetime <= to_utc,
                 BookingLeg.status != LegStatus.CANCELLED
             )
-            .options(selectinload(BookingLeg.booking))
+            .options(selectinload(BookingLeg.booking).selectinload(Booking.legs))
             .order_by(desc(BookingLeg.pickup_datetime))
         )
         res = await db.execute(stmt)
@@ -225,7 +225,7 @@ class AnalyticsService:
                 BookingLeg.status == LegStatus.COMPLETED,
                 BookingLeg.vehicle_id.isnot(None)
             )
-            .options(selectinload(BookingLeg.booking))
+            .options(selectinload(BookingLeg.booking).selectinload(Booking.legs))
         )
         l_res = await db.execute(leg_stmt)
         completed_legs = list(l_res.scalars().all())
