@@ -111,10 +111,12 @@ async def test_automated_flight_delay_rescheduling_and_driver_alert(
     assert sync_resp.delay_minutes == 45
     assert sync_resp.new_pickup_datetime > sync_resp.old_pickup_datetime
 
-    # 4. Verify Driver Alerted via SMS
+    # 4. Verify Driver Alerted via SMS. The driver also receives an allocation
+    # notice on assignment, so filter to the flight-delay alert specifically.
     driver_alerts = [s for s in sms_gateway.sent_sms if s["to"] == "+61422334455"]
-    assert len(driver_alerts) == 1
-    assert "QF401 delayed +45m" in driver_alerts[0]["body"]
+    delay_alerts = [s for s in driver_alerts if "delayed" in s["body"].lower()]
+    assert len(delay_alerts) == 1
+    assert "QF401 delayed +45m" in delay_alerts[0]["body"]
 
     # 5. Verify Leg updated in database
     reloaded_leg = await db_session.get(booking.legs[0].__class__, leg_id)

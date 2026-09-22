@@ -113,6 +113,11 @@ require_driver = require_roles([
     UserRole.DRIVER
 ])
 
+require_customer = require_roles([
+    UserRole.ADMIN,
+    UserRole.CUSTOMER
+])
+
 require_staff = require_roles([
     UserRole.ADMIN,
     UserRole.OPERATIONS_MANAGER,

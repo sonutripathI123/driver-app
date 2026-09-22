@@ -291,6 +291,21 @@ export const driverPortalApi = {
   },
 };
 
+export const customerPortalApi = {
+  setPassword: async (token: string, password: string) => {
+    const res = await apiClient.post(`/customer-portal/set-password`, { token, password });
+    return res.data;
+  },
+  getProfile: async () => {
+    const res = await apiClient.get(`/customer-portal/me`);
+    return res.data;
+  },
+  getBookings: async () => {
+    const res = await apiClient.get(`/customer-portal/bookings`);
+    return res.data;
+  },
+};
+
 export const flightsApi = {
   lookup: async (flightNumber: string, flightDate?: string) => {
     const res = await apiClient.get(`/flights/lookup`, {

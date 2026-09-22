@@ -17,6 +17,8 @@ import { EmailCommunicationsHubPage } from './pages/EmailCommunicationsHubPage';
 import { EmailBookingWorkflowPage } from './pages/EmailBookingWorkflowPage';
 import { LoginPage } from './pages/LoginPage';
 import { DriverApplyPage } from './pages/DriverApplyPage';
+import { CustomerPortalPage } from './pages/CustomerPortalPage';
+import { SetPasswordPage } from './pages/SetPasswordPage';
 import { dispatchApi } from './services/api';
 import { triggerNativeNotification } from './utils/notificationSound';
 
@@ -153,6 +155,9 @@ const isDirectDriverLink =
 // Public driver self-registration link (/apply?token=…). No login required.
 const isDriverApplyLink = window.location.pathname.replace(/\/+$/, '').endsWith('/apply');
 
+// Public customer set-password link (/set-password?token=…). No login required.
+const isSetPasswordLink = window.location.pathname.replace(/\/+$/, '').endsWith('/set-password');
+
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isBootstrapping, currentRole } = useAuth();
 
@@ -162,9 +167,14 @@ const AppRoutes: React.FC = () => {
 
   // The public signup form is shown to anyone with the link, logged in or not.
   if (isDriverApplyLink) return <DriverApplyPage />;
+  // The public customer set-password form, opened from the first-booking link.
+  if (isSetPasswordLink) return <SetPasswordPage />;
 
   if (isBootstrapping) return <BootSplash />;
   if (!isAuthenticated) return <LoginPage />;
+
+  // Customers only ever get their own portal — never the admin dashboard.
+  if (currentRole === 'CUSTOMER') return <CustomerPortalPage />;
 
   // Chauffeurs only ever get the mobile portal. Without this a driver signing
   // in landed on the admin dashboard, which then 403s on every staff endpoint.

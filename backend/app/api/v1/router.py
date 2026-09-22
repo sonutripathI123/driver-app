@@ -4,6 +4,7 @@ from app.api.v1.analytics import router as analytics_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.automations import router as automations_router
 from app.api.v1.bookings import router as bookings_router
+from app.api.v1.customer_portal import router as customer_portal_router
 from app.api.v1.customers import router as customers_router
 from app.api.v1.dispatch import router as dispatch_router
 from app.api.v1.driver_portal import router as driver_portal_router
@@ -46,6 +47,7 @@ api_router.include_router(notifications_router)
 api_router.include_router(mailboxes_router)
 api_router.include_router(automations_router)
 api_router.include_router(driver_portal_router)
+api_router.include_router(customer_portal_router)
 api_router.include_router(flights_router)
 api_router.include_router(invoices_router)
 api_router.include_router(accounting_router)

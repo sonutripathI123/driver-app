@@ -318,9 +318,28 @@ class NotificationService:
         notifs = []
         cust_name, cust_email, cust_phone = get_customer_contact(booking)
 
+        # Customer portal link. First-ever booking (no login yet) -> a
+        # set-password link so they activate their account; a returning customer
+        # with a login -> the dashboard sign-in link.
+        portal_url = (settings.PUBLIC_APP_URL or "").rstrip("/")
+        portal_link = portal_url + "/"
+        first_time = True
+        try:
+            from app.models.customer import Customer
+            from app.core.security import create_customer_setup_token
+            cust_rec = await db.get(Customer, booking.customer_id) if booking.customer_id else None
+            if cust_rec:
+                if cust_rec.user_id:
+                    first_time = False
+                else:
+                    portal_link = f"{portal_url}/set-password?token={create_customer_setup_token(cust_rec.id)}"
+        except Exception:
+            pass
+        cta = "Set up your account & track your booking" if first_time else "Track your booking"
+
         # 1. Customer Confirmation SMS
         if cust_phone:
-            sms_body = f"Opal Chauffeurs: Booking #{booking.booking_number} confirmed for {cust_name}. Total: ${booking.total_fare:.2f} AUD. Thank you for choosing us."
+            sms_body = f"Opal Chauffeurs: Booking #{booking.booking_number} confirmed for {cust_name}. Total: ${booking.total_fare:.2f} AUD. {cta}: {portal_link}"
             n_sms = await NotificationService.record_and_dispatch_sms(
                 db, cust_phone, "BOOKING_CONFIRMED_SMS", sms_body, booking.id
             )
@@ -336,6 +355,7 @@ class NotificationService:
             <p><strong>Total Fare:</strong> ${booking.total_fare:.2f} AUD (Inc GST)<br/>
             <strong>Paid:</strong> ${booking.paid_amount:.2f} AUD<br/>
             <strong>Balance Due:</strong> ${booking.balance_amount:.2f} AUD</p>
+            <p><a href="{portal_link}" style="color:#0A0E1A;font-weight:800;">{cta}</a> — sign in any time with your email to see your bookings and re-book.</p>
             """
             n_email = await NotificationService.record_and_dispatch_email(
                 db, cust_email, "BOOKING_CONFIRMED_EMAIL", subj, html, booking.id

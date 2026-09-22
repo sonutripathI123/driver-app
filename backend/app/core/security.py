@@ -81,6 +81,22 @@ def create_refresh_token(
     )
 
 
+def create_customer_setup_token(customer_id: str, expires_days: int = 14) -> str:
+    """
+    Signed one-time-ish token embedded in the customer's first-booking link so
+    they can set a password and activate their portal login. Carries a distinct
+    `purpose` so it can never be used as an access token.
+    """
+    now = datetime.now(timezone.utc)
+    to_encode: Dict[str, Any] = {
+        "sub": customer_id,
+        "purpose": "customer_setup",
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(days=expires_days)).timestamp()),
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
 def decode_token(token: str) -> Dict[str, Any]:
     """Decodes and validates a JWT token signature and expiration."""
     return jwt.decode(
