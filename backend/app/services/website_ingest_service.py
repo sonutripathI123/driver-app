@@ -179,6 +179,16 @@ class WebsiteIngestService:
             when = when.replace(hour=hm[0], minute=hm[1])
         message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
 
+        # TEMP DEBUG (remove after time mapping confirmed).
+        try:
+            import logging
+            logging.getLogger("website_ingest").warning(
+                "WEBSITE_FORM_DEBUG time_raw=%r hm=%s when=%s",
+                WebsiteIngestService._pick(flat, "pickup_time", "pickuptime", "time"), hm, when,
+            )
+        except Exception:
+            pass
+
         # Sensible fallbacks so create_booking's required fields are satisfied.
         email = (email or "no-email@website-enquiry.local").strip().lower()
         phone = (phone or "+61000000000").strip()
