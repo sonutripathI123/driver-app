@@ -91,6 +91,18 @@ class MailboxService:
         return mb
 
     @staticmethod
+    def _clean_secret(raw: str) -> str:
+        """Strip every whitespace char from a mailbox/app password.
+
+        Zoho and Gmail display app-specific passwords in space-separated groups
+        (e.g. "abcd efgh ijkl mnop") purely for readability; the real secret has
+        no spaces. Users routinely paste them as shown, which the provider then
+        rejects with AUTHENTICATIONFAILED. App passwords never legitimately
+        contain whitespace, so removing it makes the connect foolproof.
+        """
+        return "".join((raw or "").split())
+
+    @staticmethod
     async def create(db: AsyncSession, payload: MailboxCreate) -> Mailbox:
         mb = Mailbox(
             label=payload.label.strip(),
@@ -101,7 +113,7 @@ class MailboxService:
             smtp_port=payload.smtp_port,
             smtp_use_tls=payload.smtp_use_tls,
             username=payload.username.strip(),
-            encrypted_password=encrypt_secret(payload.password),
+            encrypted_password=encrypt_secret(MailboxService._clean_secret(payload.password)),
             is_active=payload.is_active,
             booking_form_url=(payload.booking_form_url or "").strip() or None,
         )
@@ -122,7 +134,7 @@ class MailboxService:
                 value = value.strip()
             setattr(mb, key, value)
         if password:
-            mb.encrypted_password = encrypt_secret(password)
+            mb.encrypted_password = encrypt_secret(MailboxService._clean_secret(password))
         await db.commit()
         await db.refresh(mb)
         return mb
