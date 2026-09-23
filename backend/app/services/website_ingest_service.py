@@ -25,6 +25,7 @@ from app.schemas.website_ingest import WebsiteBookingIngest
 
 _EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
 _PHONE_RE = re.compile(r"[+()\d][\d\s()\-]{6,}\d")
+_TIME_RE = re.compile(r"\b(\d{1,2}:\d{2}\s*(?:[APap][Mm])?)\b")
 
 
 class WebsiteIngestService:
@@ -135,17 +136,43 @@ class WebsiteIngestService:
                     break
         pickup = WebsiteIngestService._pick(flat, "pickup", "pick-up", "from", "origin", "collection")
         dropoff = WebsiteIngestService._pick(flat, "dropoff", "drop-off", "drop", "destination", "to")
+        # Date — keyed field first, else scan every value for a date-looking one.
         when = WebsiteIngestService._parse_dt(
             WebsiteIngestService._pick(flat, "datetime", "pickup_date", "pickupdate", "date", "when")
         )
-        # If the form has a separate Time field, fold it onto the date.
-        if when is not None:
-            hm = WebsiteIngestService._parse_time(
-                WebsiteIngestService._pick(flat, "pickup_time", "pickuptime", "time")
-            )
-            if hm is not None:
-                when = when.replace(hour=hm[0], minute=hm[1])
+        if when is None:
+            for k, v in flat.items():
+                kl = k.lower()
+                if "email" in kl or "phone" in kl or "mobile" in kl:
+                    continue
+                d = WebsiteIngestService._parse_dt(v)
+                if d is not None:
+                    when = d
+                    break
+        # Time — keyed field first, else scan every value for a HH:MM (am/pm) token.
+        hm = WebsiteIngestService._parse_time(
+            WebsiteIngestService._pick(flat, "pickup_time", "pickuptime", "time")
+        )
+        if hm is None:
+            for v in flat.values():
+                m = _TIME_RE.search(v)
+                if m:
+                    hm = WebsiteIngestService._parse_time(m.group(1))
+                    if hm is not None:
+                        break
+        if when is not None and hm is not None:
+            when = when.replace(hour=hm[0], minute=hm[1])
         message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
+
+        # TEMP DEBUG (remove after mapping confirmed): log the flattened payload
+        # so we can see exactly what the website sent for date/time.
+        try:
+            import logging
+            logging.getLogger("website_ingest").warning(
+                "WEBSITE_FORM_DEBUG when=%s hm=%s flat=%s", when, hm, dict(flat)
+            )
+        except Exception:
+            pass
 
         # Sensible fallbacks so create_booking's required fields are satisfied.
         email = (email or "no-email@website-enquiry.local").strip().lower()
