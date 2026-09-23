@@ -91,6 +91,20 @@ class WebsiteIngestService:
         return None
 
     @staticmethod
+    def _parse_time(raw: Optional[str]) -> Optional[Tuple[int, int]]:
+        """Return (hour, minute) from a separate time field like '2:30 PM' or '14:30'."""
+        if not raw:
+            return None
+        raw = raw.strip()
+        for fmt in ("%I:%M %p", "%I:%M%p", "%H:%M", "%I %p"):
+            try:
+                t = datetime.strptime(raw, fmt)
+                return t.hour, t.minute
+            except Exception:
+                continue
+        return None
+
+    @staticmethod
     async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None) -> Tuple[Booking, bool]:
         """Create a QUOTE-REQUEST booking from a loose website/Elementor form
         payload. Best-effort field extraction; the full raw payload is kept in
@@ -122,8 +136,15 @@ class WebsiteIngestService:
         pickup = WebsiteIngestService._pick(flat, "pickup", "pick-up", "from", "origin", "collection")
         dropoff = WebsiteIngestService._pick(flat, "dropoff", "drop-off", "drop", "destination", "to")
         when = WebsiteIngestService._parse_dt(
-            WebsiteIngestService._pick(flat, "datetime", "pickup_date", "pickupdate", "date", "when", "time")
+            WebsiteIngestService._pick(flat, "datetime", "pickup_date", "pickupdate", "date", "when")
         )
+        # If the form has a separate Time field, fold it onto the date.
+        if when is not None:
+            hm = WebsiteIngestService._parse_time(
+                WebsiteIngestService._pick(flat, "pickup_time", "pickuptime", "time")
+            )
+            if hm is not None:
+                when = when.replace(hour=hm[0], minute=hm[1])
         message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
 
         # Sensible fallbacks so create_booking's required fields are satisfied.
