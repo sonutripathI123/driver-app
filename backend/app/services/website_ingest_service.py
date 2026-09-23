@@ -183,8 +183,7 @@ class WebsiteIngestService:
         try:
             import logging
             logging.getLogger("website_ingest").warning(
-                "WEBSITE_FORM_DEBUG time_raw=%r hm=%s when=%s",
-                WebsiteIngestService._pick(flat, "pickup_time", "pickuptime", "time"), hm, when,
+                "WEBSITE_FORM_DEBUG hm=%s when=%s flat=%s", hm, when, dict(flat)
             )
         except Exception:
             pass
