@@ -19,6 +19,7 @@ from app.api.v1.pricing import router as pricing_router
 from app.api.v1.quotes import router as quotes_router
 from app.api.v1.users import router as users_router
 from app.api.v1.vehicles import router as vehicles_router
+from app.api.v1.website_ingest import router as website_ingest_router
 from app.core.rbac import (
     get_current_active_user,
     require_accountant,
@@ -52,6 +53,7 @@ api_router.include_router(flights_router)
 api_router.include_router(invoices_router)
 api_router.include_router(accounting_router)
 api_router.include_router(analytics_router)
+api_router.include_router(website_ingest_router)
 
 
 # RBAC Role Test / Verification Endpoints

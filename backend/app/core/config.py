@@ -53,6 +53,11 @@ class Settings(BaseSettings):
     # rather than letting anyone post messages into the operator's inbox.
     INBOUND_EMAIL_TOKEN: str = ""
 
+    # Shared secret a website must present to push a booking/quote into the
+    # dashboard via the public ingest endpoint. Empty means website ingest is
+    # off and the endpoint refuses everything.
+    WEBSITE_INGEST_TOKEN: str = ""
+
     # Shared secret embedded in the public driver self-signup link. Empty means
     # the signup link is disabled and the public apply endpoint refuses
     # everything, so no one can create driver accounts without the link.
