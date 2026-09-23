@@ -79,6 +79,9 @@ class WebsiteIngestService:
             "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
             "%Y-%m-%d", "%d/%m/%Y %H:%M", "%d/%m/%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y",
             "%m/%d/%Y %H:%M", "%m/%d/%Y",
+            # Month-name formats (Elementor's date picker sends e.g. "September 23, 2026")
+            "%B %d, %Y", "%b %d, %Y", "%B %d %Y", "%b %d %Y",
+            "%d %B %Y", "%d %b %Y",
         ]
         try:
             return datetime.fromisoformat(raw.replace("Z", "+00:00"))
@@ -116,7 +119,12 @@ class WebsiteIngestService:
 
         flat = WebsiteIngestService._flatten(payload)
 
-        name = WebsiteIngestService._pick(flat, "name", "your-name", "fullname") or "Website enquiry"
+        first = WebsiteIngestService._pick(flat, "first name", "firstname", "first-name")
+        last = WebsiteIngestService._pick(flat, "last name", "lastname", "last-name")
+        if first or last:
+            name = " ".join(p for p in (first, last) if p)
+        else:
+            name = WebsiteIngestService._pick(flat, "name", "your-name", "fullname") or "Website enquiry"
         email = WebsiteIngestService._pick(flat, "email", "e-mail")
         if not email:
             # last resort: scan all values for something that looks like an email
@@ -163,16 +171,6 @@ class WebsiteIngestService:
         if when is not None and hm is not None:
             when = when.replace(hour=hm[0], minute=hm[1])
         message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
-
-        # TEMP DEBUG (remove after mapping confirmed): log the flattened payload
-        # so we can see exactly what the website sent for date/time.
-        try:
-            import logging
-            logging.getLogger("website_ingest").warning(
-                "WEBSITE_FORM_DEBUG when=%s hm=%s flat=%s", when, hm, dict(flat)
-            )
-        except Exception:
-            pass
 
         # Sensible fallbacks so create_booking's required fields are satisfied.
         email = (email or "no-email@website-enquiry.local").strip().lower()

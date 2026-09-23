@@ -131,3 +131,39 @@ async def test_form_rejects_bad_token(client: AsyncClient, monkeypatch):
     monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
     r = await client.post("/api/v1/website/form?token=nope", json=ELEMENTOR_JSON)
     assert r.status_code == 401, r.text
+
+
+# Elementor's real webhook keys fields by their LABEL, and its date picker sends
+# a month-name date. This is the exact shape seen from corporatecarsmelbourne.
+ELEMENTOR_LABEL_PAYLOAD = {
+    "Service": "Wedding Car",
+    "Pick-up Location": "Melbourne VIC, Australia",
+    "Drop-Off Location": "Melbourne Airport (MEL), Australia",
+    "Date": "September 23, 2026",
+    "Time": "10:00 pm",
+    "Vehicle Type": "Business SUV",
+    "First Name": "Sonu",
+    "Last Name": "Tripathi",
+    "Email": "sonutripathi9305@gmail.com",
+    "Phone Number": "919305365420",
+    "Special Instructions": "No",
+    "form_name": "get a quote form",
+}
+
+
+@pytest.mark.asyncio
+async def test_form_label_keys_map_name_date_time(client: AsyncClient, admin_user, monkeypatch):
+    from tests.conftest import auth_header
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    r = await client.post("/api/v1/website/form?token=s3cret", json=ELEMENTOR_LABEL_PAYLOAD)
+    assert r.status_code == 200, r.text
+    num = r.json()["booking_number"]
+
+    # Pull it back and check the pickup datetime + full name mapped correctly.
+    lst = await client.get("/api/v1/bookings/", headers=auth_header(admin_user))
+    assert lst.status_code == 200, lst.text
+    bk = next(b for b in lst.json()["bookings"] if b["booking_number"] == num)
+    assert bk["passenger_name"] == "Sonu Tripathi"
+    leg = bk["legs"][0]
+    assert leg["pickup_datetime"].startswith("2026-09-23T22:00"), leg["pickup_datetime"]
+    assert "Melbourne VIC" in leg["pickup_address"]
