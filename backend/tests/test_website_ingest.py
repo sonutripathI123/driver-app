@@ -72,3 +72,62 @@ async def test_quote_request_flagged(client: AsyncClient, monkeypatch):
     )
     assert r.status_code == 200, r.text
     assert r.json()["status"] == "quote"
+
+
+# ---------------------------------------------------------------- lenient /form (Elementor)
+
+ELEMENTOR_JSON = {
+    "form_name": "Get a Quote",
+    "fields": {
+        "name": {"value": "Jane Doe"},
+        "email": {"value": "jane@corp.example.com"},
+        "phone": {"value": "+61400111222"},
+        "pickuplocations": {"value": "Melbourne CBD"},
+        "dropofflocation": {"value": "Avalon Airport"},
+        "message": {"value": "Van for 5 people, 3 bags"},
+    },
+}
+
+
+@pytest.mark.asyncio
+async def test_form_elementor_json_creates_quote(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    r = await client.post(
+        "/api/v1/website/form?website=corporatecarsmelbourne.com.au&token=s3cret",
+        json=ELEMENTOR_JSON,
+    )
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["status"] == "quote"
+    assert body["total_fare"] == 0.0
+    # Same payload again -> deduped.
+    r2 = await client.post(
+        "/api/v1/website/form?token=s3cret", json=ELEMENTOR_JSON
+    )
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["duplicate"] is True
+
+
+@pytest.mark.asyncio
+async def test_form_urlencoded_creates_quote(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    r = await client.post(
+        "/api/v1/website/form?token=s3cret",
+        data={
+            "your-name": "Bob Smith",
+            "email": "bob@corp.example.com",
+            "mobile": "+61400999888",
+            "pickup": "Southbank",
+            "destination": "Melbourne Airport",
+            "message": "ASAP",
+        },
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "quote"
+
+
+@pytest.mark.asyncio
+async def test_form_rejects_bad_token(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    r = await client.post("/api/v1/website/form?token=nope", json=ELEMENTOR_JSON)
+    assert r.status_code == 401, r.text

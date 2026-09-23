@@ -131,11 +131,16 @@ class BookingService:
     async def create_booking(
         db: AsyncSession,
         booking_in: BookingCreate,
-        actor: Optional[User] = None
+        actor: Optional[User] = None,
+        notify: bool = True
     ) -> Booking:
         """
         Creates Master Booking and all attached journey legs.
         Guarantees ONE BOOKING -> ONE RECORD -> ONE SOURCE OF TRUTH.
+
+        notify=False suppresses the customer confirmation + portal link — used
+        for website *quote enquiries*, where telling the customer their trip is
+        confirmed would be wrong; the team quotes them first.
         """
         # 1. Resolve Customer CRM record
         customer: Optional[Customer] = None
@@ -250,7 +255,8 @@ class BookingService:
         booking.audit_logs.append(audit)
 
         db.add(booking)
-        await NotificationService.send_dual_booking_created_alert(db, booking)
+        if notify:
+            await NotificationService.send_dual_booking_created_alert(db, booking)
         await db.commit()
         await db.refresh(booking)
         return booking

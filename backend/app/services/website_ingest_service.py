@@ -10,6 +10,11 @@ Idempotency: the website's own reference is stored in internal_notes as a
 [web-ref:<ref>] tag; a repeated push with the same reference returns the
 existing booking instead of creating a duplicate.
 """
+import hashlib
+import re
+from datetime import datetime, timedelta, timezone
+from typing import Any, Dict, Optional, Tuple
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -18,11 +23,159 @@ from app.models.booking import Booking
 from app.models.enums import BookingSource, PaymentStatus, VehicleCategory
 from app.schemas.website_ingest import WebsiteBookingIngest
 
+_EMAIL_RE = re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")
+_PHONE_RE = re.compile(r"[+()\d][\d\s()\-]{6,}\d")
+
 
 class WebsiteIngestService:
     @staticmethod
     def _ref_tag(external_reference: str) -> str:
         return f"[web-ref:{external_reference.strip()}]"
+
+    # ------------------------------------------------------------------ lenient form ingest
+
+    @staticmethod
+    def _flatten(obj: Any, prefix: str = "") -> Dict[str, str]:
+        """Flatten a nested dict/list (e.g. Elementor's fields[x][value]) into
+        {dotted.key: string_value}, keeping only leaf scalars."""
+        out: Dict[str, str] = {}
+        if isinstance(obj, dict):
+            for k, v in obj.items():
+                out.update(WebsiteIngestService._flatten(v, f"{prefix}.{k}" if prefix else str(k)))
+        elif isinstance(obj, (list, tuple)):
+            for i, v in enumerate(obj):
+                out.update(WebsiteIngestService._flatten(v, f"{prefix}.{i}" if prefix else str(i)))
+        elif obj is not None:
+            s = str(obj).strip()
+            if s:
+                out[prefix] = s
+        return out
+
+    @staticmethod
+    def _pick(flat: Dict[str, str], *keywords: str) -> Optional[str]:
+        """First value whose key contains any of the keywords (case-insensitive).
+        Elementor keys look like 'fields.pickuplocations.value', so we match on
+        the key path, preferring '...value' leaves over id/title/type."""
+        kws = [k.lower() for k in keywords]
+        best: Optional[str] = None
+        for key, val in flat.items():
+            kl = key.lower()
+            if any(kw in kl for kw in kws):
+                # skip Elementor metadata leaves that aren't the actual value
+                if kl.endswith((".id", ".type", ".title", ".raw_value")) and not kl.endswith(".value"):
+                    if best is None:
+                        best = val
+                    continue
+                return val
+        return best
+
+    @staticmethod
+    def _parse_dt(raw: Optional[str]) -> Optional[datetime]:
+        if not raw:
+            return None
+        raw = raw.strip()
+        candidates = [
+            "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M",
+            "%Y-%m-%d", "%d/%m/%Y %H:%M", "%d/%m/%Y", "%d-%m-%Y %H:%M", "%d-%m-%Y",
+            "%m/%d/%Y %H:%M", "%m/%d/%Y",
+        ]
+        try:
+            return datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        except Exception:
+            pass
+        for fmt in candidates:
+            try:
+                return datetime.strptime(raw, fmt)
+            except Exception:
+                continue
+        return None
+
+    @staticmethod
+    async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None) -> Tuple[Booking, bool]:
+        """Create a QUOTE-REQUEST booking from a loose website/Elementor form
+        payload. Best-effort field extraction; the full raw payload is kept in
+        internal_notes so nothing the customer sent is ever lost. The customer
+        is NOT auto-notified (the team quotes them first)."""
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        flat = WebsiteIngestService._flatten(payload)
+
+        name = WebsiteIngestService._pick(flat, "name", "your-name", "fullname") or "Website enquiry"
+        email = WebsiteIngestService._pick(flat, "email", "e-mail")
+        if not email:
+            # last resort: scan all values for something that looks like an email
+            for v in flat.values():
+                m = _EMAIL_RE.search(v)
+                if m:
+                    email = m.group(0)
+                    break
+        phone = WebsiteIngestService._pick(flat, "phone", "mobile", "tel", "contact-number")
+        if not phone:
+            for k, v in flat.items():
+                if "email" in k.lower():
+                    continue
+                m = _PHONE_RE.search(v)
+                if m:
+                    phone = m.group(0).strip()
+                    break
+        pickup = WebsiteIngestService._pick(flat, "pickup", "pick-up", "from", "origin", "collection")
+        dropoff = WebsiteIngestService._pick(flat, "dropoff", "drop-off", "drop", "destination", "to")
+        when = WebsiteIngestService._parse_dt(
+            WebsiteIngestService._pick(flat, "datetime", "pickup_date", "pickupdate", "date", "when", "time")
+        )
+        message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
+
+        # Sensible fallbacks so create_booking's required fields are satisfied.
+        email = (email or "no-email@website-enquiry.local").strip().lower()
+        phone = (phone or "+61000000000").strip()
+        pickup = (pickup or "See enquiry notes").strip()
+        dropoff = (dropoff or "See enquiry notes").strip()
+        pickup_dt = when or (datetime.now(timezone.utc) + timedelta(days=2))
+
+        # Idempotency: dedupe identical rapid re-submits (Elementor can double-fire).
+        sig = hashlib.sha1(
+            f"{email}|{pickup}|{dropoff}|{when}|{message}".encode("utf-8", "ignore")
+        ).hexdigest()[:10]
+        tag = WebsiteIngestService._ref_tag(f"form-{sig}")
+        existing = (
+            await db.execute(
+                select(Booking).where(Booking.internal_notes.ilike(f"%{tag}%"))
+                .options(selectinload(Booking.legs), selectinload(Booking.customer))
+            )
+        ).scalars().first()
+        if existing:
+            return existing, True
+
+        raw_lines = "\n".join(f"  - {k}: {v}" for k, v in flat.items())
+        note = "[QUOTE REQUEST]"
+        if website:
+            note += f" [via {website.strip()}]"
+        if message:
+            note += f"\nMessage: {message}"
+        note += f"\n--- raw website form ---\n{raw_lines}\n{tag}"
+
+        booking_in = BookingCreate(
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            source=BookingSource.WEBSITE,
+            total_fare=0.0,
+            deposit_percentage=100.0,
+            passenger_name=name,
+            passenger_phone=phone,
+            passenger_email=email,
+            internal_notes=note[:4000],
+            legs=[BookingLegCreate(
+                leg_number=1,
+                pickup_address=pickup[:500],
+                dropoff_address=dropoff[:500],
+                pickup_datetime=pickup_dt,
+                vehicle_category=VehicleCategory.SEDAN_PREMIUM,
+            )],
+        )
+        booking = await BookingService.create_booking(db, booking_in, notify=False)
+        return booking, False
 
     @staticmethod
     async def ingest(db: AsyncSession, payload: WebsiteBookingIngest) -> tuple[Booking, bool]:
