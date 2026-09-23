@@ -89,50 +89,6 @@ ELEMENTOR_JSON = {
 }
 
 
-@pytest.mark.asyncio
-async def test_form_elementor_json_creates_quote(client: AsyncClient, monkeypatch):
-    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
-    r = await client.post(
-        "/api/v1/website/form?website=corporatecarsmelbourne.com.au&token=s3cret",
-        json=ELEMENTOR_JSON,
-    )
-    assert r.status_code == 200, r.text
-    body = r.json()
-    assert body["status"] == "quote"
-    assert body["total_fare"] == 0.0
-    # Same payload again -> deduped.
-    r2 = await client.post(
-        "/api/v1/website/form?token=s3cret", json=ELEMENTOR_JSON
-    )
-    assert r2.status_code == 200, r2.text
-    assert r2.json()["duplicate"] is True
-
-
-@pytest.mark.asyncio
-async def test_form_urlencoded_creates_quote(client: AsyncClient, monkeypatch):
-    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
-    r = await client.post(
-        "/api/v1/website/form?token=s3cret",
-        data={
-            "your-name": "Bob Smith",
-            "email": "bob@corp.example.com",
-            "mobile": "+61400999888",
-            "pickup": "Southbank",
-            "destination": "Melbourne Airport",
-            "message": "ASAP",
-        },
-    )
-    assert r.status_code == 200, r.text
-    assert r.json()["status"] == "quote"
-
-
-@pytest.mark.asyncio
-async def test_form_rejects_bad_token(client: AsyncClient, monkeypatch):
-    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
-    r = await client.post("/api/v1/website/form?token=nope", json=ELEMENTOR_JSON)
-    assert r.status_code == 401, r.text
-
-
 # Elementor's real webhook keys fields by their LABEL, and its date picker sends
 # a month-name date. This is the exact shape seen from corporatecarsmelbourne.
 ELEMENTOR_LABEL_PAYLOAD = {
@@ -152,18 +108,73 @@ ELEMENTOR_LABEL_PAYLOAD = {
 
 
 @pytest.mark.asyncio
-async def test_form_label_keys_map_name_date_time(client: AsyncClient, admin_user, monkeypatch):
-    from tests.conftest import auth_header
+async def test_form_endpoint_returns_received_fast(client: AsyncClient, monkeypatch):
+    """The endpoint responds 200 immediately and schedules a background task
+    (so the website webhook never times out)."""
     monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
-    r = await client.post("/api/v1/website/form?token=s3cret", json=ELEMENTOR_LABEL_PAYLOAD)
-    assert r.status_code == 200, r.text
-    num = r.json()["booking_number"]
+    captured = {}
 
-    # Pull it back and check the pickup datetime + full name mapped correctly.
-    lst = await client.get("/api/v1/bookings/", headers=auth_header(admin_user))
-    assert lst.status_code == 200, lst.text
-    bk = next(b for b in lst.json()["bookings"] if b["booking_number"] == num)
-    assert bk["passenger_name"] == "Sonu Tripathi"
-    leg = bk["legs"][0]
-    assert leg["pickup_datetime"].startswith("2026-09-23T22:00"), leg["pickup_datetime"]
-    assert "Melbourne VIC" in leg["pickup_address"]
+    async def fake_bg(payload, website):
+        captured["payload"] = payload
+        captured["website"] = website
+
+    import app.api.v1.website_ingest as wi
+    monkeypatch.setattr(wi, "_bg_ingest_form", fake_bg)
+
+    r = await client.post(
+        "/api/v1/website/form?website=corporatecarsmelbourne.com.au&token=s3cret",
+        json=ELEMENTOR_LABEL_PAYLOAD,
+    )
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "received"
+    assert captured["website"] == "corporatecarsmelbourne.com.au"
+    assert captured["payload"]["Email"] == "sonutripathi9305@gmail.com"
+
+
+@pytest.mark.asyncio
+async def test_form_rejects_bad_token(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    r = await client.post("/api/v1/website/form?token=nope", json=ELEMENTOR_JSON)
+    assert r.status_code == 401, r.text
+
+
+# ---- service-level: the actual mapping the background task performs
+
+@pytest.mark.asyncio
+async def test_ingest_form_maps_label_keys(db_session):
+    from app.models.booking_leg import BookingLeg
+    from sqlalchemy import select
+    from app.services.website_ingest_service import WebsiteIngestService
+
+    booking, dup = await WebsiteIngestService.ingest_form(
+        db_session, ELEMENTOR_LABEL_PAYLOAD, website="corporatecarsmelbourne.com.au"
+    )
+    assert dup is False
+    assert booking.passenger_name == "Sonu Tripathi"
+    assert booking.total_fare == 0.0
+
+    leg = (await db_session.execute(
+        select(BookingLeg).where(BookingLeg.booking_id == booking.id)
+    )).scalars().first()
+    assert leg.pickup_datetime.strftime("%Y-%m-%d %H:%M") == "2026-09-23 22:00"
+    assert "Melbourne VIC" in leg.pickup_address
+    assert "Melbourne Airport" in leg.dropoff_address
+
+    # Re-ingesting the identical payload is deduped.
+    _, dup2 = await WebsiteIngestService.ingest_form(db_session, ELEMENTOR_LABEL_PAYLOAD)
+    assert dup2 is True
+
+
+@pytest.mark.asyncio
+async def test_ingest_form_elementor_nested_and_urlencoded(db_session):
+    from app.services.website_ingest_service import WebsiteIngestService
+    b1, _ = await WebsiteIngestService.ingest_form(db_session, ELEMENTOR_JSON)
+    assert b1.total_fare == 0.0
+    assert "Jane" in b1.passenger_name
+
+    b2, _ = await WebsiteIngestService.ingest_form(db_session, {
+        "your-name": "Bob Smith", "email": "bob@corp.example.com",
+        "mobile": "+61400999888", "pickup": "Southbank",
+        "destination": "Melbourne Airport", "message": "ASAP",
+    })
+    assert b2.passenger_name == "Bob Smith"

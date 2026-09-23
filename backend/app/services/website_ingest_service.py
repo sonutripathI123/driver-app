@@ -52,15 +52,22 @@ class WebsiteIngestService:
                 out[prefix] = s
         return out
 
+    # Elementor/CF7 metadata keys that are never a customer value.
+    _META_KEYS = ("form_name", "form-name", "form name", "form_id", "form-id",
+                  "page url", "page_url", "referer", "remote_ip", "queried_id", "post_id")
+
     @staticmethod
     def _pick(flat: Dict[str, str], *keywords: str) -> Optional[str]:
         """First value whose key contains any of the keywords (case-insensitive).
         Elementor keys look like 'fields.pickuplocations.value', so we match on
-        the key path, preferring '...value' leaves over id/title/type."""
+        the key path, preferring '...value' leaves over id/title/type. Form
+        metadata keys (form_name, page url, …) are never matched."""
         kws = [k.lower() for k in keywords]
         best: Optional[str] = None
         for key, val in flat.items():
             kl = key.lower()
+            if any(m in kl for m in WebsiteIngestService._META_KEYS):
+                continue
             if any(kw in kl for kw in kws):
                 # skip Elementor metadata leaves that aren't the actual value
                 if kl.endswith((".id", ".type", ".title", ".raw_value")) and not kl.endswith(".value"):

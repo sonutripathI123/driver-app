@@ -9,18 +9,31 @@ switched off and refuses everything, so an unconfigured deployment can't have
 bookings injected into it.
 """
 import hmac
+import logging
 from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, Header, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.database import get_db
+from app.core.database import AsyncSessionLocal, get_db
 from app.core.rbac import require_staff
 from app.schemas.website_ingest import WebsiteBookingIngest, WebsiteBookingIngestResult
 from app.services.website_ingest_service import WebsiteIngestService
 
 router = APIRouter(prefix="/website", tags=["Website Ingest"])
+logger = logging.getLogger("website_ingest")
+
+
+async def _bg_ingest_form(payload: Any, website: Optional[str]) -> None:
+    """Create the quote booking off the request path so the website's webhook
+    gets an instant 200 (Elementor's webhook times out after a few seconds and
+    would otherwise flag an error even though the booking was created)."""
+    async with AsyncSessionLocal() as db:
+        try:
+            await WebsiteIngestService.ingest_form(db, payload, website=website)
+        except Exception:
+            logger.exception("Website form ingest failed for payload from %s", website)
 
 
 def _check_token(supplied: Optional[str]) -> None:
@@ -59,13 +72,13 @@ async def ingest_website_booking(
     )
 
 
-@router.post("/form", response_model=WebsiteBookingIngestResult)
+@router.post("/form")
 async def ingest_website_form(
     request: Request,
+    background_tasks: BackgroundTasks,
     website: Optional[str] = Query(None, description="Which site this came from"),
     token: Optional[str] = Query(None),
     x_website_token: Optional[str] = Header(None, alias="X-Website-Token"),
-    db: AsyncSession = Depends(get_db),
 ):
     """
     Lenient intake for a raw website/Elementor form (a *quote enquiry*).
@@ -75,6 +88,9 @@ async def ingest_website_form(
     kept in the booking notes, so nothing the customer entered is lost. The
     customer is NOT auto-notified — the team quotes them first. Point Elementor
     Pro's Webhook action at this URL with ?token=... in the URL.
+
+    Responds 200 immediately and creates the booking in the background, so the
+    website's webhook never times out.
     """
     _check_token(x_website_token or token)
 
@@ -92,13 +108,8 @@ async def ingest_website_form(
     if not payload:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty form payload.")
 
-    booking, duplicate = await WebsiteIngestService.ingest_form(db, payload, website=website)
-    return WebsiteBookingIngestResult(
-        status="duplicate" if duplicate else "quote",
-        booking_number=booking.booking_number,
-        total_fare=booking.total_fare,
-        duplicate=duplicate,
-    )
+    background_tasks.add_task(_bg_ingest_form, payload, website)
+    return {"status": "received"}
 
 
 @router.get("/status")
