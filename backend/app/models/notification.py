@@ -36,6 +36,12 @@ class Notification(Base):
         nullable=False,
         index=True
     )
+    # Which address this went out from, so the Email hub can show each website's
+    # outbound separately. Null = the platform default address (a system
+    # confirmation/dispatch email, not sent from a specific site mailbox).
+    from_address: Mapped[Optional[str]] = mapped_column(String(320), nullable=True, index=True)
+    # The connected mailbox it was sent from, when it was a per-site reply.
+    mailbox_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
     channel: Mapped[str] = mapped_column(
         String(20),
         default="EMAIL",

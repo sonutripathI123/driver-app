@@ -31,8 +31,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { automationsApi, bookingsApi, inboxApi, notificationsApi } from '../services/api';
-import { Booking, InboundEmail, InboundMailboxStatus } from '../types';
+import { automationsApi, bookingsApi, inboxApi, mailboxesApi, notificationsApi } from '../services/api';
+import { Booking, InboundEmail, InboundMailboxStatus, Mailbox } from '../types';
 
 export interface EmailLog {
   id: string;
@@ -49,6 +49,9 @@ export interface EmailLog {
   failure_reason?: string | null;
   body_preview: string;
   html_body?: string;
+  /** Which address it went out from (null = platform default). */
+  from_address?: string | null;
+  mailbox_id?: string | null;
 }
 
 /**
@@ -99,6 +102,11 @@ export const EmailCommunicationsHubPage: React.FC = () => {
   const [sendError, setSendError] = useState<string | null>(null);
   const [isSending, setIsSending] = useState(false);
 
+  // Connected mailboxes drive the per-website tabs, so a new site added later
+  // appears here automatically without any code change.
+  const [mailboxes, setMailboxes] = useState<Mailbox[]>([]);
+  const [activeMailboxId, setActiveMailboxId] = useState<string>(''); // '' = all sites
+
   const TRIGGER_BY_TEMPLATE: Record<string, EmailLog['trigger_type']> = {
     BOOKING_CONFIRMATION: 'BOOKING_CONFIRMATION',
     CHAUFFEUR_DISPATCH: 'CHAUFFEUR_DISPATCH',
@@ -138,6 +146,8 @@ export const EmailCommunicationsHubPage: React.FC = () => {
       failure_reason: n.error_message || null,
       body_preview: stripHtml(body).slice(0, 160),
       html_body: body,
+      from_address: n.from_address || null,
+      mailbox_id: n.mailbox_id || null,
     };
   };
 
@@ -205,6 +215,35 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     loadInbox();
   }, []);
 
+  useEffect(() => {
+    mailboxesApi
+      .list()
+      .then((rows: Mailbox[]) => setMailboxes(Array.isArray(rows) ? rows : []))
+      .catch(() => setMailboxes([]));
+  }, []);
+
+  // The selected website's mailbox, and helpers that decide whether a thread /
+  // outbound email belongs to it. Inbound is matched by the mailbox it was
+  // polled from (or the address it was sent to); outbound by the address it was
+  // sent from. Platform system emails (no from_address) only show under "All".
+  const selectedMailbox = mailboxes.find((m) => m.id === activeMailboxId);
+  const threadBelongsToSite = (t: InboundReply): boolean => {
+    if (!activeMailboxId) return true;
+    if (t.mailbox_id) return t.mailbox_id === activeMailboxId;
+    if (selectedMailbox && t.recipient_email) {
+      return t.recipient_email.toLowerCase() === selectedMailbox.email_address.toLowerCase();
+    }
+    return false;
+  };
+  const logBelongsToSite = (log: EmailLog): boolean => {
+    if (!activeMailboxId) return true;
+    if (log.mailbox_id) return log.mailbox_id === activeMailboxId;
+    if (selectedMailbox && log.from_address) {
+      return log.from_address.toLowerCase() === selectedMailbox.email_address.toLowerCase();
+    }
+    return false;
+  };
+
   /** Opening a thread marks it read for everyone, not just this browser. */
   const handleOpenThread = async (thread: InboundReply) => {
     setSelectedReplyThread(thread);
@@ -246,13 +285,22 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      const notif = await notificationsApi.sendDirect({
-        recipient: composeRecipientEmail.trim(),
-        channel: 'EMAIL',
-        subject: composeSubject,
-        message: composeMessage,
-        booking_id: composeBookingRef.trim() || undefined,
-      });
+      // If a website is selected, compose from that site's own mailbox; else
+      // the platform default sender.
+      const notif = activeMailboxId
+        ? await mailboxesApi.reply(activeMailboxId, {
+            to_email: composeRecipientEmail.trim(),
+            subject: composeSubject,
+            message: composeMessage,
+            booking_id: composeBookingRef.trim() || undefined,
+          })
+        : await notificationsApi.sendDirect({
+            recipient: composeRecipientEmail.trim(),
+            channel: 'EMAIL',
+            subject: composeSubject,
+            message: composeMessage,
+            booking_id: composeBookingRef.trim() || undefined,
+          });
 
       // Only celebrate an email the provider actually accepted. This used to
       // fire confetti and log DELIVERED without contacting anything at all.
@@ -299,13 +347,27 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     setIsSending(true);
     setSendError(null);
     try {
-      const notif = await notificationsApi.sendDirect({
-        recipient: selectedReplyThread.sender_email,
-        channel: 'EMAIL',
-        subject: `Re: ${selectedReplyThread.subject || '(no subject)'}`,
-        message: quickReplyText.trim(),
-        booking_id: selectedReplyThread.booking_id || undefined,
-      });
+      // Reply from the mailbox this message came in on (the site's own
+      // address), so the customer sees a reply from the address they wrote to —
+      // not the platform default. Falls back to the platform sender only when
+      // the thread predates multi-mailbox and no site is selected.
+      const replyMailboxId = selectedReplyThread.mailbox_id || activeMailboxId || '';
+      const subject = `Re: ${selectedReplyThread.subject || '(no subject)'}`;
+      const notif = replyMailboxId
+        ? await mailboxesApi.reply(replyMailboxId, {
+            to_email: selectedReplyThread.sender_email,
+            subject,
+            message: quickReplyText.trim(),
+            booking_id: selectedReplyThread.booking_id || undefined,
+            inbound_id: selectedReplyThread.id,
+          })
+        : await notificationsApi.sendDirect({
+            recipient: selectedReplyThread.sender_email,
+            channel: 'EMAIL',
+            subject,
+            message: quickReplyText.trim(),
+            booking_id: selectedReplyThread.booking_id || undefined,
+          });
 
       if (notif?.status !== 'SENT') {
         setSendError(
@@ -371,8 +433,12 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     }
   };
 
-  // Filtered Logs
-  const filteredLogs = emailLogs.filter((log) => {
+  // Everything below the site filter reflects the selected website only.
+  const siteLogs = emailLogs.filter(logBelongsToSite);
+  const visibleThreads = inboundReplies.filter(threadBelongsToSite);
+
+  // Filtered Logs (site + search + type)
+  const filteredLogs = siteLogs.filter((log) => {
     const matchesQuery =
       log.recipient_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       log.recipient_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -383,10 +449,10 @@ export const EmailCommunicationsHubPage: React.FC = () => {
     return matchesQuery && log.trigger_type === filterType;
   });
 
-  const unreadCount = inboundReplies.filter((r) => r.status === 'UNREAD').length;
-  const sentCount = emailLogs.filter((l) => l.status === 'SENT').length;
-  const failedCount = emailLogs.length - sentCount;
-  const deliveryRate = emailLogs.length ? (sentCount / emailLogs.length) * 100 : 0;
+  const unreadCount = visibleThreads.filter((r) => r.status === 'UNREAD').length;
+  const sentCount = siteLogs.filter((l) => l.status === 'SENT').length;
+  const failedCount = siteLogs.length - sentCount;
+  const deliveryRate = siteLogs.length ? (sentCount / siteLogs.length) * 100 : 0;
 
   return (
     <div className="space-y-6 text-[#0A0E1A]">
@@ -441,7 +507,7 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             <Send className="w-4 h-4 text-[#0A0E1A]" />
           </div>
           <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">{sentCount} Sent</div>
-          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">{emailLogs.length} attempts recorded</div>
+          <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">{siteLogs.length} attempts recorded</div>
         </div>
 
         <div className="bg-[#FAF6F0] border border-[#E6D8C3] p-4 rounded-2xl shadow-sm text-[#0A0E1A]">
@@ -450,10 +516,10 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             <CheckCircle2 className="w-4 h-4 text-[#0A0E1A]" />
           </div>
           <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A]">
-            {emailLogs.length ? `${deliveryRate.toFixed(1)}%` : '—'}
+            {siteLogs.length ? `${deliveryRate.toFixed(1)}%` : '—'}
           </div>
           <div className="text-[10px] font-bold text-[#0A0E1A] mt-1">
-            {emailLogs.length ? `${sentCount} accepted by provider` : 'No sends recorded yet'}
+            {siteLogs.length ? `${sentCount} accepted by provider` : 'No sends recorded yet'}
           </div>
         </div>
 
@@ -477,7 +543,7 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             <MessageSquare className="w-4 h-4 text-[#0A0E1A]" />
           </div>
           <div className="text-2xl font-black font-mono mt-1 text-[#0A0E1A] flex items-center gap-2">
-            <span>{inboundReplies.length} Threads</span>
+            <span>{visibleThreads.length} Threads</span>
             {unreadCount > 0 && (
               <span className="px-2 py-0.5 rounded-full bg-[#06090F] text-white text-[10px] font-bold">
                 {unreadCount} New
@@ -487,6 +553,46 @@ export const EmailCommunicationsHubPage: React.FC = () => {
           <div className="text-[10px] font-black text-[#0A0E1A] mt-1 underline">Click to view client replies ➔</div>
         </div>
       </div>
+
+      {/* ─────────────────────────────────────────────────────────────
+          PER-WEBSITE FILTER — pick a site to see only its mail, and
+          replies go out from that site's own address. Driven by the
+          connected mailboxes, so new sites appear here automatically.
+      ───────────────────────────────────────────────────────────── */}
+      {mailboxes.length > 0 && (
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[10px] font-black text-white/60 uppercase tracking-wide mr-1">Website</span>
+          <button
+            onClick={() => setActiveMailboxId('')}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+              activeMailboxId === ''
+                ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black border-[#DFCAA8] shadow-md'
+                : 'bg-[#06090F] text-white border-[#1E2738] hover-sky'
+            }`}
+          >
+            All sites
+          </button>
+          {mailboxes.map((mb) => (
+            <button
+              key={mb.id}
+              onClick={() => setActiveMailboxId(mb.id)}
+              title={mb.email_address}
+              className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all border ${
+                activeMailboxId === mb.id
+                  ? 'bg-[#DFCAA8] text-[#0A0E1A] font-black border-[#DFCAA8] shadow-md'
+                  : 'bg-[#06090F] text-white border-[#1E2738] hover-sky'
+              }`}
+            >
+              {mb.label}
+            </button>
+          ))}
+          {selectedMailbox && (
+            <span className="text-[11px] font-mono text-white/50 ml-1">
+              incoming &amp; outgoing · replies from {selectedMailbox.email_address}
+            </span>
+          )}
+        </div>
+      )}
 
       {(logsError || sendError) && (
         <div role="alert" className="rounded-2xl bg-[#FFFFFF] border border-[#EF4444] p-4 shadow-lg space-y-2">
@@ -530,7 +636,7 @@ export const EmailCommunicationsHubPage: React.FC = () => {
           }`}
         >
           <Send className="w-3.5 h-3.5" />
-          <span>Outbound Dispatched Logs ({emailLogs.length})</span>
+          <span>Outbound Dispatched Logs ({siteLogs.length})</span>
         </button>
 
         <button
@@ -542,7 +648,7 @@ export const EmailCommunicationsHubPage: React.FC = () => {
           }`}
         >
           <Inbox className="w-3.5 h-3.5" />
-          <span>Client Inbox & Replies ({inboundReplies.length})</span>
+          <span>Client Inbox & Replies ({visibleThreads.length})</span>
           {unreadCount > 0 && (
             <span className="px-1.5 py-0.2 rounded-full bg-red-600 text-white text-[9px] font-black">
               {unreadCount}
@@ -766,12 +872,12 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                 <h3 className="font-black text-sm text-[#0A0E1A]">Inbound Client Messages</h3>
               </div>
               <span className="px-2 py-0.5 rounded-full bg-[#FFFFFF] border border-[#DFCAA8] text-xs font-black font-mono">
-                {inboundReplies.length} Threads
+                {visibleThreads.length} Threads
               </span>
             </div>
 
             <div className="space-y-2.5 max-h-[600px] overflow-y-auto">
-              {inboundReplies.map((thread) => {
+              {visibleThreads.map((thread) => {
                 const isSelected = selectedReplyThread?.id === thread.id;
                 return (
                   <div
@@ -818,9 +924,11 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                 );
               })}
 
-              {inboundReplies.length === 0 && !inboxError && (
+              {visibleThreads.length === 0 && !inboxError && (
                 <div className="p-6 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-center space-y-1">
-                  <p className="text-xs font-black text-[#0A0E1A]">No replies in the inbox.</p>
+                  <p className="text-xs font-black text-[#0A0E1A]">
+                    {activeMailboxId ? 'No replies for this website yet.' : 'No replies in the inbox.'}
+                  </p>
                   <p className="text-[11px] text-slate-700 font-semibold">
                     {mailboxStatus?.configured
                       ? 'Client replies will appear here as they arrive.'

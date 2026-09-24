@@ -391,6 +391,8 @@ class MailboxService:
             id=str(uuid.uuid4()),
             booking_id=booking_id,
             recipient=to_email,
+            from_address=mb.email_address,
+            mailbox_id=mb.id,
             channel="EMAIL",
             template_name="MAILBOX_REPLY",
             subject=subject,

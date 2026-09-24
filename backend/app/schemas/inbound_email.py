@@ -12,6 +12,7 @@ class InboundEmailRead(BaseModel):
     sender_email: str
     sender_name: Optional[str] = None
     recipient_email: Optional[str] = None
+    mailbox_id: Optional[str] = None
     subject: Optional[str] = None
     body_text: Optional[str] = None
     body_html: Optional[str] = None

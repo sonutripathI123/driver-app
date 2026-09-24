@@ -10,6 +10,8 @@ class NotificationRead(BaseModel):
     id: str
     booking_id: Optional[str] = None
     recipient: str
+    from_address: Optional[str] = None
+    mailbox_id: Optional[str] = None
     channel: str
     template_name: str
     subject: Optional[str] = None
