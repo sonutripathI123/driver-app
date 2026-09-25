@@ -245,6 +245,11 @@ export const DriverPortalPage: React.FC = () => {
   const currentDriver: ChauffeurProfileItem =
     profile ?? { id: '', name: 'Chauffeur', plate: '—', vehicle: '—', phone: '', rating: 0 };
 
+  // Staff who open the /driver link have a roster but no driver profile of their
+  // own, so the personal panels can't load. Show them the roster tools plus a
+  // clear note instead of a "profile not found" error and an empty $0 welcome.
+  const isAdminPreview = roster !== null && !profile;
+
   const byPickupAsc = (a: DriverTripItem, b: DriverTripItem) =>
     new Date(a.pickupDatetimeRaw).getTime() - new Date(b.pickupDatetimeRaw).getTime();
 
@@ -398,6 +403,19 @@ export const DriverPortalPage: React.FC = () => {
         </div>
       )}
 
+      {/* Staff preview note — the personal view belongs to a signed-in driver */}
+      {isAdminPreview && (
+        <div className="rounded-2xl bg-[#121A2D] border border-[#1F2E4D] p-4 sm:p-5 flex items-start gap-2.5 text-slate-300">
+          <AlertCircle className="w-4 h-4 text-[#DFCAA8] shrink-0 mt-0.5" />
+          <p className="text-xs font-semibold leading-relaxed">
+            You're viewing this as staff. The personal chauffeur view — total earnings, the active trip,
+            and the En&nbsp;Route / Arrived / Onboard / Complete buttons — is what a driver sees when they
+            sign in with their own driver login. Use the roster above to manage your drivers.
+          </p>
+        </div>
+      )}
+
+      {!isAdminPreview && (<>
       {/* 1. Driver Profile Header (Ultra-Clean, NO admin clutter) */}
       <div className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center justify-between gap-3 shadow-lg text-white">
         <div className="flex items-center gap-3">
@@ -815,6 +833,7 @@ export const DriverPortalPage: React.FC = () => {
           </div>
         </div>
       )}
+      </>)}
     </div>
   );
 };
