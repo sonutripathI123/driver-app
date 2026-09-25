@@ -255,7 +255,7 @@ This removes the whole booking — all its legs, its invoice, payments and notif
       `🏁 *Dropoff:* ${selectedLeg.leg.dropoff_address}\n` +
       `💰 *Guaranteed Driver Payout:* $${allocationCost.toFixed(2)} AUD\n\n` +
       `📲 *Click your Driver Portal link below to open live manifest, 1-tap call & maps:*\n` +
-      `👉 https://driver-frontend-q3fh.onrender.com/driver`;
+      `👉 ${window.location.origin}/driver`;
 
     const waUrl = `https://api.whatsapp.com/send?phone=${cleanPhone}&text=${encodeURIComponent(waText)}`;
     setAllocatedWhatsAppUrl(waUrl);
