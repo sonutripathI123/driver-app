@@ -116,13 +116,14 @@ class WebsiteIngestService:
         return None
 
     @staticmethod
-    async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None) -> Tuple[Booking, bool]:
-        """Create a QUOTE-REQUEST booking from a loose website/Elementor form
-        payload. Best-effort field extraction; the full raw payload is kept in
-        internal_notes so nothing the customer sent is ever lost. The customer
-        is NOT auto-notified (the team quotes them first)."""
-        from app.schemas.booking import BookingCreate, BookingLegCreate
-        from app.services.booking_service import BookingService
+    async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None) -> Tuple["Enquiry", bool]:
+        """Store a website/Elementor form submission as a price ENQUIRY.
+
+        These are NOT bookings and never touch the Operate Board — someone is
+        only asking for a price. Best-effort field extraction; the full raw
+        payload is kept in notes so nothing the customer sent is ever lost.
+        """
+        from app.models.enquiry import Enquiry
 
         flat = WebsiteIngestService._flatten(payload)
 
@@ -178,57 +179,50 @@ class WebsiteIngestService:
         if when is not None and hm is not None:
             when = when.replace(hour=hm[0], minute=hm[1])
         message = WebsiteIngestService._pick(flat, "message", "note", "comment", "detail", "requirement")
+        service = WebsiteIngestService._pick(flat, "service")
+        vehicle = WebsiteIngestService._pick(flat, "vehicle type", "vehicletype", "vehicle")
 
-        # Sensible fallbacks so create_booking's required fields are satisfied.
-        email = (email or "no-email@website-enquiry.local").strip().lower()
-        phone = (phone or "+61000000000").strip()
-        pickup = (pickup or "See enquiry notes").strip()
-        dropoff = (dropoff or "See enquiry notes").strip()
-        pickup_dt = when or (datetime.now(timezone.utc) + timedelta(days=2))
+        name = (name or "Website enquiry").strip()
+        email = (email or "").strip().lower() or None
+        phone = (phone or "").strip() or None
+        pickup = (pickup or "").strip() or None
+        dropoff = (dropoff or "").strip() or None
 
         # Idempotency: dedupe identical rapid re-submits (Elementor can double-fire).
         sig = hashlib.sha1(
             f"{email}|{pickup}|{dropoff}|{when}|{message}".encode("utf-8", "ignore")
-        ).hexdigest()[:10]
-        tag = WebsiteIngestService._ref_tag(f"form-{sig}")
+        ).hexdigest()[:12]
+        dedup_key = f"form-{sig}"
         existing = (
-            await db.execute(
-                select(Booking).where(Booking.internal_notes.ilike(f"%{tag}%"))
-                .options(selectinload(Booking.legs), selectinload(Booking.customer))
-            )
+            await db.execute(select(Enquiry).where(Enquiry.dedup_key == dedup_key))
         ).scalars().first()
         if existing:
             return existing, True
 
         raw_lines = "\n".join(f"  - {k}: {v}" for k, v in flat.items())
-        note = "[QUOTE REQUEST]"
-        if website:
-            note += f" [via {website.strip()}]"
+        notes = ""
         if message:
-            note += f"\nMessage: {message}"
-        note += f"\n--- raw website form ---\n{raw_lines}\n{tag}"
+            notes += f"Message: {message}\n"
+        notes += f"--- raw website form ---\n{raw_lines}"
 
-        booking_in = BookingCreate(
+        enq = Enquiry(
+            website=(website.strip() if website else None),
+            dedup_key=dedup_key,
+            service_type=service,
             customer_name=name,
             customer_email=email,
             customer_phone=phone,
-            source=BookingSource.WEBSITE,
-            total_fare=0.0,
-            deposit_percentage=100.0,
-            passenger_name=name,
-            passenger_phone=phone,
-            passenger_email=email,
-            internal_notes=note[:4000],
-            legs=[BookingLegCreate(
-                leg_number=1,
-                pickup_address=pickup[:500],
-                dropoff_address=dropoff[:500],
-                pickup_datetime=pickup_dt,
-                vehicle_category=VehicleCategory.SEDAN_PREMIUM,
-            )],
+            pickup_address=(pickup[:500] if pickup else None),
+            dropoff_address=(dropoff[:500] if dropoff else None),
+            pickup_datetime=when,
+            vehicle_category=vehicle,
+            notes=notes[:4000],
+            status="NEW",
         )
-        booking = await BookingService.create_booking(db, booking_in, notify=False)
-        return booking, False
+        db.add(enq)
+        await db.commit()
+        await db.refresh(enq)
+        return enq, False
 
     @staticmethod
     async def ingest(db: AsyncSession, payload: WebsiteBookingIngest) -> tuple[Booking, bool]:

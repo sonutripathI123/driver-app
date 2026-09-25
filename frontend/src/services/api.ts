@@ -16,6 +16,7 @@ import {
   VehicleUtilizationReport,
   InboundEmail,
   Mailbox,
+  Enquiry,
   InboundMailboxStatus,
   ManagerNotificationSettings,
   NotificationItem,
@@ -589,6 +590,21 @@ export const mailboxesApi = {
     const res = await apiClient.post<{ subject: string; message: string; to_email: string }>(
       `/mailboxes/${id}/inbound/${inboundId}/draft-reply`
     );
+    return res.data;
+  },
+};
+
+export const enquiriesApi = {
+  list: async (params?: { website?: string; status?: string; limit?: number }) => {
+    const res = await apiClient.get<{ total: number; enquiries: Enquiry[] }>(`/enquiries/`, { params });
+    return res.data;
+  },
+  setStatus: async (id: string, status: Enquiry['status']) => {
+    const res = await apiClient.patch<Enquiry>(`/enquiries/${id}`, { status });
+    return res.data;
+  },
+  remove: async (id: string) => {
+    const res = await apiClient.delete(`/enquiries/${id}`);
     return res.data;
   },
 };

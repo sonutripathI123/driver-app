@@ -138,27 +138,30 @@ async def test_form_rejects_bad_token(client: AsyncClient, monkeypatch):
     assert r.status_code == 401, r.text
 
 
-# ---- service-level: the actual mapping the background task performs
+# ---- service-level: a form submission becomes an ENQUIRY, never a booking
 
 @pytest.mark.asyncio
-async def test_ingest_form_maps_label_keys(db_session):
-    from app.models.booking_leg import BookingLeg
-    from sqlalchemy import select
+async def test_ingest_form_creates_enquiry_not_booking(db_session):
+    from sqlalchemy import func, select
+    from app.models.booking import Booking
     from app.services.website_ingest_service import WebsiteIngestService
 
-    booking, dup = await WebsiteIngestService.ingest_form(
+    enq, dup = await WebsiteIngestService.ingest_form(
         db_session, ELEMENTOR_LABEL_PAYLOAD, website="corporatecarsmelbourne.com.au"
     )
     assert dup is False
-    assert booking.passenger_name == "Sonu Tripathi"
-    assert booking.total_fare == 0.0
+    assert enq.customer_name == "Sonu Tripathi"
+    assert enq.status == "NEW"
+    assert enq.website == "corporatecarsmelbourne.com.au"
+    assert enq.service_type == "Wedding Car"
+    assert enq.vehicle_category == "Business SUV"
+    assert enq.pickup_datetime.strftime("%Y-%m-%d %H:%M") == "2026-09-23 22:00"
+    assert "Melbourne VIC" in enq.pickup_address
+    assert "Melbourne Airport" in enq.dropoff_address
 
-    leg = (await db_session.execute(
-        select(BookingLeg).where(BookingLeg.booking_id == booking.id)
-    )).scalars().first()
-    assert leg.pickup_datetime.strftime("%Y-%m-%d %H:%M") == "2026-09-23 22:00"
-    assert "Melbourne VIC" in leg.pickup_address
-    assert "Melbourne Airport" in leg.dropoff_address
+    # It must NOT have created a booking (nothing reaches the Operate Board).
+    booking_count = await db_session.scalar(select(func.count()).select_from(Booking))
+    assert booking_count == 0
 
     # Re-ingesting the identical payload is deduped.
     _, dup2 = await WebsiteIngestService.ingest_form(db_session, ELEMENTOR_LABEL_PAYLOAD)
@@ -168,13 +171,38 @@ async def test_ingest_form_maps_label_keys(db_session):
 @pytest.mark.asyncio
 async def test_ingest_form_elementor_nested_and_urlencoded(db_session):
     from app.services.website_ingest_service import WebsiteIngestService
-    b1, _ = await WebsiteIngestService.ingest_form(db_session, ELEMENTOR_JSON)
-    assert b1.total_fare == 0.0
-    assert "Jane" in b1.passenger_name
+    e1, _ = await WebsiteIngestService.ingest_form(db_session, ELEMENTOR_JSON)
+    assert "Jane" in e1.customer_name
+    assert e1.status == "NEW"
 
-    b2, _ = await WebsiteIngestService.ingest_form(db_session, {
+    e2, _ = await WebsiteIngestService.ingest_form(db_session, {
         "your-name": "Bob Smith", "email": "bob@corp.example.com",
         "mobile": "+61400999888", "pickup": "Southbank",
         "destination": "Melbourne Airport", "message": "ASAP",
     })
-    assert b2.passenger_name == "Bob Smith"
+    assert e2.customer_name == "Bob Smith"
+    assert e2.pickup_address == "Southbank"
+
+
+@pytest.mark.asyncio
+async def test_enquiries_api_list_status_delete(client: AsyncClient, admin_user, db_session):
+    from tests.conftest import auth_header
+    from app.services.website_ingest_service import WebsiteIngestService
+
+    enq, _ = await WebsiteIngestService.ingest_form(
+        db_session, ELEMENTOR_LABEL_PAYLOAD, website="corporatecarsmelbourne.com.au"
+    )
+    h = auth_header(admin_user)
+
+    r = await client.get("/api/v1/enquiries/", headers=h)
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert body["total"] >= 1
+    assert any(e["customer_name"] == "Sonu Tripathi" for e in body["enquiries"])
+
+    r2 = await client.patch(f"/api/v1/enquiries/{enq.id}", headers=h, json={"status": "REVIEWED"})
+    assert r2.status_code == 200, r2.text
+    assert r2.json()["status"] == "REVIEWED"
+
+    r3 = await client.delete(f"/api/v1/enquiries/{enq.id}", headers=h)
+    assert r3.status_code == 200, r3.text

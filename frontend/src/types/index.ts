@@ -365,6 +365,27 @@ export interface InboundEmail {
   received_at: string;
 }
 
+/** A price/quote enquiry from a website form — NOT a booking. */
+export interface Enquiry {
+  id: string;
+  website?: string | null;
+  service_type?: string | null;
+  customer_name: string;
+  customer_email?: string | null;
+  customer_phone?: string | null;
+  pickup_address?: string | null;
+  dropoff_address?: string | null;
+  pickup_datetime?: string | null;
+  vehicle_category?: string | null;
+  passenger_count: number;
+  luggage_count: number;
+  is_airport_pickup: boolean;
+  flight_number?: string | null;
+  notes?: string | null;
+  status: 'NEW' | 'REVIEWED' | 'QUOTED' | 'ARCHIVED';
+  created_at: string;
+}
+
 /** Whether inbound mail is actually connected, so the UI need not guess. */
 export interface InboundMailboxStatus {
   configured: boolean;

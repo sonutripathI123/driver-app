@@ -7,6 +7,7 @@ import { DashboardPage } from './pages/DashboardPage';
 import { BookingsOperatePage } from './pages/BookingsOperatePage';
 import { QuoteBookingPage } from './pages/QuoteBookingPage';
 import { DriverPortalPage } from './pages/DriverPortalPage';
+import { EnquiriesPage } from './pages/EnquiriesPage';
 import { FlightRadarPage } from './pages/FlightRadarPage';
 import { NotificationsHubPage } from './pages/NotificationsHubPage';
 import { InvoicingTaxPage } from './pages/InvoicingTaxPage';
@@ -117,6 +118,8 @@ const AuthenticatedApp: React.FC = () => {
         return <BookingsOperatePage />;
       case 'quotes':
         return <QuoteBookingPage />;
+      case 'enquiries':
+        return <EnquiriesPage />;
       case 'driver-portal':
         return <DriverPortalPage />;
       case 'clients':

@@ -9,6 +9,7 @@ from app.api.v1.customers import router as customers_router
 from app.api.v1.dispatch import router as dispatch_router
 from app.api.v1.driver_portal import router as driver_portal_router
 from app.api.v1.drivers import router as drivers_router
+from app.api.v1.enquiries import router as enquiries_router
 from app.api.v1.flights import router as flights_router
 from app.api.v1.invoices import router as invoices_router
 from app.api.v1.mailboxes import router as mailboxes_router
@@ -54,6 +55,7 @@ api_router.include_router(invoices_router)
 api_router.include_router(accounting_router)
 api_router.include_router(analytics_router)
 api_router.include_router(website_ingest_router)
+api_router.include_router(enquiries_router)
 
 
 # RBAC Role Test / Verification Endpoints
