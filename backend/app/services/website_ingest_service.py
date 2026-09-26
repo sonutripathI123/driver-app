@@ -224,6 +224,146 @@ class WebsiteIngestService:
         await db.refresh(enq)
         return enq, False
 
+    # ------------------------------------------------------------------ CHBS booking adapter
+
+    @staticmethod
+    def _num(v: Any, default: float = 0.0) -> float:
+        try:
+            return float(str(v).strip())
+        except Exception:
+            return default
+
+    @staticmethod
+    async def ingest_chbs(db: AsyncSession, payload: Any) -> Tuple[Booking, bool]:
+        """Create a real, dispatchable booking from a Chauffeur Booking System
+        (CHBS) order payload — the exact object the site posts to the partner's
+        insert_order. Lands on the Operate Board; the customer is NOT re-notified
+        (they already booked and were confirmed on the website). Idempotent on
+        the CHBS booking id.
+        """
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+        from app.models.enums import PaymentStatus
+
+        meta = (payload.get("meta") or {}) if isinstance(payload, dict) else {}
+        post = (payload.get("post") or {}) if isinstance(payload, dict) else {}
+
+        ext = str(post.get("ID") or meta.get("booking_id") or "").strip()
+        tag = WebsiteIngestService._ref_tag(f"chbs-{ext}") if ext else None
+        if tag:
+            existing = (
+                await db.execute(
+                    select(Booking).where(Booking.internal_notes.ilike(f"%{tag}%"))
+                    .options(selectinload(Booking.legs), selectinload(Booking.customer))
+                )
+            ).scalars().first()
+            if existing:
+                return existing, True
+
+        # Customer
+        fn = (meta.get("client_contact_detail_first_name") or "").strip()
+        ln = (meta.get("client_contact_detail_last_name") or "").strip()
+        name = (f"{fn} {ln}").strip() or "Website booking"
+        email = (meta.get("client_contact_detail_email_address") or "").strip().lower() or None
+        phone = (meta.get("client_contact_detail_phone_number") or "").strip() or None
+
+        # Pickup / dropoff from the coordinate list (first = pickup, last = dropoff)
+        coords = meta.get("coordinate") or []
+        pickup_c = coords[0] if coords else {}
+        drop_c = coords[-1] if len(coords) > 1 else (coords[0] if coords else {})
+        pickup = (pickup_c.get("address") or "See booking notes").strip()
+        dropoff = (drop_c.get("address") or "See booking notes").strip()
+
+        # When
+        when = WebsiteIngestService._parse_dt(meta.get("pickup_datetime"))
+        if when is None:
+            d = meta.get("pickup_date")
+            t = meta.get("pickup_time")
+            when = WebsiteIngestService._parse_dt(f"{d} {t}" if d and t else d)
+
+        # Passengers / luggage
+        pax = int(WebsiteIngestService._num(meta.get("passenger_adult_number")) +
+                  WebsiteIngestService._num(meta.get("passenger_children_number")))
+        if pax <= 0:
+            pax = 1
+        bags = int(WebsiteIngestService._num(payload.get("vehicle_bag_count") if isinstance(payload, dict) else 0))
+
+        # Fare + paid state
+        billing = (payload.get("billing") or {}) if isinstance(payload, dict) else {}
+        summary = billing.get("summary") or {}
+        total = round(WebsiteIngestService._num(summary.get("pay") or summary.get("value_gross")), 2)
+        status_name = str(payload.get("booking_status_name") or "").lower() if isinstance(payload, dict) else ""
+        is_paid = ("confirm" in status_name) or ("complet" in status_name)
+
+        # Flight number, if the form captured it
+        flight = None
+        for f in (meta.get("form_element_field") or []):
+            if "flight" in str(f.get("label") or "").lower() and f.get("value"):
+                flight = str(f.get("value"))[:20]
+                break
+
+        is_airport = "airport" in pickup.lower() or "airport" in dropoff.lower()
+        distance_km = WebsiteIngestService._num(meta.get("base_location_distance")) or None
+        vehicle_name = (payload.get("vehicle_name") or meta.get("vehicle_name") or "") if isinstance(payload, dict) else ""
+
+        note_bits = [f"[Website booking via CHBS #{ext}]"]
+        for label, key in (("service", "service_type_name"), ("transfer", "transfer_type_name"),
+                           ("payment", "payment_name"), ("status", "booking_status_name")):
+            val = payload.get(key) if isinstance(payload, dict) else None
+            if val:
+                note_bits.append(f"{label}={val}")
+        if vehicle_name:
+            note_bits.append(f"vehicle={vehicle_name}")
+        if meta.get("comment"):
+            note_bits.append(f"| Comment: {meta.get('comment')}")
+        if meta.get("coupon_code"):
+            note_bits.append(f"| Coupon: {meta.get('coupon_code')}")
+        if tag:
+            note_bits.append(tag)
+        internal_notes = " ".join(note_bits)
+
+        booking_in = BookingCreate(
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            source=BookingSource.WEBSITE,
+            total_fare=total,
+            deposit_percentage=100.0,
+            flight_tracking_enabled=bool(flight),
+            passenger_name=name,
+            passenger_phone=phone,
+            passenger_email=email,
+            passenger_count=pax,
+            luggage_count=bags,
+            internal_notes=internal_notes[:4000],
+            legs=[BookingLegCreate(
+                leg_number=1,
+                pickup_address=pickup[:500],
+                pickup_lat=pickup_c.get("lat"),
+                pickup_lng=pickup_c.get("lng"),
+                dropoff_address=dropoff[:500],
+                dropoff_lat=drop_c.get("lat"),
+                dropoff_lng=drop_c.get("lng"),
+                pickup_datetime=when or (datetime.now(timezone.utc) + timedelta(days=1)),
+                distance_km=distance_km,
+                vehicle_category=VehicleCategory.SEDAN_PREMIUM,
+                is_airport_pickup=is_airport,
+                flight_number=flight,
+            )],
+        )
+        booking = await BookingService.create_booking(db, booking_in, notify=False)
+
+        if is_paid and total > 0:
+            booking.paid_amount = total
+            booking.calculate_balance()
+            booking.payment_status = (
+                PaymentStatus.PAID_IN_FULL if booking.balance_amount <= 0 else PaymentStatus.PARTIAL_DEPOSIT
+            )
+            await db.commit()
+            await db.refresh(booking)
+
+        return booking, False
+
     @staticmethod
     async def ingest(db: AsyncSession, payload: WebsiteBookingIngest) -> tuple[Booking, bool]:
         """Create (or return the existing) booking for a website submission.

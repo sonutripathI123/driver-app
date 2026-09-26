@@ -184,6 +184,89 @@ async def test_ingest_form_elementor_nested_and_urlencoded(db_session):
     assert e2.pickup_address == "Southbank"
 
 
+# ---- CHBS real-booking adapter (partner insert_order format)
+
+CHBS_PAYLOAD = {
+    "post": {"ID": 11481, "post_type": "chbs_booking"},
+    "meta": {
+        "pickup_datetime": "2026-05-29 19:45:00",
+        "pickup_date": "29-05-2026",
+        "pickup_time": "19:45",
+        "passenger_adult_number": "2",
+        "passenger_children_number": "0",
+        "coordinate": [
+            {"lat": -37.67, "lng": 144.84, "address": "Melbourne Airport (MEL), Australia"},
+            {"lat": -37.81, "lng": 144.96, "address": "Melbourne CBD, Australia"},
+        ],
+        "client_contact_detail_first_name": "ankit",
+        "client_contact_detail_last_name": "verma",
+        "client_contact_detail_email_address": "aankitverma1@gmail.com",
+        "client_contact_detail_phone_number": "+61424423507",
+        "comment": "checking booking",
+        "base_location_distance": "46.5",
+        "form_element_field": [{"label": "Flight Details", "value": "QF400"}],
+    },
+    "service_type_name": "Distance",
+    "transfer_type_name": "One Way",
+    "payment_name": "Stripe",
+    "booking_status_name": "Confirmed",
+    "vehicle_name": "Next Available",
+    "vehicle_bag_count": "2",
+    "billing": {"summary": {"pay": "189.00", "value_gross": "189.00", "distance": 46.5}},
+}
+
+
+@pytest.mark.asyncio
+async def test_ingest_chbs_creates_real_booking(db_session):
+    from sqlalchemy import select
+    from app.models.booking_leg import BookingLeg
+    from app.models.enums import PaymentStatus
+    from app.services.website_ingest_service import WebsiteIngestService
+
+    booking, dup = await WebsiteIngestService.ingest_chbs(db_session, CHBS_PAYLOAD)
+    assert dup is False
+    assert booking.passenger_name == "ankit verma"
+    assert booking.passenger_count == 2
+    assert booking.total_fare == 189.0
+    # Confirmed + Stripe -> recorded as paid.
+    assert booking.paid_amount == 189.0
+    assert booking.payment_status == PaymentStatus.PAID_IN_FULL
+
+    leg = (await db_session.execute(
+        select(BookingLeg).where(BookingLeg.booking_id == booking.id)
+    )).scalars().first()
+    assert "Melbourne Airport" in leg.pickup_address
+    assert "Melbourne CBD" in leg.dropoff_address
+    assert leg.pickup_datetime.strftime("%Y-%m-%d %H:%M") == "2026-05-29 19:45"
+    assert leg.is_airport_pickup is True
+    assert leg.flight_number == "QF400"
+
+    # Same CHBS id again -> deduped, no second booking.
+    _, dup2 = await WebsiteIngestService.ingest_chbs(db_session, CHBS_PAYLOAD)
+    assert dup2 is True
+
+
+@pytest.mark.asyncio
+async def test_chbs_endpoint_returns_received(client: AsyncClient, monkeypatch):
+    monkeypatch.setattr(settings, "WEBSITE_INGEST_TOKEN", "s3cret")
+    captured = {}
+
+    async def fake_bg(payload):
+        captured["payload"] = payload
+
+    import app.api.v1.website_ingest as wi
+    monkeypatch.setattr(wi, "_bg_ingest_chbs", fake_bg)
+
+    r = await client.post("/api/v1/website/chbs-booking?token=s3cret", json=CHBS_PAYLOAD)
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "received"
+    assert captured["payload"]["post"]["ID"] == 11481
+
+    # bad token rejected
+    r2 = await client.post("/api/v1/website/chbs-booking?token=nope", json=CHBS_PAYLOAD)
+    assert r2.status_code == 401
+
+
 @pytest.mark.asyncio
 async def test_enquiries_api_list_status_delete(client: AsyncClient, admin_user, db_session):
     from tests.conftest import auth_header

@@ -36,6 +36,16 @@ async def _bg_ingest_form(payload: Any, website: Optional[str]) -> None:
             logger.exception("Website form ingest failed for payload from %s", website)
 
 
+async def _bg_ingest_chbs(payload: Any) -> None:
+    """Create a real booking from a CHBS order off the request path, so the
+    caller (the partner's insert_order integration) gets an instant 200."""
+    async with AsyncSessionLocal() as db:
+        try:
+            await WebsiteIngestService.ingest_chbs(db, payload)
+        except Exception:
+            logger.exception("CHBS booking ingest failed")
+
+
 def _check_token(supplied: Optional[str]) -> None:
     expected = (settings.WEBSITE_INGEST_TOKEN or "").strip()
     if not expected:
@@ -109,6 +119,34 @@ async def ingest_website_form(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty form payload.")
 
     background_tasks.add_task(_bg_ingest_form, payload, website)
+    return {"status": "received"}
+
+
+@router.post("/chbs-booking")
+async def ingest_chbs_booking(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    token: Optional[str] = Query(None),
+    x_website_token: Optional[str] = Header(None, alias="X-Website-Token"),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Real confirmed booking from a Chauffeur Booking System (CHBS) order — the
+    exact JSON the site posts to the partner's insert_order. Creates a
+    dispatchable booking on the Operate Board (customer not re-notified).
+
+    The caller sends the SAME body it sends to insert_order, plus our token.
+    Responds 200 immediately; the booking is created in the background.
+    """
+    _check_token(x_website_token or token)
+    try:
+        payload = await request.json()
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Body was not valid JSON.")
+    if not isinstance(payload, dict) or not payload:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty or invalid CHBS payload.")
+
+    background_tasks.add_task(_bg_ingest_chbs, payload)
     return {"status": "received"}
 
 
