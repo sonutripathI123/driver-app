@@ -103,8 +103,14 @@ export const AnalyticsProfitPage: React.FC = () => {
     return [...byDay.slice(1), byDay[0]];
   })();
 
-  // Scale the bars to the busiest day so an empty or quiet week still renders.
-  const maxRevenue = Math.max(1, ...revenueChartData.map((d) => d.revenue));
+  // Scale the bars to the largest value across ALL series (revenue, cost and
+  // profit) so no single bar can overflow the chart. Scaling only to revenue
+  // meant a day with near-zero revenue but real profit rendered as a thin line
+  // shooting far past the top of the chart.
+  const maxVal = Math.max(
+    1,
+    ...revenueChartData.flatMap((d) => [d.revenue, d.cost, d.profit])
+  );
 
   const FLEET_COLOURS = [
     { color: 'bg-amber-400', hex: '#D4AF37' },
@@ -361,9 +367,9 @@ export const AnalyticsProfitPage: React.FC = () => {
           {/* Custom Luxury SVG Bar Chart */}
           <div className="h-[280px] w-full flex items-end justify-between gap-3 pt-6 pb-2 px-2 border-b border-[#E6D8C3]">
             {revenueChartData.map((item, idx) => {
-              const revHeight = (item.revenue / maxRevenue) * 100;
-              const costHeight = (item.cost / maxRevenue) * 100;
-              const profitHeight = (item.profit / maxRevenue) * 100;
+              const revHeight = Math.min(100, Math.max(0, (item.revenue / maxVal) * 100));
+              const costHeight = Math.min(100, Math.max(0, (item.cost / maxVal) * 100));
+              const profitHeight = Math.min(100, Math.max(0, (item.profit / maxVal) * 100));
               const isHovered = hoveredBar === idx;
 
               return (
