@@ -265,6 +265,12 @@ class DriverPortalService:
                     # Close the loop with the passenger. Completion used to
                     # notify only the manager, so the client heard nothing.
                     await NotificationService.send_trip_completed_receipt(db, booking, leg)
+                    # Auto-raise the tax invoice on completion (idempotent).
+                    try:
+                        from app.services.accounting_service import AccountingService
+                        await AccountingService.generate_invoice_for_booking(db, booking.id)
+                    except Exception:
+                        pass
 
         else:
             raise HTTPException(

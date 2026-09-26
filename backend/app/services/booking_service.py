@@ -588,6 +588,13 @@ class BookingService:
         all_completed = all(l.status == LegStatus.COMPLETED for l in booking.legs)
         if all_completed and booking.status != BookingStatus.COMPLETED:
             booking.status = BookingStatus.COMPLETED
+            # Auto-raise the tax invoice on completion (idempotent — returns the
+            # existing one if already generated). Never block completion on it.
+            try:
+                from app.services.accounting_service import AccountingService
+                await AccountingService.generate_invoice_for_booking(db, booking.id)
+            except Exception:
+                pass
 
         # Audit log leg status update
         audit = AuditLog(
