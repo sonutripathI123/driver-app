@@ -297,6 +297,11 @@ export const customerPortalApi = {
     const res = await apiClient.post(`/customer-portal/set-password`, { token, password });
     return res.data;
   },
+  /** Staff: (re)generate a customer's set-password / login link to share. */
+  getSetupLink: async (customerId: string) => {
+    const res = await apiClient.get<{ url: string }>(`/customer-portal/setup-link/${customerId}`);
+    return res.data;
+  },
   getProfile: async () => {
     const res = await apiClient.get(`/customer-portal/me`);
     return res.data;

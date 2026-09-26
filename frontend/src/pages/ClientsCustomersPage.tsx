@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bookingsApi, customersApi, invoicesApi } from '../services/api';
+import { bookingsApi, customersApi, customerPortalApi, invoicesApi } from '../services/api';
 import { Customer } from '../types';
 import { BANK, BANK_CONFIGURED, COMPANY, NOT_CONFIGURED } from '../config/company';
 import {
@@ -72,6 +72,7 @@ interface VIPClient {
 
 export const ClientsCustomersPage: React.FC = () => {
   const [clients, setClients] = useState<VIPClient[]>([]);
+  const [portalBusyId, setPortalBusyId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
@@ -305,6 +306,27 @@ export const ClientsCustomersPage: React.FC = () => {
   };
 
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
+
+  const handleCopyPortalLink = async (client: VIPClient) => {
+    setPortalBusyId(client.id);
+    try {
+      const { url } = await customerPortalApi.getSetupLink(client.id);
+      try {
+        await navigator.clipboard.writeText(url);
+      } catch {
+        // clipboard blocked; the alert still shows the link to copy manually
+      }
+      window.alert(
+        `Customer portal link for ${client.name} (copied):\n\n${url}\n\n` +
+        `Share this with the customer. First time → they set a password; after that they log in with their email.`
+      );
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      window.alert(typeof detail === 'string' ? detail : 'Could not generate the portal link.');
+    } finally {
+      setPortalBusyId(null);
+    }
+  };
 
   const handleDeleteClient = async (client: VIPClient) => {
     const ok = window.confirm(
@@ -582,6 +604,17 @@ Web: https://www.${COMPANY.website}`
                       >
                         <Mail className="w-3.5 h-3.5 text-[#0A0E1A]" />
                         <span className="hidden sm:inline">Email</span>
+                      </button>
+
+                      {/* Customer portal (set-password / login) link */}
+                      <button
+                        onClick={() => handleCopyPortalLink(client)}
+                        disabled={portalBusyId === client.id}
+                        className="px-2.5 py-1.5 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm disabled:opacity-50"
+                        title="Copy this customer's portal login / set-password link"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5 text-[#0A0E1A]" />
+                        <span className="hidden sm:inline">{portalBusyId === client.id ? '…' : 'Portal Link'}</span>
                       </button>
 
                       {/* Delete client */}
