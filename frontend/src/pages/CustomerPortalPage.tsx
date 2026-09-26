@@ -134,13 +134,29 @@ export const CustomerPortalPage: React.FC = () => {
     }
   };
 
-  useEffect(() => { load(); }, []);
+  // Poll so the driver's live status (on the way / arrived / on board / done)
+  // updates on the customer's screen without them reloading.
+  useEffect(() => {
+    load();
+    const t = setInterval(load, 20000);
+    return () => clearInterval(t);
+  }, []);
 
   const statusColor = (s: string) =>
     s === 'COMPLETED' ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
       : ACTIVE.includes(s) ? 'bg-[#E0F2FE] text-[#0A0E1A] border-[#7DD3FC]'
         : s === 'CANCELLED' ? 'bg-rose-100 text-rose-900 border-rose-300'
           : 'bg-amber-100 text-amber-900 border-amber-300';
+
+  // Customer-friendly wording for the driver's live progress.
+  const STATUS_LABEL: Record<string, string> = {
+    DRAFT: 'Pending', ENQUIRY: 'Pending', QUOTED: 'Pending',
+    PAYMENT_PENDING: 'Payment pending', CONFIRMED: 'Confirmed',
+    ALLOCATED: 'Driver assigned', DISPATCHED: 'Driver assigned',
+    EN_ROUTE: '🚗 Driver on the way', ARRIVED: '📍 Driver arrived',
+    PICKED_UP: '🧳 On board', COMPLETED: 'Completed', CANCELLED: 'Cancelled',
+  };
+  const statusLabel = (s: string) => STATUS_LABEL[s] || s;
 
   return (
     <div className="min-h-screen bg-[#06090F] text-slate-100 p-3 sm:p-6">
@@ -209,7 +225,7 @@ export const CustomerPortalPage: React.FC = () => {
                 <div key={b.id} className="p-4 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] space-y-2">
                   <div className="flex items-center justify-between gap-2 border-b border-[#1F2E4D] pb-2">
                     <span className="font-mono font-black text-white text-sm">{b.booking_number}</span>
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusColor(b.status)}`}>{b.status}</span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${statusColor(b.status)}`}>{statusLabel(b.status)}</span>
                   </div>
                   <div className="text-xs text-slate-200 space-y-1">
                     <p className="flex items-center gap-1.5"><CalendarDays className="w-3.5 h-3.5 text-[#DFCAA8]" /> {fmt(b.pickup_datetime)}</p>
