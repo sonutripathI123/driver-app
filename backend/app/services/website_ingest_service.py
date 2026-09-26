@@ -362,6 +362,15 @@ class WebsiteIngestService:
             await db.commit()
             await db.refresh(booking)
 
+        # The website already emails its own confirmation, so we only SMS the
+        # customer their dashboard portal (set-password / login) link.
+        try:
+            from app.services.notification_service import NotificationService
+            await NotificationService.send_portal_link_sms(db, booking)
+            await db.commit()
+        except Exception:
+            pass
+
         return booking, False
 
     @staticmethod

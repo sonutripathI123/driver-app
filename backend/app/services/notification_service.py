@@ -389,6 +389,39 @@ class NotificationService:
         return notifs
 
     @staticmethod
+    async def send_portal_link_sms(db: AsyncSession, booking: Booking) -> Optional[Notification]:
+        """Send the customer ONLY their portal (set-password / login) link by SMS.
+
+        Used for website-originated bookings: the website already emails its own
+        booking confirmation, so we don't duplicate that — we just add the
+        dashboard access link, via SMS (which works without the email server).
+        The caller commits.
+        """
+        cust_name, _, cust_phone = get_customer_contact(booking)
+        if not cust_phone:
+            return None
+
+        portal_url = (settings.PUBLIC_APP_URL or "").rstrip("/")
+        portal_link = portal_url + "/"
+        first_time = True
+        try:
+            from app.models.customer import Customer
+            from app.core.security import create_customer_setup_token
+            cust_rec = await db.get(Customer, booking.customer_id) if booking.customer_id else None
+            if cust_rec:
+                if cust_rec.user_id:
+                    first_time = False
+                else:
+                    portal_link = f"{portal_url}/set-password?token={create_customer_setup_token(cust_rec.id)}"
+        except Exception:
+            pass
+        cta = "Set up your account & track your booking" if first_time else "Track your booking"
+        sms = f"Opal Chauffeurs: Booking #{booking.booking_number} received for {cust_name}. {cta}: {portal_link}"
+        return await NotificationService.record_and_dispatch_sms(
+            db, cust_phone, "PORTAL_LINK_SMS", sms, booking.id
+        )
+
+    @staticmethod
     async def send_driver_allocation_notice(
         db: AsyncSession,
         booking: Booking,
