@@ -259,6 +259,14 @@ class BookingService:
             await NotificationService.send_dual_booking_created_alert(db, booking)
         await db.commit()
         await db.refresh(booking)
+
+        # Mirror the booking onto Google Calendar (no-op if not configured).
+        try:
+            from app.integrations.google_calendar import GoogleCalendarClient
+            await GoogleCalendarClient.create_event_for_booking(booking)
+        except Exception:
+            pass
+
         return booking
 
     @staticmethod

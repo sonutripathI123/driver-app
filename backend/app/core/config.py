@@ -165,6 +165,17 @@ class Settings(BaseSettings):
     # getattr(settings, "GOOGLE_MAPS_API_KEY") never sees a value from .env.
     GOOGLE_MAPS_API_KEY: Optional[str] = None
 
+    # Google Calendar (OAuth, offline access). With a client id/secret + a
+    # long-lived refresh token the backend creates a calendar event for each
+    # booking without any interactive login. Empty => calendar sync is off (no
+    # event is created, nothing fabricated). GOOGLE_CALENDAR_ID is the target
+    # calendar ("primary" = the authorising account's main calendar, or a
+    # specific calendar id).
+    GOOGLE_CALENDAR_CLIENT_ID: str = ""
+    GOOGLE_CALENDAR_CLIENT_SECRET: str = ""
+    GOOGLE_CALENDAR_REFRESH_TOKEN: str = ""
+    GOOGLE_CALENDAR_ID: str = "primary"
+
     # Live flight tracking.
     # FLIGHT_PROVIDER: flightaware | aerodatabox | aviationstack | auto
     #   auto = whichever has a key, in that order. With none configured the
