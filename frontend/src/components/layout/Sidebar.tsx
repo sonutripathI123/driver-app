@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import {
   LayoutDashboard,
   CalendarDays,
+  CalendarRange,
   Compass,
   Smartphone,
   Plane,
@@ -23,6 +24,7 @@ import { ChangePasswordModal } from '../ChangePasswordModal';
 export type NavTab =
   | 'dashboard'
   | 'operate'
+  | 'calendar'
   | 'quotes'
   | 'enquiries'
   | 'driver-portal'
@@ -72,6 +74,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       items: [
         { id: 'dashboard', label: 'Executive Overview', icon: LayoutDashboard },
         { id: 'operate', label: 'Live Operate Board', icon: CalendarDays, badge: 'Live', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
+        { id: 'calendar', label: 'Booking Calendar', icon: CalendarRange, badge: 'View', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'quotes', label: 'Instant 3D Quoting', icon: Compass, badge: '3D UI', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'enquiries', label: 'Website Enquiries', icon: ClipboardList, badge: 'Leads', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
       ],

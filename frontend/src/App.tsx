@@ -5,6 +5,7 @@ import { Shell } from './components/layout/Shell';
 import { NavTab } from './components/layout/Sidebar';
 import { DashboardPage } from './pages/DashboardPage';
 import { BookingsOperatePage } from './pages/BookingsOperatePage';
+import { CalendarPage } from './pages/CalendarPage';
 import { QuoteBookingPage } from './pages/QuoteBookingPage';
 import { DriverPortalPage } from './pages/DriverPortalPage';
 import { EnquiriesPage } from './pages/EnquiriesPage';
@@ -116,6 +117,8 @@ const AuthenticatedApp: React.FC = () => {
         return <DashboardPage onNavigate={setActiveTab} />;
       case 'operate':
         return <BookingsOperatePage />;
+      case 'calendar':
+        return <CalendarPage />;
       case 'quotes':
         return <QuoteBookingPage />;
       case 'enquiries':
