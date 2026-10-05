@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { LuxuryCarCanvas } from '../components/3d/LuxuryCarCanvas';
-import { RadarGlobeCanvas } from '../components/3d/RadarGlobeCanvas';
 import { analyticsApi, bookingsApi, fleetApi } from '../services/api';
 import { Booking, Driver, ExecutiveDashboardSummary } from '../types';
 import {
@@ -513,22 +511,8 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* 3. Dual 3D Interactive Showcase Panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 w-full min-w-0">
-        {/* Left: 3D Interactive Luxury Car Showcase (7 Cols) */}
-        <div className="lg:col-span-7 h-[360px] sm:h-[400px] lg:h-[440px] w-full min-w-0 overflow-hidden">
-          <LuxuryCarCanvas showControls={true} />
-        </div>
-
-        {/* Right: 3D Holographic Dispatch Radar & Airspace (5 Cols) */}
-        <div className="lg:col-span-5 h-[360px] sm:h-[400px] lg:h-[440px] w-full min-w-0 overflow-hidden">
-          <RadarGlobeCanvas
-            activeFlightsCount={airportFlights.length}
-            activeDriversCount={activeDrivers}
-            onOpenFlightModal={() => setActiveModal('FLIGHTS')}
-          />
-        </div>
-      </div>
+      {/* The 3D vehicle showroom and dispatch-radar globe live on the Fleet and
+          Flight Radar pages respectively, so they are not duplicated here. */}
 
       {/* 4. Human-in-the-Loop Dispatch Queue */}
       <div className="rounded-2xl bg-[#FAF6F0] border border-[#E6D8C3] p-4 sm:p-6 space-y-4 w-full min-w-0 overflow-hidden shadow-lg">
