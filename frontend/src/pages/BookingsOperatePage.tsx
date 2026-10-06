@@ -546,12 +546,22 @@ This removes the whole booking — all its legs, its invoice, payments and notif
                         </td>
                         <td className="py-4 px-4 text-right" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-2">
-                            <button
-                              onClick={() => handleOpenAllocation(b, leg)}
-                              className="px-3.5 py-2 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
-                            >
-                              Dispatch / Offload
-                            </button>
+                            {leg.status === 'COMPLETED' ? (
+                              <span className="inline-flex items-center gap-1 px-3 py-2 rounded-xl bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] text-xs font-black">
+                                <CheckCircle className="w-3.5 h-3.5 text-[#047857]" /> Completed
+                              </span>
+                            ) : leg.status === 'CANCELLED' ? (
+                              <span className="inline-flex items-center px-3 py-2 rounded-xl bg-[#FFF1F2] text-[#B91C1C] border border-[#FECACA] text-xs font-black">
+                                Cancelled
+                              </span>
+                            ) : (
+                              <button
+                                onClick={() => handleOpenAllocation(b, leg)}
+                                className="px-3.5 py-2 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
+                              >
+                                Dispatch / Offload
+                              </button>
+                            )}
                             <button
                               onClick={() => handleDeleteBooking(b)}
                               disabled={deletingBookingId === b.id}
@@ -657,12 +667,22 @@ This removes the whole booking — all its legs, its invoice, payments and notif
 
                   {/* Actions */}
                   <div className="flex items-center gap-2 pt-1">
-                    <button
-                      onClick={() => handleOpenAllocation(b, leg)}
-                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
-                    >
-                      Dispatch / Offload
-                    </button>
+                    {leg.status === 'COMPLETED' ? (
+                      <span className="flex-1 inline-flex items-center justify-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] text-xs font-black">
+                        <CheckCircle className="w-4 h-4 text-[#047857]" /> Completed
+                      </span>
+                    ) : leg.status === 'CANCELLED' ? (
+                      <span className="flex-1 inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl bg-[#FFF1F2] text-[#B91C1C] border border-[#FECACA] text-xs font-black">
+                        Cancelled
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => handleOpenAllocation(b, leg)}
+                        className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
+                      >
+                        Dispatch / Offload
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDeleteBooking(b)}
                       disabled={deletingBookingId === b.id}
@@ -701,12 +721,22 @@ This removes the whole booking — all its legs, its invoice, payments and notif
                       </div>
                       <p className="text-xs text-[#0A0E1A] font-black mt-1">{booking.passenger_name}</p>
                       <p className="text-[11px] text-[#0A0E1A] font-bold mt-1 truncate">{leg.pickup_address} ➔ {leg.dropoff_address}</p>
-                      <button
-                        onClick={() => handleOpenAllocation(booking, leg)}
-                        className="w-full mt-3 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-sm"
-                      >
-                        Manage Allocation
-                      </button>
+                      {leg.status === 'COMPLETED' ? (
+                        <span className="w-full mt-3 inline-flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#ECFDF5] text-[#047857] border border-[#A7F3D0] text-xs font-black">
+                          <CheckCircle className="w-3.5 h-3.5 text-[#047857]" /> Completed
+                        </span>
+                      ) : leg.status === 'CANCELLED' ? (
+                        <span className="w-full mt-3 inline-flex items-center justify-center py-2 rounded-xl bg-[#FFF1F2] text-[#B91C1C] border border-[#FECACA] text-xs font-black">
+                          Cancelled
+                        </span>
+                      ) : (
+                        <button
+                          onClick={() => handleOpenAllocation(booking, leg)}
+                          className="w-full mt-3 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-sm"
+                        >
+                          Manage Allocation
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
