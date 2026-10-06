@@ -510,8 +510,8 @@ Web: https://www.${COMPANY.website}`
         </div>
       </div>
 
-      {/* Clients Directory Table */}
-      <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl text-[#0A0E1A]">
+      {/* Clients Directory Table (desktop) */}
+      <div className="hidden lg:block glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl text-[#0A0E1A]">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
@@ -634,6 +634,122 @@ Web: https://www.${COMPANY.website}`
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* Clients Directory (mobile stacked cards) */}
+      <div className="lg:hidden space-y-3">
+        {filteredClients.map((client) => (
+          <div
+            key={client.id}
+            className="rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-md p-4 space-y-3 text-[#0A0E1A]"
+          >
+            {/* Top row: identity + account type */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] font-bold text-xs font-mono shrink-0">
+                  {client.company_name ? <Building2 className="w-4 h-4" /> : <Users className="w-4 h-4" />}
+                </div>
+                <div className="min-w-0">
+                  <strong className="text-[#0A0E1A] block text-sm font-black break-words">
+                    {client.company_name || client.name}
+                  </strong>
+                  {client.company_name && (
+                    <span className="text-[11px] text-[#0A0E1A] font-bold block break-words">{client.name}</span>
+                  )}
+                  {client.abn && (
+                    <span className="text-[10px] font-mono text-[#0A0E1A] block font-bold">ABN: {client.abn}</span>
+                  )}
+                </div>
+              </div>
+              <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]">
+                {client.client_type === 'CORPORATE' ? '🏢 CORPORATE (Net 30)' : '💎 PRIVATE VIP'}
+              </span>
+            </div>
+
+            {/* Contact */}
+            <div className="font-mono text-[11px] pt-1 border-t border-[#F0E6D6]">
+              <span className="text-[#0A0E1A] block font-black">{client.phone}</span>
+              <span className="text-[#0A0E1A] block text-[10px] font-bold break-words">{client.email}</span>
+            </div>
+
+            {/* Metrics: rides / spend / debt */}
+            <div className="grid grid-cols-3 gap-2 text-[11px]">
+              <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] p-2.5">
+                <span className="block text-[9px] uppercase font-bold text-[#0A0E1A]">Total Rides</span>
+                <span className="font-mono font-black text-[#0A0E1A]">{client.bookings.length} Bookings</span>
+              </div>
+              <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] p-2.5">
+                <span className="block text-[9px] uppercase font-bold text-[#0A0E1A]">Lifetime Spend</span>
+                <span className="font-mono font-black text-[#0A0E1A]">${client.total_spent.toFixed(2)}</span>
+              </div>
+              <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] p-2.5">
+                <span className="block text-[9px] uppercase font-bold text-[#0A0E1A]">Outstanding</span>
+                {client.pending_balance > 0 ? (
+                  <span className="font-mono font-black text-[#0A0E1A]">
+                    ${client.pending_balance.toFixed(2)}
+                    <span className="block text-[9px] font-bold">({client.unpaid_invoices_count} Unpaid)</span>
+                  </span>
+                ) : (
+                  <span className="font-mono font-bold text-[#0A0E1A]">● Settle ($0.00)</span>
+                )}
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-1">
+              {/* View Dossier Button */}
+              <button
+                onClick={() => setSelectedClient(client)}
+                className="px-2.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] text-xs font-black transition-all flex items-center gap-1 shadow-sm active:scale-95"
+              >
+                <FileText className="w-3.5 h-3.5 text-white" />
+                <span>Dossier & Rides</span>
+              </button>
+
+              {/* Send Invoice Statement via WhatsApp */}
+              <button
+                onClick={() => handleGenerateWhatsAppStatement(client)}
+                className="px-2.5 py-2 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                title="Send Tax Invoice Statement via WhatsApp"
+              >
+                <MessageSquare className="w-3.5 h-3.5 text-[#0A0E1A]" />
+                <span>WhatsApp</span>
+              </button>
+
+              {/* Send Invoice Statement via Email */}
+              <button
+                onClick={() => handleSendEmailStatement(client)}
+                className="px-2.5 py-2 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm active:scale-95"
+                title="Send Tax Invoice Statement via Email"
+              >
+                <Mail className="w-3.5 h-3.5 text-[#0A0E1A]" />
+                <span>Email</span>
+              </button>
+
+              {/* Customer portal (set-password / login) link */}
+              <button
+                onClick={() => handleCopyPortalLink(client)}
+                disabled={portalBusyId === client.id}
+                className="px-2.5 py-2 rounded-xl bg-[#FAF6F0] hover:bg-[#EBDDC8] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all flex items-center gap-1 shadow-sm disabled:opacity-50 active:scale-95"
+                title="Copy this customer's portal login / set-password link"
+              >
+                <ExternalLink className="w-3.5 h-3.5 text-[#0A0E1A]" />
+                <span>{portalBusyId === client.id ? '…' : 'Portal Link'}</span>
+              </button>
+
+              {/* Delete client */}
+              <button
+                onClick={() => handleDeleteClient(client)}
+                disabled={deletingClientId === client.id}
+                className="px-2.5 py-2 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#B91C1C] border border-[#FECACA] text-xs font-black transition-all flex items-center gap-1 shadow-sm disabled:opacity-50 active:scale-95"
+                title="Delete this client"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-[#B91C1C]" />
+                <span>{deletingClientId === client.id ? 'Deleting…' : 'Delete'}</span>
+              </button>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* ─────────────────────────────────────────────────────────────

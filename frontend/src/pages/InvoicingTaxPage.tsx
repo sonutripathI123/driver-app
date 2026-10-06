@@ -372,7 +372,7 @@ export const InvoicingTaxPage: React.FC = () => {
       ───────────────────────────────────────────────────────────── */}
       {activeTab === 'invoices' && (
         <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl">
-          <div className="overflow-x-auto">
+          <div className="hidden lg:block overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
                 <tr>
@@ -426,6 +426,64 @@ export const InvoicingTaxPage: React.FC = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* Mobile: stacked invoice cards (same data + handlers as the table) */}
+          <div className="lg:hidden space-y-3 p-3">
+            {invoices.map((inv) => (
+              <div
+                key={inv.id}
+                className="rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-md p-4 space-y-3 text-[#0A0E1A]"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-black text-sm block font-mono">{inv.invoice_number}</span>
+                    {inv.booking_number && (
+                      <span className="block text-[10px] font-bold font-mono">{inv.booking_number}</span>
+                    )}
+                  </div>
+                  <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]">
+                    {inv.status}
+                  </span>
+                </div>
+
+                <div>
+                  <span className="font-black text-xs block">{inv.customer_company || inv.customer_name || 'VIP Client'}</span>
+                  <span className="text-[11px] font-bold block">{inv.passenger_name || inv.customer_name}</span>
+                </div>
+
+                <div className="text-[11px] font-bold">
+                  {fmtInvoiceDate(inv.issue_date)}
+                  <span className="block text-[10px] font-bold">Due: {fmtInvoiceDate(inv.due_date)}</span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[11px]">
+                  <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] px-2.5 py-1.5">
+                    <span className="block text-[10px] font-bold opacity-75">Subtotal (Ex GST)</span>
+                    <span className="font-black font-mono">${inv.subtotal_ex_gst.toFixed(2)}</span>
+                  </div>
+                  <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] px-2.5 py-1.5">
+                    <span className="block text-[10px] font-bold opacity-75">10% GST</span>
+                    <span className="font-black font-mono">${inv.gst_amount.toFixed(2)}</span>
+                  </div>
+                  <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] px-2.5 py-1.5">
+                    <span className="block text-[10px] font-bold opacity-75">Total (Inc GST)</span>
+                    <span className="font-black font-mono">${inv.total_inc_gst.toFixed(2)}</span>
+                  </div>
+                  <div className="rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] px-2.5 py-1.5">
+                    <span className="block text-[10px] font-bold opacity-75">Balance Due</span>
+                    <span className="font-black font-mono">${inv.balance_due.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setPreviewInvoice(inv)}
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#06090F] hover:bg-[#1A2233] border border-[#DFCAA8] text-white font-black text-xs transition-all shadow-md active:scale-95"
+                >
+                  View Tax Invoice
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       )}

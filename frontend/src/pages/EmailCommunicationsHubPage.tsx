@@ -727,8 +727,8 @@ export const EmailCommunicationsHubPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Table of Sent Emails */}
-          <div className="bg-[#FAF6F0] rounded-2xl border border-[#E6D8C3] overflow-hidden shadow-lg">
+          {/* Table of Sent Emails — desktop / tablet only (scrolls badly on phones) */}
+          <div className="hidden lg:block bg-[#FAF6F0] rounded-2xl border border-[#E6D8C3] overflow-hidden shadow-lg">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs">
                 <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
@@ -823,6 +823,88 @@ export const EmailCommunicationsHubPage: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
+
+          {/* Mobile: one card per sent email (table scrolls badly on phones) */}
+          <div className="lg:hidden space-y-3">
+            {filteredLogs.map((log) => (
+              <div
+                key={log.id}
+                onClick={() => setViewingEmail(log)}
+                className="rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-md p-4 space-y-2 text-[#0A0E1A] cursor-pointer"
+              >
+                {/* Recipient + status */}
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <span className="font-black text-[#0A0E1A] block text-sm truncate">{log.recipient_name}</span>
+                    <span className="font-mono text-[11px] text-[#0A0E1A] font-bold block truncate">{log.recipient_email}</span>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1.5">
+                    <span
+                      className={`w-2 h-2 rounded-full shrink-0 ${
+                        log.status === 'SENT' ? 'bg-emerald-600' : 'bg-red-600'
+                      }`}
+                    />
+                    <span className="font-black text-[11px] text-[#0A0E1A]">
+                      {log.status === 'SENT' ? 'SENT' : 'NOT DELIVERED'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Category + reference badges */}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]">
+                    {log.trigger_type.replace('_', ' ')}
+                  </span>
+                  {log.booking_ref && (
+                    <span className="inline-block px-2 py-0.5 rounded bg-[#FAF6F0] border border-[#DFCAA8] text-[10px] font-mono font-black text-[#0A0E1A]">
+                      {log.booking_ref}
+                    </span>
+                  )}
+                  {log.invoice_ref && (
+                    <span className="inline-block px-2 py-0.5 rounded bg-[#FAF6F0] border border-[#DFCAA8] text-[10px] font-mono font-black text-[#0A0E1A]">
+                      {log.invoice_ref}
+                    </span>
+                  )}
+                </div>
+
+                {/* Subject + preview */}
+                <div>
+                  <span className="font-black text-[#0A0E1A] block break-words">{log.subject}</span>
+                  <span className="text-[11px] text-slate-700 font-bold block break-words mt-0.5">{log.body_preview}</span>
+                </div>
+
+                {/* Failure reason */}
+                {log.failure_reason && (
+                  <span className="text-[10px] font-mono text-[#B91C1C] block break-words">
+                    {log.failure_reason}
+                  </span>
+                )}
+
+                {/* Time */}
+                <div className="font-mono text-[11px] text-[#0A0E1A] font-black break-words">
+                  {log.sent_at}
+                </div>
+
+                {/* Actions */}
+                <div className="flex items-center gap-2 pt-1" onClick={(e) => e.stopPropagation()}>
+                  <button
+                    onClick={() => setViewingEmail(log)}
+                    className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white text-xs font-black transition-all shadow-sm"
+                  >
+                    View HTML
+                  </button>
+                  <button
+                    onClick={() => handleDeleteEmailLog(log.id)}
+                    disabled={deletingEmailId === log.id}
+                    className="px-3 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] border border-[#FECACA] text-[#B91C1C] text-xs font-black transition-all shadow-sm disabled:opacity-50"
+                    title="Delete this email record"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       )}

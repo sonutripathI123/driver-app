@@ -497,7 +497,8 @@ export const AnalyticsProfitPage: React.FC = () => {
           <span className="text-xs text-[#0A0E1A] font-mono font-bold">Live On-Time & Payout Metrics</span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Desktop / tablet: full table */}
+        <div className="hidden lg:block overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
               <tr>
@@ -527,6 +528,54 @@ export const AnalyticsProfitPage: React.FC = () => {
               ))}
             </tbody>
           </table>
+        </div>
+
+        {/* Mobile: one card per chauffeur (table scrolls badly on phones) */}
+        <div className="lg:hidden space-y-3 p-4 bg-[#FAF6F0]">
+          {driverKPIs.map((d, idx) => (
+            <div
+              key={d.driver_id}
+              className="rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-md p-4 space-y-2 text-[#0A0E1A]"
+            >
+              {/* Rank + name */}
+              <div className="flex items-center gap-2.5">
+                <span className="w-5 h-5 rounded-full bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] flex items-center justify-center text-[10px] font-mono font-black shrink-0">
+                  #{idx + 1}
+                </span>
+                <span className="font-black text-[#0A0E1A] text-sm min-w-0 break-words">{d.full_name}</span>
+              </div>
+
+              {/* Phone */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-[#0A0E1A] font-bold uppercase text-[10px] tracking-wider">Phone Contact</span>
+                <span className="text-[#0A0E1A] font-mono font-bold">{d.phone || '+61 400 000 000'}</span>
+              </div>
+
+              {/* Rating */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-[#0A0E1A] font-bold uppercase text-[10px] tracking-wider">Passenger Rating</span>
+                <span className="text-[#0A0E1A] font-black">⭐ {d.rating.toFixed(2)} / 5.0</span>
+              </div>
+
+              {/* Completed trips */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-[#0A0E1A] font-bold uppercase text-[10px] tracking-wider">Completed Trips</span>
+                <span className="text-[#0A0E1A] font-mono font-bold">{d.total_trips_completed} journeys</span>
+              </div>
+
+              {/* On-time rate */}
+              <div className="flex items-center justify-between gap-2 text-xs">
+                <span className="text-[#0A0E1A] font-bold uppercase text-[10px] tracking-wider">On-Time Arrival Rate</span>
+                <span className="text-[#0A0E1A] font-mono font-black">{d.on_time_arrival_rate_pct.toFixed(1)}%</span>
+              </div>
+
+              {/* Total payout */}
+              <div className="flex items-center justify-between gap-2 text-xs pt-2 border-t border-[#F0E6D6]">
+                <span className="text-[#0A0E1A] font-bold uppercase text-[10px] tracking-wider">Total Payout Earnings</span>
+                <span className="text-[#0A0E1A] font-mono font-black">${d.total_earnings.toFixed(2)} AUD</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

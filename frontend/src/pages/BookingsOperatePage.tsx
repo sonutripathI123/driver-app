@@ -454,7 +454,9 @@ This removes the whole booking — all its legs, its invoice, payments and notif
 
       {/* Main Table View */}
       {viewMode === 'table' ? (
-        <div className="glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl bg-[#FAF6F0]">
+        <>
+        {/* Desktop / tablet: full table */}
+        <div className="hidden lg:block glass-panel rounded-2xl overflow-hidden border-[#E6D8C3] shadow-xl bg-[#FAF6F0]">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
               <thead className="bg-[#FAF6F0] text-[#0A0E1A] uppercase font-mono font-black tracking-wider border-b border-[#E6D8C3]">
@@ -568,6 +570,114 @@ This removes the whole booking — all its legs, its invoice, payments and notif
             </table>
           </div>
         </div>
+
+        {/* Mobile: one card per leg (table scrolls badly on phones) */}
+        <div className="lg:hidden space-y-3">
+          {bookings.map((b) =>
+            b.legs.map((leg) => {
+              const assignedDriver = drivers.find((d) => d.id === leg.driver_id);
+              const grossFare = leg.fare_share || b.total_fare / Math.max(1, b.legs.length);
+              const netExGst = grossFare / 1.1;
+              const directCost = (leg.allocation_cost ?? 0) + (leg.partner_payout_amount ?? 0);
+              const margin = netExGst - directCost;
+              const marginPct = (margin / Math.max(1, netExGst)) * 100;
+
+              return (
+                <div key={leg.id} className="rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] shadow-md p-4 space-y-3">
+                  {/* Top row: ref + status */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="font-mono font-black text-[#0A0E1A] text-sm">{b.booking_number}</span>
+                      <span className="block text-[10px] text-[#0A0E1A] font-bold">Leg #{leg.leg_number}</span>
+                    </div>
+                    <span className="shrink-0 px-2.5 py-1 rounded-full text-[10px] font-black border font-mono bg-[#FAF6F0] text-[#0A0E1A] border-[#DFCAA8]">
+                      {leg.status}
+                    </span>
+                  </div>
+
+                  {/* Passenger */}
+                  <div>
+                    <span className="font-black text-[#0A0E1A] block text-sm">{b.passenger_name || 'VIP Client'}</span>
+                    <span className="block text-[11px] text-[#0A0E1A] font-bold font-mono">{b.passenger_phone || '+61 400 000 000'}</span>
+                  </div>
+
+                  {/* Route */}
+                  <div className="text-[13px]">
+                    <div className="flex items-center gap-1.5 text-[#0A0E1A] font-black">
+                      <MapPin className="w-3.5 h-3.5 text-[#0A0E1A] shrink-0" />
+                      <span className="min-w-0 break-words">{leg.pickup_address}</span>
+                    </div>
+                    <div className="text-[#0A0E1A] text-[12px] font-bold mt-0.5 pl-5 break-words">➔ {leg.dropoff_address}</div>
+                    {leg.is_airport_pickup && (
+                      <span className="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 mt-1.5 rounded-md bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-black">
+                        <Plane className="w-2.5 h-2.5 text-[#0A0E1A]" /> Airport ({leg.flight_number || 'Tullamarine'})
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Time + fare row */}
+                  <div className="flex items-center justify-between gap-2 pt-1 border-t border-[#F0E6D6]">
+                    <div className="font-mono text-[#0A0E1A]">
+                      <span className="font-black text-sm">
+                        {new Date(leg.pickup_datetime).toLocaleTimeString('en-AU', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </span>
+                      <span className="block text-[10px] font-bold font-sans">
+                        {new Date(leg.pickup_datetime).toLocaleDateString('en-AU', { month: 'short', day: 'numeric' })}
+                      </span>
+                    </div>
+                    <div className="text-right font-mono">
+                      <span className="font-black text-[#0A0E1A] text-sm">${grossFare.toFixed(2)}</span>
+                      <span className="block text-[11px] text-[#0A0E1A] font-black">+${margin.toFixed(2)} ({marginPct.toFixed(0)}%)</span>
+                    </div>
+                  </div>
+
+                  {/* Driver / partner */}
+                  <div className="text-[13px]">
+                    {assignedDriver ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-xl bg-[#06090F] text-white border border-[#DFCAA8] font-black flex items-center justify-center text-xs shadow-sm shrink-0">
+                          {assignedDriver.full_name.charAt(0)}
+                        </div>
+                        <div className="min-w-0">
+                          <span className="font-black text-[#0A0E1A] block truncate">{assignedDriver.full_name}</span>
+                          <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Cost: ${leg.allocation_cost.toFixed(2)} AUD</span>
+                        </div>
+                      </div>
+                    ) : leg.partner_id ? (
+                      <div className="text-[#0A0E1A] font-black">
+                        Subcontractor Offload
+                        <span className="block text-[10px] text-[#0A0E1A] font-bold font-mono">Payout: ${(leg.partner_payout_amount ?? 0).toFixed(2)} AUD</span>
+                      </div>
+                    ) : (
+                      <span className="inline-flex px-2.5 py-1 rounded-full bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] font-black text-[11px]">
+                        Unallocated
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => handleOpenAllocation(b, leg)}
+                      className="flex-1 px-3.5 py-2.5 rounded-xl bg-[#06090F] hover-sky text-white border border-[#DFCAA8] text-xs font-black transition-all shadow-md active:scale-95"
+                    >
+                      Dispatch / Offload
+                    </button>
+                    <button
+                      onClick={() => handleDeleteBooking(b)}
+                      disabled={deletingBookingId === b.id}
+                      className="px-3 py-2.5 rounded-xl bg-[#FFF1F2] hover:bg-[#FFE4E6] text-[#B91C1C] border border-[#FECACA] text-xs font-black transition-all shadow-sm active:scale-95 disabled:opacity-50"
+                      title="Delete this booking"
+                    >
+                      <Trash2 className="w-4 h-4 text-[#B91C1C]" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+        </>
       ) : (
         /* Kanban Board View */
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
