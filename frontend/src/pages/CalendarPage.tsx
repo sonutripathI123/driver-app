@@ -67,11 +67,20 @@ export const CalendarPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      // Pull a generous window; the calendar filters client-side by month.
-      const res = await bookingsApi.list(undefined, 1000);
+      // 200 is the server's max page size; the calendar filters client-side by month.
+      const res = await bookingsApi.list(undefined, 200);
       setBookings(res.bookings || []);
     } catch (e: any) {
-      setError(e?.response?.data?.detail || e?.message || 'Could not load bookings');
+      // A 422 detail is an array of objects, not a string — never hand a non-string
+      // to React or the whole page unmounts (React error #31). Coerce safely.
+      const detail = e?.response?.data?.detail;
+      const msg =
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail)
+          ? detail.map((d: any) => d?.msg).filter(Boolean).join('; ')
+          : e?.message;
+      setError(msg || 'Could not load bookings');
     } finally {
       setLoading(false);
     }
