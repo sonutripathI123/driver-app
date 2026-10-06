@@ -20,6 +20,20 @@ def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
 
+# Business operates in Melbourne; status alerts must show local wall-clock time,
+# not UTC mislabelled as AEST. zoneinfo handles AEST/AEDT (daylight saving)
+# automatically. Falls back to UTC if the tz database is unavailable.
+def _melbourne_now_str(fmt: str = "%I:%M %p") -> str:
+    try:
+        from zoneinfo import ZoneInfo
+
+        now = datetime.now(ZoneInfo("Australia/Melbourne"))
+        label = now.tzname() or "AEST"  # AEDT in summer, AEST in winter
+        return f"{now.strftime(fmt)} {label}"
+    except Exception:
+        return f"{utc_now().strftime(fmt)} UTC"
+
+
 def get_customer_contact(booking: Booking) -> Tuple[str, Optional[str], Optional[str]]:
     """Helper to safely extract client contact information from booking and customer relations."""
     try:
@@ -214,7 +228,7 @@ class NotificationService:
 
         # Build clean formatted mobile message
         prefix = "🚨 [URGENT DISPATCH]" if urgency == "HIGH" else "🔔 [CHAUFFEUR OPS]"
-        mobile_msg = f"{prefix} {title}\n{message}\nTime: {utc_now().strftime('%H:%M AEST')}"
+        mobile_msg = f"{prefix} {title}\n{message}\nTime: {_melbourne_now_str('%H:%M')}"
 
         channel = "WHATSAPP" if mgr.whatsapp_enabled else "SMS"
         
