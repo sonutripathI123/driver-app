@@ -1,4 +1,6 @@
-const CACHE_NAME = 'admin-dashboard-pwa-v3';
+// Bump this on every meaningful change so all clients purge old caches and
+// pull the new build on their next visit (no manual "clear cache" needed).
+const CACHE_NAME = 'admin-dashboard-pwa-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -31,37 +33,35 @@ self.addEventListener('activate', (event) => {
   );
 });
 
+// This is an always-online admin dashboard, so correctness of the latest code
+// matters more than offline speed: use NETWORK-FIRST for everything, and fall
+// back to the cache only when the network is unavailable. This guarantees a
+// deploy is picked up on the next load instead of a stale bundle being served.
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
-  
-  // Network first strategy for HTML to ensure instant auto-updates
-  if (event.request.headers.get('accept')?.includes('text/html')) {
-    event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const responseClone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-          return response;
-        })
-        .catch(() => caches.match(event.request).then((cached) => cached || caches.match('/index.html')))
-    );
-    return;
-  }
 
-  // Stale-while-revalidate for other assets
+  // Never intercept API traffic — always hit the network directly.
+  const url = new URL(event.request.url);
+  if (url.pathname.startsWith('/api/')) return;
+
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      const fetchPromise = fetch(event.request)
-        .then((networkResponse) => {
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
+    fetch(event.request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      })
+      .catch(() =>
+        caches.match(event.request).then((cached) => {
+          if (cached) return cached;
+          // SPA navigations fall back to the cached shell when offline.
+          if (event.request.headers.get('accept')?.includes('text/html')) {
+            return caches.match('/index.html');
           }
-          return networkResponse;
+          return cached;
         })
-        .catch(() => cachedResponse);
-
-      return cachedResponse || fetchPromise;
-    })
+      )
   );
 });
