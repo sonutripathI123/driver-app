@@ -65,10 +65,18 @@ export const EnquiriesPage: React.FC = () => {
     return () => clearInterval(t);
   }, []);
 
-  const websites = useMemo(
-    () => Array.from(new Set(enquiries.map((e) => e.website).filter(Boolean))) as string[],
-    [enquiries]
-  );
+  // The three business sites always get a filter chip so the operator can
+  // switch between them even before a given site has sent its first enquiry.
+  // Any other site seen in the data is appended.
+  const websites = useMemo(() => {
+    const known = [
+      'opalchauffeurs.com.au',
+      'corporatecarsmelbourne.com.au',
+      'melbourneairportchauffeurservice.com.au',
+    ];
+    const fromData = enquiries.map((e) => e.website).filter(Boolean) as string[];
+    return Array.from(new Set([...known, ...fromData]));
+  }, [enquiries]);
 
   const visible = enquiries.filter(
     (e) => (!website || e.website === website) && (!statusFilter || e.status === statusFilter)
