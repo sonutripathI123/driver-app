@@ -1083,40 +1083,54 @@ export const InvoicingTaxPage: React.FC = () => {
 
               {/* Financial Totals & GST Summary */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Remittance & Bank EFT Instructions */}
-                <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-2 text-[11px] shadow-sm text-[#0A0E1A]">
-                  <span className="text-[10px] text-[#0A0E1A] block uppercase font-black tracking-wider flex items-center gap-1.5 font-sans">
-                    <CreditCard className="w-3.5 h-3.5 text-[#0A0E1A]" /> Remittance & EFT Payment Details
-                  </span>
-                  {!BANK_CONFIGURED && (
-                    <p className="text-[10px] font-sans font-bold text-[#B91C1C]">
-                      Remittance details are not configured. Set them before sending this
-                      invoice — a client paying against placeholder details pays the wrong account.
-                    </p>
-                  )}
-                  <div className="space-y-1 font-mono text-[#0A0E1A] font-bold">
-                    <div className="flex justify-between">
-                      <span className="text-[#0A0E1A]">Bank:</span>
-                      <strong className="text-[#0A0E1A]">{BANK.name || NOT_CONFIGURED}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#0A0E1A]">Account Name:</span>
-                      <strong className="text-[#0A0E1A]">{BANK.accountName}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#0A0E1A]">BSB:</span>
-                      <strong className="text-[#0A0E1A] font-black">{BANK.bsb || NOT_CONFIGURED}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#0A0E1A]">Account Number:</span>
-                      <strong className="text-[#0A0E1A] font-black">{BANK.accountNumber || NOT_CONFIGURED}</strong>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-[#0A0E1A]">PayID / OSKO:</span>
-                      <strong className="text-[#0A0E1A] font-black">{BANK.payId || NOT_CONFIGURED}</strong>
+                {/* Remittance / EFT details — only relevant while money is still
+                    owed. A prepaid (already-paid) booking's invoice is just a GST
+                    receipt, so show a "paid in full" note instead of a bank
+                    account the customer should not pay into again. */}
+                {previewInvoice.balance_due > 0 ? (
+                  <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-2 text-[11px] shadow-sm text-[#0A0E1A]">
+                    <span className="text-[10px] text-[#0A0E1A] block uppercase font-black tracking-wider flex items-center gap-1.5 font-sans">
+                      <CreditCard className="w-3.5 h-3.5 text-[#0A0E1A]" /> Remittance & EFT Payment Details
+                    </span>
+                    {!BANK_CONFIGURED && (
+                      <p className="text-[10px] font-sans font-bold text-[#B91C1C]">
+                        Remittance details are not configured. Set them before sending this
+                        invoice — a client paying against placeholder details pays the wrong account.
+                      </p>
+                    )}
+                    <div className="space-y-1 font-mono text-[#0A0E1A] font-bold">
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">Bank:</span>
+                        <strong className="text-[#0A0E1A]">{BANK.name || NOT_CONFIGURED}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">Account Name:</span>
+                        <strong className="text-[#0A0E1A]">{BANK.accountName}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">BSB:</span>
+                        <strong className="text-[#0A0E1A] font-black">{BANK.bsb || NOT_CONFIGURED}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">Account Number:</span>
+                        <strong className="text-[#0A0E1A] font-black">{BANK.accountNumber || NOT_CONFIGURED}</strong>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-[#0A0E1A]">PayID / OSKO:</span>
+                        <strong className="text-[#0A0E1A] font-black">{BANK.payId || NOT_CONFIGURED}</strong>
+                      </div>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-[#ECFDF5] border border-[#A7F3D0] space-y-1.5 text-[11px] shadow-sm text-[#047857]">
+                    <span className="text-[10px] block uppercase font-black tracking-wider flex items-center gap-1.5 font-sans">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#047857]" /> Payment Received
+                    </span>
+                    <p className="text-[11px] font-sans font-bold">
+                      Paid in full — no payment required. This document is a tax receipt for your records.
+                    </p>
+                  </div>
+                )}
 
                 {/* Amount Totals */}
                 <div className="p-4 rounded-2xl bg-[#FFFFFF] border border-[#E6D8C3] space-y-2 font-mono text-right flex flex-col justify-between shadow-sm text-[#0A0E1A]">
