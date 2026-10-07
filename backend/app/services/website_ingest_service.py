@@ -250,6 +250,15 @@ class WebsiteIngestService:
         pickup = pickup or "See booking notes"
         dropoff = dropoff or "See booking notes"
 
+        # Fare, if the booking form sent a price/total field (strip $ and commas).
+        raw_fare = WebsiteIngestService._pick(
+            flat, "fare", "price", "total", "amount", "cost", "quote", "estimate", "total price"
+        )
+        total = 0.0
+        if raw_fare:
+            cleaned = re.sub(r"[^0-9.]", "", raw_fare)
+            total = WebsiteIngestService._num(cleaned) if cleaned else 0.0
+
         # Idempotency: a ref tag in internal_notes, like the CHBS adapter uses.
         sig = hashlib.sha1(
             f"{email}|{phone}|{pickup}|{dropoff}|{when}".encode("utf-8", "ignore")
@@ -277,7 +286,7 @@ class WebsiteIngestService:
             customer_email=email,
             customer_phone=phone,
             source=BookingSource.WEBSITE,
-            total_fare=0.0,
+            total_fare=total,
             deposit_percentage=100.0,
             passenger_name=name,
             passenger_phone=phone,
