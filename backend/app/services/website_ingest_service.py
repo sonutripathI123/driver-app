@@ -259,6 +259,20 @@ class WebsiteIngestService:
             cleaned = re.sub(r"[^0-9.]", "", raw_fare)
             total = WebsiteIngestService._num(cleaned) if cleaned else 0.0
 
+        # Flight number (airport transfers) and passenger count, if the form sent them.
+        flight = WebsiteIngestService._pick(
+            flat, "flight", "flight number", "flight details", "airline and flight number", "airline"
+        )
+        flight = (flight.strip()[:30] if flight else None) or None
+        raw_pax = WebsiteIngestService._pick(
+            flat, "passengers", "number of passengers", "passengers count", "passenger count", "pax"
+        )
+        pax = 1
+        if raw_pax:
+            digits = re.sub(r"[^0-9]", "", raw_pax)
+            if digits:
+                pax = max(1, int(digits))
+
         # Idempotency: a ref tag in internal_notes, like the CHBS adapter uses.
         sig = hashlib.sha1(
             f"{email}|{phone}|{pickup}|{dropoff}|{when}".encode("utf-8", "ignore")
@@ -288,10 +302,11 @@ class WebsiteIngestService:
             source=BookingSource.WEBSITE,
             total_fare=total,
             deposit_percentage=100.0,
+            flight_tracking_enabled=bool(flight),
             passenger_name=name,
             passenger_phone=phone,
             passenger_email=email,
-            passenger_count=1,
+            passenger_count=pax,
             luggage_count=0,
             internal_notes=internal_notes,
             legs=[BookingLegCreate(
@@ -301,6 +316,7 @@ class WebsiteIngestService:
                 pickup_datetime=when or (datetime.now(timezone.utc) + timedelta(days=1)),
                 vehicle_category=VehicleCategory.SEDAN_PREMIUM,
                 is_airport_pickup=is_airport,
+                flight_number=flight,
             )],
         )
         booking = await BookingService.create_booking(db, booking_in, notify=False)
