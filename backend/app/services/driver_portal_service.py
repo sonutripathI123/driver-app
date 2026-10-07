@@ -269,8 +269,11 @@ class DriverPortalService:
                     try:
                         from app.services.accounting_service import AccountingService
                         await AccountingService.generate_invoice_for_booking(db, booking.id)
-                    except Exception:
-                        pass
+                    except Exception as exc:
+                        import logging
+                        logging.getLogger("auto_invoice").warning(
+                            "Auto-invoice failed for booking %s on completion: %s", booking.id, exc
+                        )
 
         else:
             raise HTTPException(
