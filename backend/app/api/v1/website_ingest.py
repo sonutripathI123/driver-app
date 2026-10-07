@@ -25,13 +25,13 @@ router = APIRouter(prefix="/website", tags=["Website Ingest"])
 logger = logging.getLogger("website_ingest")
 
 
-async def _bg_ingest_form(payload: Any, website: Optional[str]) -> None:
-    """Create the quote booking off the request path so the website's webhook
+async def _bg_ingest_form(payload: Any, website: Optional[str], as_booking: bool = False) -> None:
+    """Create the quote/booking off the request path so the website's webhook
     gets an instant 200 (Elementor's webhook times out after a few seconds and
-    would otherwise flag an error even though the booking was created)."""
+    would otherwise flag an error even though the record was created)."""
     async with AsyncSessionLocal() as db:
         try:
-            await WebsiteIngestService.ingest_form(db, payload, website=website)
+            await WebsiteIngestService.ingest_form(db, payload, website=website, as_booking=as_booking)
         except Exception:
             logger.exception("Website form ingest failed for payload from %s", website)
 
@@ -87,6 +87,7 @@ async def ingest_website_form(
     request: Request,
     background_tasks: BackgroundTasks,
     website: Optional[str] = Query(None, description="Which site this came from"),
+    type: Optional[str] = Query(None, description="'booking' => dispatchable booking; else a quote enquiry"),
     token: Optional[str] = Query(None),
     x_website_token: Optional[str] = Header(None, alias="X-Website-Token"),
 ):
@@ -118,7 +119,8 @@ async def ingest_website_form(
     if not payload:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Empty form payload.")
 
-    background_tasks.add_task(_bg_ingest_form, payload, website)
+    as_booking = (type or "").strip().lower() == "booking"
+    background_tasks.add_task(_bg_ingest_form, payload, website, as_booking)
     return {"status": "received"}
 
 

@@ -116,12 +116,16 @@ class WebsiteIngestService:
         return None
 
     @staticmethod
-    async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None) -> Tuple["Enquiry", bool]:
-        """Store a website/Elementor form submission as a price ENQUIRY.
+    async def ingest_form(db: AsyncSession, payload: Any, website: Optional[str] = None,
+                          as_booking: bool = False) -> Tuple[Any, bool]:
+        """Store a website/Elementor form submission.
 
-        These are NOT bookings and never touch the Operate Board — someone is
-        only asking for a price. Best-effort field extraction; the full raw
-        payload is kept in notes so nothing the customer sent is ever lost.
+        By default it is a price ENQUIRY (NOT a booking, never on the Operate
+        Board). When as_booking=True (the webhook URL carried &type=booking), the
+        same extracted fields build a real, dispatchable Booking on the Operate
+        Board instead — for sites whose actual booking form posts via webhook.
+        Best-effort field extraction; the full raw payload is kept in notes so
+        nothing the customer sent is ever lost.
         """
         from app.models.enquiry import Enquiry
 
@@ -188,6 +192,14 @@ class WebsiteIngestService:
         pickup = (pickup or "").strip() or None
         dropoff = (dropoff or "").strip() or None
 
+        # A booking-form webhook (&type=booking) becomes a real dispatchable
+        # booking instead of a lead.
+        if as_booking:
+            return await WebsiteIngestService._form_to_booking(
+                db, website=website, flat=flat, name=name, email=email, phone=phone,
+                pickup=pickup, dropoff=dropoff, when=when, vehicle=vehicle, message=message,
+            )
+
         # Idempotency: dedupe identical rapid re-submits (Elementor can double-fire).
         sig = hashlib.sha1(
             f"{email}|{pickup}|{dropoff}|{when}|{message}".encode("utf-8", "ignore")
@@ -223,6 +235,67 @@ class WebsiteIngestService:
         await db.commit()
         await db.refresh(enq)
         return enq, False
+
+    @staticmethod
+    async def _form_to_booking(
+        db: AsyncSession, *, website: Optional[str], flat: dict, name: str,
+        email: Optional[str], phone: Optional[str], pickup: Optional[str],
+        dropoff: Optional[str], when, vehicle: Optional[str], message: Optional[str],
+    ) -> Tuple[Booking, bool]:
+        """Build a real, dispatchable booking from loose website-form fields
+        (used when the booking form's webhook carries &type=booking)."""
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        pickup = pickup or "See booking notes"
+        dropoff = dropoff or "See booking notes"
+
+        # Idempotency: a ref tag in internal_notes, like the CHBS adapter uses.
+        sig = hashlib.sha1(
+            f"{email}|{phone}|{pickup}|{dropoff}|{when}".encode("utf-8", "ignore")
+        ).hexdigest()[:12]
+        tag = WebsiteIngestService._ref_tag(f"webform-{sig}")
+        existing = (
+            await db.execute(
+                select(Booking).where(Booking.internal_notes.ilike(f"%{tag}%"))
+                .options(selectinload(Booking.legs), selectinload(Booking.customer))
+            )
+        ).scalars().first()
+        if existing:
+            return existing, True
+
+        is_airport = "airport" in pickup.lower() or "airport" in dropoff.lower()
+        raw_lines = "\n".join(f"  - {k}: {v}" for k, v in flat.items())
+        note_bits = [f"[Website booking form{(' · ' + website) if website else ''}]"]
+        if message:
+            note_bits.append(f"| {message}")
+        note_bits.append(tag)
+        internal_notes = (" ".join(note_bits) + f"\n--- raw form ---\n{raw_lines}")[:4000]
+
+        booking_in = BookingCreate(
+            customer_name=name,
+            customer_email=email,
+            customer_phone=phone,
+            source=BookingSource.WEBSITE,
+            total_fare=0.0,
+            deposit_percentage=100.0,
+            passenger_name=name,
+            passenger_phone=phone,
+            passenger_email=email,
+            passenger_count=1,
+            luggage_count=0,
+            internal_notes=internal_notes,
+            legs=[BookingLegCreate(
+                leg_number=1,
+                pickup_address=pickup[:500],
+                dropoff_address=dropoff[:500],
+                pickup_datetime=when or (datetime.now(timezone.utc) + timedelta(days=1)),
+                vehicle_category=VehicleCategory.SEDAN_PREMIUM,
+                is_airport_pickup=is_airport,
+            )],
+        )
+        booking = await BookingService.create_booking(db, booking_in, notify=False)
+        return booking, False
 
     # ------------------------------------------------------------------ CHBS booking adapter
 
