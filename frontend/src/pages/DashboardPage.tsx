@@ -250,7 +250,13 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
       ]);
       setSummary(sumData);
       setBookings(bData.bookings || []);
-      setPendingBookings(bData.bookings?.slice(0, 3) || []);
+      // Only surface bookings that still have an unallocated (PENDING) leg —
+      // a completed/dispatched/allocated job must not show "Allocate Driver".
+      setPendingBookings(
+        (bData.bookings || [])
+          .filter((b) => (b.legs ?? []).some((l) => l.status === 'PENDING'))
+          .slice(0, 3)
+      );
       setDrivers(driverData || []);
     } catch (err: any) {
       // Never substitute invented figures here: a dispatcher acting on fake
@@ -540,6 +546,11 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({ onNavigate }) => {
 
         {/* Itemized Queue Rows */}
         <div className="space-y-3 w-full min-w-0">
+          {pendingBookings.length === 0 && (
+            <div className="p-5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-center text-[#0A0E1A] font-bold text-xs shadow-sm">
+              ✅ Koi booking allocation ke liye pending nahi hai.
+            </div>
+          )}
           {pendingBookings.map((b) => (
             <div
               key={b.id}

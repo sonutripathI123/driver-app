@@ -160,6 +160,13 @@ class DispatchService:
         if not leg:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking leg not found.")
 
+        # A finished or cancelled job must not be re-allocated.
+        if leg.status in (LegStatus.COMPLETED, LegStatus.CANCELLED):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"This job is already {leg.status.value.lower()} and cannot be re-allocated.",
+            )
+
         # 1. Run Conflict Checks
         has_driver_conf, driver_msg = await DispatchService.check_driver_conflicts(
             db, driver_id, leg.pickup_datetime, leg.duration_minutes, exclude_leg_id=leg.id
@@ -264,6 +271,13 @@ class DispatchService:
         leg = res.scalar_one_or_none()
         if not leg:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking leg not found.")
+
+        # A finished or cancelled job must not be re-offloaded.
+        if leg.status in (LegStatus.COMPLETED, LegStatus.CANCELLED):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"This job is already {leg.status.value.lower()} and cannot be re-allocated.",
+            )
 
         partner = await db.get(Partner, partner_id)
         if not partner or not partner.is_active:
@@ -379,6 +393,13 @@ class DispatchService:
         leg = res.scalar_one_or_none()
         if not leg:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Booking leg not found.")
+
+        # A finished or cancelled job must not be re-dispatched.
+        if leg.status in (LegStatus.COMPLETED, LegStatus.CANCELLED):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"This job is already {leg.status.value.lower()} and cannot be re-dispatched.",
+            )
 
         if not leg.driver_id and not leg.partner_id:
             raise HTTPException(
