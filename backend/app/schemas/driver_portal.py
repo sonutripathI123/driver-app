@@ -14,6 +14,15 @@ class DriverShiftStatusUpdate(BaseModel):
     status: DriverStatus = Field(..., description="Target driver operational status: AVAILABLE, OFF_DUTY, ON_TRIP")
 
 
+class DriverProfileUpdate(BaseModel):
+    """Fields a signed-in driver may edit about themselves. Email is the login
+    identity and is not self-editable here."""
+    full_name: Optional[str] = Field(None, min_length=1, max_length=120)
+    phone: Optional[str] = Field(None, max_length=40)
+    license_number: Optional[str] = Field(None, max_length=60)
+    accreditation_number: Optional[str] = Field(None, max_length=60)
+
+
 class DriverJobItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

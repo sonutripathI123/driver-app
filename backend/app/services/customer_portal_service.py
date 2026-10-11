@@ -99,6 +99,24 @@ class CustomerPortalService:
         return customer
 
     @staticmethod
+    async def update_profile(db: AsyncSession, customer: Customer, data) -> Customer:
+        """Let a signed-in customer edit their own name / phone / company."""
+        if data.full_name is not None:
+            customer.full_name = data.full_name.strip() or customer.full_name
+        if data.phone is not None:
+            customer.phone = data.phone.strip() or None
+        if data.company_name is not None:
+            customer.company_name = data.company_name.strip() or None
+        # Keep the linked login's display name in sync.
+        if data.full_name is not None and customer.user_id:
+            user = await db.get(User, customer.user_id)
+            if user:
+                user.full_name = customer.full_name
+        await db.commit()
+        await db.refresh(customer)
+        return customer
+
+    @staticmethod
     async def _bookings(db: AsyncSession, customer_id: str) -> List[Booking]:
         stmt = (
             select(Booking)

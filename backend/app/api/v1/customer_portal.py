@@ -10,6 +10,7 @@ from app.schemas.customer_portal import (
     CustomerBookingItem,
     CustomerBookResponse,
     CustomerPortalProfile,
+    CustomerProfileUpdate,
     CustomerQuoteRequest,
     CustomerQuoteResponse,
     CustomerSetPasswordRequest,
@@ -41,6 +42,18 @@ async def get_my_profile(
 ):
     """The signed-in customer's own profile and booking totals."""
     customer = await CustomerPortalService.get_customer_by_user(db, current_user)
+    return await CustomerPortalService.get_profile(db, customer)
+
+
+@router.patch("/me", response_model=CustomerPortalProfile, dependencies=[Depends(require_customer)])
+async def update_my_profile(
+    payload: CustomerProfileUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Let the signed-in customer update their own name / phone / company."""
+    customer = await CustomerPortalService.get_customer_by_user(db, current_user)
+    customer = await CustomerPortalService.update_profile(db, customer, payload)
     return await CustomerPortalService.get_profile(db, customer)
 
 

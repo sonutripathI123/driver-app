@@ -11,6 +11,7 @@ from app.schemas.driver_portal import (
     DriverJobItem,
     DriverLocationUpdate,
     DriverPortalProfile,
+    DriverProfileUpdate,
     DriverShiftStatusUpdate,
 )
 from app.services.driver_portal_service import DriverPortalService
@@ -29,6 +30,20 @@ async def get_my_driver_profile(
     """
     driver = await DriverPortalService.get_driver_by_user(db, current_user)
     return driver
+
+
+@router.patch("/me", response_model=DriverPortalProfile, dependencies=[Depends(require_driver)])
+async def update_my_driver_profile(
+    payload: DriverProfileUpdate,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):
+    """
+    Let the signed-in driver update their own name / phone / licence details.
+    Access: DRIVER role only
+    """
+    driver = await DriverPortalService.get_driver_by_user(db, current_user)
+    return await DriverPortalService.update_profile(db, driver, payload)
 
 
 @router.patch("/status", response_model=DriverPortalProfile, dependencies=[Depends(require_driver)])

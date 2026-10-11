@@ -15,6 +15,14 @@ class CustomerSetPasswordResponse(BaseModel):
     message: str
 
 
+class CustomerProfileUpdate(BaseModel):
+    """Fields a signed-in customer may edit about themselves. Email is the login
+    identity and is not self-editable here."""
+    full_name: Optional[str] = Field(None, min_length=1, max_length=120)
+    phone: Optional[str] = Field(None, max_length=40)
+    company_name: Optional[str] = Field(None, max_length=160)
+
+
 class CustomerBookingItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

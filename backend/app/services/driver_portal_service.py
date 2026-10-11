@@ -52,6 +52,26 @@ class DriverPortalService:
         return driver
 
     @staticmethod
+    async def update_profile(db: AsyncSession, driver: Driver, data) -> Driver:
+        """Let a signed-in driver edit their own name / phone / licence details."""
+        if data.full_name is not None:
+            driver.full_name = data.full_name.strip() or driver.full_name
+        if data.phone is not None:
+            driver.phone = data.phone.strip() or driver.phone
+        if data.license_number is not None:
+            driver.license_number = data.license_number.strip() or driver.license_number
+        if data.accreditation_number is not None:
+            driver.accreditation_number = data.accreditation_number.strip() or None
+        # Keep the linked login's display name in sync.
+        if data.full_name is not None and driver.user_id:
+            user = await db.get(User, driver.user_id)
+            if user:
+                user.full_name = driver.full_name
+        await db.commit()
+        await db.refresh(driver)
+        return driver
+
+    @staticmethod
     async def update_shift_status(
         db: AsyncSession,
         driver_id: str,

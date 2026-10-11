@@ -24,7 +24,9 @@ import {
   Copy,
   Check,
   Trash2,
-  Users as UsersIcon
+  Users as UsersIcon,
+  UserCog,
+  X,
 } from 'lucide-react';
 
 interface DriverTripItem {
@@ -57,6 +59,7 @@ interface ChauffeurProfileItem {
   phone: string;
   email?: string;
   license?: string;
+  accreditation?: string;
   rating: number;
 }
 
@@ -119,6 +122,12 @@ export const DriverPortalPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [isStepping, setIsStepping] = useState(false);
+
+  // Self-service "update my details"
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', license_number: '', accreditation_number: '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   // Staff-only signup link. The endpoint is staff-gated, so a real driver
   // viewing their portal gets a 403 and this card simply never appears.
@@ -217,6 +226,7 @@ export const DriverPortalPage: React.FC = () => {
         phone: me.phone,
         email: me.email,
         license: me.license_number,
+        accreditation: me.accreditation_number,
         rating: me.rating ?? 0,
       });
       setTrips(jobList.map(toTripItem));
@@ -241,6 +251,37 @@ export const DriverPortalPage: React.FC = () => {
     const interval = setInterval(loadManifest, 15000);
     return () => clearInterval(interval);
   }, []);
+
+  const openEdit = () => {
+    setEditForm({
+      full_name: profile?.name || '',
+      phone: profile?.phone || '',
+      license_number: profile?.license || '',
+      accreditation_number: profile?.accreditation || '',
+    });
+    setEditError(null);
+    setEditOpen(true);
+  };
+  const saveEdit = async () => {
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      await driverPortalApi.updateProfile({
+        full_name: editForm.full_name.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        license_number: editForm.license_number.trim() || undefined,
+        accreditation_number: editForm.accreditation_number.trim(),
+      });
+      await loadManifest();
+      setEditOpen(false);
+      showToast('✅ Your details have been updated.');
+    } catch (err: any) {
+      const d = err?.response?.data?.detail;
+      setEditError(typeof d === 'string' ? d : 'Could not save your details. Please try again.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const currentDriver: ChauffeurProfileItem =
     profile ?? { id: '', name: 'Chauffeur', plate: '—', vehicle: '—', phone: '', rating: 0 };
@@ -439,11 +480,83 @@ export const DriverPortalPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Live Duty Pill */}
-        <span className="px-3 py-1.5 rounded-xl bg-[#121A2D] border border-[#DFCAA8] text-white text-xs font-bold hidden sm:inline-block">
-          🟢 Connected Live
-        </span>
+        {/* Right side: edit details + live pill */}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={openEdit}
+            disabled={!profile}
+            title="Update my details"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#DFCAA8] text-[#0A0E1A] border border-[#DFCAA8] text-xs font-black disabled:opacity-50"
+          >
+            <UserCog className="w-4 h-4" /> <span className="hidden sm:inline">Edit details</span>
+          </button>
+          <span className="px-3 py-1.5 rounded-xl bg-[#121A2D] border border-[#DFCAA8] text-white text-xs font-bold hidden lg:inline-block">
+            🟢 Connected Live
+          </span>
+        </div>
       </div>
+
+      {/* Edit-details modal */}
+      {editOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-[#0D1322] border border-[#1F2E4D] rounded-2xl p-5 space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-base font-black text-white">Update my details</h2>
+              <button onClick={() => setEditOpen(false)} className="p-1.5 rounded-lg bg-[#121A2D] border border-[#1F2E4D] text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {editError && (
+              <div className="p-3 rounded-xl bg-[#2A1214] border border-rose-500 text-rose-200 text-xs font-bold">
+                {editError}
+              </div>
+            )}
+
+            <div className="space-y-3">
+              {[
+                { key: 'full_name', label: 'Full name' },
+                { key: 'phone', label: 'Phone' },
+                { key: 'license_number', label: 'Licence number' },
+                { key: 'accreditation_number', label: 'Accreditation number (optional)' },
+              ].map((f) => (
+                <label key={f.key} className="block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">{f.label}</span>
+                  <input
+                    value={(editForm as any)[f.key]}
+                    onChange={(e) => setEditForm({ ...editForm, [f.key]: e.target.value })}
+                    className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#06090F] border border-[#1F2E4D] text-white text-sm font-bold outline-none focus:border-[#DFCAA8]"
+                  />
+                </label>
+              ))}
+              <label className="block">
+                <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">Email (login — contact admin to change)</span>
+                <input
+                  value={profile?.email || ''}
+                  readOnly
+                  className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-400 text-sm font-bold outline-none cursor-not-allowed"
+                />
+              </label>
+            </div>
+
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={saveEdit}
+                disabled={editSaving}
+                className="flex-1 px-4 py-2.5 rounded-xl bg-[#DFCAA8] text-[#0A0E1A] font-black text-sm disabled:opacity-50"
+              >
+                {editSaving ? 'Saving…' : 'Save changes'}
+              </button>
+              <button
+                onClick={() => setEditOpen(false)}
+                className="px-4 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white font-black text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* All-time summary: name, total earnings and total jobs so far */}
       <div className="rounded-2xl bg-[#0D1322] border border-[#1F2E4D] p-4 space-y-3">

@@ -290,6 +290,15 @@ export const driverPortalApi = {
     const res = await apiClient.get(`/driver-portal/earnings`);
     return res.data;
   },
+  updateProfile: async (data: {
+    full_name?: string;
+    phone?: string;
+    license_number?: string;
+    accreditation_number?: string;
+  }) => {
+    const res = await apiClient.patch(`/driver-portal/me`, data);
+    return res.data;
+  },
 };
 
 export const customerPortalApi = {
@@ -316,6 +325,10 @@ export const customerPortalApi = {
   },
   book: async (payload: any) => {
     const res = await apiClient.post(`/customer-portal/book`, payload);
+    return res.data;
+  },
+  updateProfile: async (data: { full_name?: string; phone?: string; company_name?: string }) => {
+    const res = await apiClient.patch(`/customer-portal/me`, data);
     return res.data;
   },
 };

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { customerPortalApi } from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { LoaderCircle, LogOut, CalendarDays, MapPin, AlertCircle, Car, Plus, CheckCircle2, X } from 'lucide-react';
+import { LoaderCircle, LogOut, CalendarDays, MapPin, AlertCircle, Car, Plus, CheckCircle2, X, UserCog } from 'lucide-react';
 
 const VEHICLE_OPTIONS = [
   { value: 'SEDAN_EXECUTIVE', label: 'Executive Sedan' },
@@ -74,6 +74,40 @@ export const CustomerPortalPage: React.FC = () => {
   const [booking, setBooking] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [booked, setBooked] = useState<{ booking_number: string; total_fare: number } | null>(null);
+
+  // Self-service "update my details"
+  const [editOpen, setEditOpen] = useState(false);
+  const [editForm, setEditForm] = useState({ full_name: '', phone: '', company_name: '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEdit = () => {
+    setEditForm({
+      full_name: profile?.full_name || '',
+      phone: profile?.phone || '',
+      company_name: profile?.company_name || '',
+    });
+    setEditError(null);
+    setEditOpen(true);
+  };
+  const saveEdit = async () => {
+    setEditSaving(true);
+    setEditError(null);
+    try {
+      await customerPortalApi.updateProfile({
+        full_name: editForm.full_name.trim() || undefined,
+        phone: editForm.phone.trim() || undefined,
+        company_name: editForm.company_name.trim(),
+      });
+      await load();
+      setEditOpen(false);
+    } catch (err: any) {
+      const d = err?.response?.data?.detail;
+      setEditError(typeof d === 'string' ? d : 'Could not save your details. Please try again.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
 
   const pickupIso = () => (form.pickup_date && form.pickup_time ? `${form.pickup_date}T${form.pickup_time}:00` : '');
   const payload = () => ({
@@ -169,10 +203,92 @@ export const CustomerPortalPage: React.FC = () => {
               Welcome{profile ? `, ${profile.full_name}` : ''}
             </h1>
           </div>
-          <button onClick={logout} title="Sign out" className="shrink-0 p-2 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white">
-            <LogOut className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={openEdit}
+              disabled={!profile}
+              title="Update my details"
+              className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#DFCAA8] text-[#0A0E1A] border border-[#DFCAA8] text-xs font-black disabled:opacity-50"
+            >
+              <UserCog className="w-4 h-4" /> <span className="hidden sm:inline">Edit details</span>
+            </button>
+            <button onClick={logout} title="Sign out" className="p-2 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white">
+              <LogOut className="w-4 h-4" />
+            </button>
+          </div>
         </div>
+
+        {/* Edit-details modal */}
+        {editOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="w-full max-w-md bg-[#0D1322] border border-[#1F2E4D] rounded-2xl p-5 space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-base font-black text-white">Update my details</h2>
+                <button onClick={() => setEditOpen(false)} className="p-1.5 rounded-lg bg-[#121A2D] border border-[#1F2E4D] text-white">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {editError && (
+                <div className="p-3 rounded-xl bg-[#2A1214] border border-rose-500 text-rose-200 text-xs font-bold flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> {editError}
+                </div>
+              )}
+
+              <div className="space-y-3">
+                <label className="block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">Full name</span>
+                  <input
+                    value={editForm.full_name}
+                    onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
+                    className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#06090F] border border-[#1F2E4D] text-white text-sm font-bold outline-none focus:border-[#DFCAA8]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">Phone</span>
+                  <input
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#06090F] border border-[#1F2E4D] text-white text-sm font-bold outline-none focus:border-[#DFCAA8]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">Company (optional)</span>
+                  <input
+                    value={editForm.company_name}
+                    onChange={(e) => setEditForm({ ...editForm, company_name: e.target.value })}
+                    className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#06090F] border border-[#1F2E4D] text-white text-sm font-bold outline-none focus:border-[#DFCAA8]"
+                  />
+                </label>
+                <label className="block">
+                  <span className="text-[10px] uppercase font-black tracking-wider text-slate-300">Email (login — contact us to change)</span>
+                  <input
+                    value={profile?.email || ''}
+                    readOnly
+                    className="mt-1 w-full px-3 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-slate-400 text-sm font-bold outline-none cursor-not-allowed"
+                  />
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  onClick={saveEdit}
+                  disabled={editSaving}
+                  className="flex-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#DFCAA8] text-[#0A0E1A] font-black text-sm disabled:opacity-50"
+                >
+                  {editSaving ? <LoaderCircle className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {editSaving ? 'Saving…' : 'Save changes'}
+                </button>
+                <button
+                  onClick={() => setEditOpen(false)}
+                  className="px-4 py-2.5 rounded-xl bg-[#121A2D] border border-[#1F2E4D] text-white font-black text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {loading && (
           <div className="p-6 rounded-2xl bg-[#0D1322] border border-[#1F2E4D] flex items-center gap-2.5">
