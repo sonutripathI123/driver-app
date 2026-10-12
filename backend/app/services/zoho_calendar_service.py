@@ -247,7 +247,7 @@ class ZohoCalendarService:
                     # No contact details come from the calendar; attach all imports
                     # to one pseudo-customer so dispatch works. The real job label
                     # is the passenger_name / notes.
-                    customer_email="calendar-import@opalchauffeurs.local",
+                    customer_email="calendar-import@opalchauffeurs.com.au",
                     customer_phone="+61000000000",
                     source=BookingSource.WEBSITE,
                     total_fare=0.0,
