@@ -172,7 +172,7 @@ This removes the whole booking — all its legs, its invoice, payments and notif
     try {
       setLoading(true);
       const [bData, dData, vData, pData] = await Promise.all([
-        bookingsApi.list(),
+        bookingsApi.list(undefined, 200),
         fleetApi.getDrivers(),
         fleetApi.getVehicles(),
         partnersApi.list(),
