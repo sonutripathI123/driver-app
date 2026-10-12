@@ -306,7 +306,10 @@ export const zohoCalendarApi = {
   getEvents: async (start: string, end: string) => {
     const res = await apiClient.get<{
       configured: boolean;
-      events: { uid?: string; title: string; location: string; date: string; time: string; start: string; all_day: boolean }[];
+      warming?: boolean;
+      events: { uid?: string; title: string; location: string; date: string; time: string; start: string; all_day: boolean;
+                pickup?: string | null; dropoff?: string | null; phone?: string | null; email?: string | null;
+                vehicle?: string | null; flight?: string | null; name?: string | null }[];
     }>(`/zoho-calendar/events`, { params: { start, end } });
     return res.data;
   },

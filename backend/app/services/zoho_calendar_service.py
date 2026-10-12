@@ -33,11 +33,19 @@ _cache: Dict[str, object] = {"at": 0.0, "events": None}
 # cannot race on booking-number generation.
 _sync_lock = asyncio.Lock()
 
+# Background refresh task handle (the iCal feed is ~9 MB and takes ~25s to pull,
+# so we never block a request on it once we have any cached copy).
+_refresh_task = None
+
 
 class ZohoCalendarService:
     @staticmethod
     def configured() -> bool:
         return bool((settings.ZOHO_ICAL_URL or "").strip())
+
+    @staticmethod
+    def has_cache() -> bool:
+        return _cache.get("events") is not None
 
     @staticmethod
     def _unfold(text: str) -> List[str]:
@@ -175,27 +183,60 @@ class ZohoCalendarService:
         return out
 
     @staticmethod
-    async def _all_events(force: bool = False) -> List[Dict]:
-        ttl = settings.ZOHO_ICAL_CACHE_SECONDS or 300
-        now = time.time()
-        cached = _cache.get("events")
-        if not force and cached is not None and (now - float(_cache.get("at", 0))) < ttl:
-            return cached  # type: ignore[return-value]
+    async def _refresh_cache() -> None:
         url = (settings.ZOHO_ICAL_URL or "").strip()
-        async with httpx.AsyncClient(timeout=30.0, follow_redirects=True) as client:
+        if not url:
+            return
+        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True) as client:
             res = await client.get(url)
             res.raise_for_status()
             text = res.text
-        evs = ZohoCalendarService._parse_ics(text)
-        _cache["events"] = evs
-        _cache["at"] = now
-        logger.info("Zoho iCal: parsed %d events", len(evs))
-        return evs
+        _cache["events"] = ZohoCalendarService._parse_ics(text)
+        _cache["at"] = time.time()
+        logger.info("Zoho iCal: cached %d events", len(_cache["events"]))  # type: ignore[arg-type]
+
+    @staticmethod
+    async def warm_cache() -> None:
+        """Kick a background refresh (used at startup) so the first user request
+        does not pay the ~25s feed download."""
+        global _refresh_task
+        if _refresh_task is None or _refresh_task.done():
+            _refresh_task = asyncio.ensure_future(ZohoCalendarService._refresh_cache())
+
+    @staticmethod
+    async def _all_events(force: bool = False, wait_if_empty: bool = True) -> List[Dict]:
+        """Stale-while-revalidate: serve the cached copy instantly and refresh in
+        the background. Only block when there is no cache at all (and allowed)."""
+        global _refresh_task
+        ttl = settings.ZOHO_ICAL_CACHE_SECONDS or 900
+        now = time.time()
+        cached = _cache.get("events")
+        fresh = (cached is not None) and (now - float(_cache.get("at", 0))) < ttl
+        if fresh and not force:
+            return cached  # type: ignore[return-value]
+
+        if _refresh_task is None or _refresh_task.done():
+            _refresh_task = asyncio.ensure_future(ZohoCalendarService._refresh_cache())
+
+        # Stale copy available -> return it now; the refresh continues in the bg.
+        if cached is not None and not force:
+            return cached  # type: ignore[return-value]
+
+        # No cache yet.
+        if wait_if_empty or force:
+            try:
+                await _refresh_task
+            except Exception as exc:
+                logger.warning("Zoho iCal refresh failed: %s", exc)
+            return _cache.get("events") or []  # type: ignore[return-value]
+        return cached or []  # type: ignore[return-value]
 
     @staticmethod
     async def events_in_range(start: str, end: str) -> List[Dict]:
         """start/end are 'YYYY-MM-DD' inclusive (Melbourne day)."""
-        evs = await ZohoCalendarService._all_events()
+        # UI path: never block on the slow feed download — serve cache (or empty
+        # while the first refresh runs; the client retries).
+        evs = await ZohoCalendarService._all_events(wait_if_empty=False)
         res = [e for e in evs if start <= e["date"] <= end]
         res.sort(key=lambda e: (e["date"], e["start"]))
         return res

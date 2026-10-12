@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CalendarDays,
   ChevronLeft,
@@ -53,6 +53,8 @@ export const CalendarPage: React.FC = () => {
   const [selectedKey, setSelectedKey] = useState<string>(() => localDateKey(new Date()));
   const [dispatchingUid, setDispatchingUid] = useState<string | null>(null);
   const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
+  const [warming, setWarming] = useState(false);
+  const retryRef = useRef(0);
 
   // The 42-cell grid starting on the Sunday on/before the 1st.
   const cells = useMemo(() => {
@@ -78,6 +80,16 @@ export const CalendarPage: React.FC = () => {
       const res = await zohoCalendarApi.getEvents(rangeStart, rangeEnd);
       setConfigured(res.configured);
       setEvents(res.events || []);
+      if (res.warming) {
+        setWarming(true);
+        if (retryRef.current < 8) {
+          retryRef.current += 1;
+          setTimeout(load, 6000); // feed still downloading; retry shortly
+        }
+      } else {
+        setWarming(false);
+        retryRef.current = 0;
+      }
     } catch (e: any) {
       const detail = e?.response?.data?.detail;
       setError(typeof detail === 'string' ? detail : 'Could not load the calendar.');
@@ -188,6 +200,12 @@ export const CalendarPage: React.FC = () => {
       {error && (
         <div className="rounded-xl border border-rose-700 bg-rose-950/50 text-rose-200 px-4 py-3 text-sm font-semibold flex items-start gap-2">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" /> {error}
+        </div>
+      )}
+
+      {warming && (
+        <div className="rounded-xl border border-[#1E2738] bg-[#0B111C] text-slate-300 px-4 py-2.5 text-sm font-semibold flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin shrink-0" /> Calendar pehli baar load ho raha hai (~30s)… apne-aap aa jayega.
         </div>
       )}
 

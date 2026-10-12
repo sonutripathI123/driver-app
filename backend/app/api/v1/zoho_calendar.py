@@ -16,10 +16,13 @@ async def zoho_calendar_events(
     """Bookings from the connected Zoho calendar (all channels) within a date
     range. Read-only, server-side; the calendar is never made public."""
     if not ZohoCalendarService.configured():
-        return {"configured": False, "events": []}
+        return {"configured": False, "warming": False, "events": []}
     try:
         events = await ZohoCalendarService.events_in_range(start, end)
-        return {"configured": True, "events": events}
+        # First load after a restart downloads a large feed in the background;
+        # tell the client to retry shortly instead of showing an empty month.
+        warming = not ZohoCalendarService.has_cache()
+        return {"configured": True, "warming": warming, "events": events}
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

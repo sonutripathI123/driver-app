@@ -182,7 +182,7 @@ class Settings(BaseSettings):
     # made public, no OAuth/app-password needed. Empty => the Zoho calendar panel
     # is off. The feed is parsed and cached in memory for ZOHO_ICAL_CACHE_SECONDS.
     ZOHO_ICAL_URL: str = ""
-    ZOHO_ICAL_CACHE_SECONDS: int = 300
+    ZOHO_ICAL_CACHE_SECONDS: int = 900
 
     # Live flight tracking.
     # FLIGHT_PROVIDER: flightaware | aerodatabox | aviationstack | auto

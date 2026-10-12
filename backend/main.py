@@ -23,6 +23,15 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.warning(f"[Startup Warning] Could not seed admin: {e}")
 
+    # Warm the Zoho calendar feed cache in the background (it is ~9 MB / ~25s to
+    # download) so the first dashboard request serves instantly.
+    try:
+        from app.services.zoho_calendar_service import ZohoCalendarService
+        if ZohoCalendarService.configured():
+            await ZohoCalendarService.warm_cache()
+    except Exception as e:
+        logger.warning(f"[Startup Warning] Zoho calendar warm failed: {e}")
+
     yield
 
     # Shutdown: Dispose engine connections
