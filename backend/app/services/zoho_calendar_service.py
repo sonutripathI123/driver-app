@@ -133,13 +133,19 @@ class ZohoCalendarService:
             pm = re.search(r"(\+?\d[\d\s\-]{7,}\d)", text)
             ph = pm.group(1).strip() if pm else None
         out["phone"] = ph
-        # Fare: the amount to collect (avoid grabbing add-on $ like "Extra: Ribbon ($50)").
-        fare_raw = (label(r"collect") or label(r"coll") or label(r"fare")
-                    or label(r"price") or label(r"total") or label(r"amount"))
-        if fare_raw:
-            fm = re.search(r"\$?\s*([\d,]+(?:\.\d+)?)", fare_raw)
-            if fm:
-                out["fare"] = fm.group(1).replace(",", "")
+        # Fare: the amount to collect. Handle the many layouts seen in the feed:
+        #   "Collect: $170", "Coll: $125 Ex GST", "Collect $120", "Coll $155",
+        #   "Airport $120 Coll", "Fare - 150". Avoids add-on $ (Extra/Ribbon) by
+        #   requiring a collect/fare/price keyword adjacent to the amount.
+        fare = None
+        m = re.search(r"\b(?:collect|coll|fare|price)\b\s*[:\-]?\s*\$?\s*([\d,]+(?:\.\d+)?)", text, re.I)
+        if m:
+            fare = m.group(1)
+        else:
+            m2 = re.search(r"\$\s*([\d,]+(?:\.\d+)?)[^\n$]{0,12}\b(?:coll|collect|fare)\b", text, re.I)
+            if m2:
+                fare = m2.group(1)
+        out["fare"] = fare.replace(",", "") if fare else None
         return out
 
     @staticmethod
