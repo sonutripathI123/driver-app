@@ -100,23 +100,27 @@ class ZohoCalendarService:
         Formats vary by source, so this is best-effort and label-driven."""
         import re
         out: Dict[str, Optional[str]] = {
-            "pickup": None, "dropoff": None, "phone": None,
-            "email": None, "vehicle": None, "flight": None, "name": None,
+            "pickup": None, "dropoff": None, "phone": None, "email": None,
+            "vehicle": None, "flight": None, "name": None, "fare": None,
+            "notes": None, "booking_ref": None, "text": None,
         }
         if not desc:
             return out
         text = (desc.replace("\\n", "\n").replace("\\N", "\n")
-                    .replace("\\,", ",").replace("\\;", ";").replace("\\\\", "\\"))
+                    .replace("\\,", ",").replace("\\;", ";").replace("\\\\", "\\")).strip()
+        out["text"] = text
 
         def label(pattern: str) -> Optional[str]:
             m = re.search(rf"{pattern}\s*[:\-]\s*(.+)", text, re.IGNORECASE)
             return m.group(1).strip() if m else None
 
-        out["pickup"] = label(r"pick\s*-?\s*up")
+        out["pickup"] = label(r"pick\s*-?\s*up(?:\s*1)?")
         out["dropoff"] = label(r"drop\s*-?\s*off")
         out["vehicle"] = label(r"vehicle")
         out["name"] = label(r"name")
-        out["flight"] = label(r"arriving flight") or label(r"flight")
+        out["flight"] = label(r"arriving flight") or label(r"flight number") or label(r"flight")
+        out["notes"] = label(r"extras") or label(r"extra") or label(r"comments") or label(r"comment") or label(r"note")
+        out["booking_ref"] = label(r"booking number") or label(r"booking")
         em = re.search(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", text)
         out["email"] = em.group(0).strip() if em else None
         ph = label(r"contact") or label(r"phone") or label(r"mobile")
@@ -124,6 +128,13 @@ class ZohoCalendarService:
             pm = re.search(r"(\+?\d[\d\s\-]{7,}\d)", text)
             ph = pm.group(1).strip() if pm else None
         out["phone"] = ph
+        # Fare: the amount to collect (avoid grabbing add-on $ like "Extra: Ribbon ($50)").
+        fare_raw = (label(r"collect") or label(r"coll") or label(r"fare")
+                    or label(r"price") or label(r"total") or label(r"amount"))
+        if fare_raw:
+            fm = re.search(r"\$?\s*([\d,]+(?:\.\d+)?)", fare_raw)
+            if fm:
+                out["fare"] = fm.group(1).replace(",", "")
         return out
 
     @staticmethod
@@ -179,6 +190,10 @@ class ZohoCalendarService:
                 "vehicle": d["vehicle"],
                 "flight": d["flight"],
                 "name": d["name"],
+                "fare": d["fare"],
+                "notes": d["notes"],
+                "booking_ref": d["booking_ref"],
+                "description": d["text"] or "",
             })
         return out
 
@@ -327,12 +342,25 @@ class ZohoCalendarService:
                 return {"status": "skipped"}
 
             try:
+                fare = float(ev.get("fare")) if ev.get("fare") else 0.0
+            except Exception:
+                fare = 0.0
+            extras = (ev.get("notes") or "").strip()
+            bref = (ev.get("booking_ref") or "").strip()
+            note_bits = ["[Zoho Calendar]", title]
+            if bref:
+                note_bits.append(f"| Ref: {bref}")
+            if extras:
+                note_bits.append(f"| Extras: {extras}")
+            note_bits.append(tag)
+
+            try:
                 booking_in = BookingCreate(
                     customer_name=name,
                     customer_email=email or "calendar-import@opalchauffeurs.com.au",
                     customer_phone=phone or "+61000000000",
                     source=BookingSource.WEBSITE,
-                    total_fare=0.0,
+                    total_fare=round(fare, 2),
                     deposit_percentage=100.0,
                     flight_tracking_enabled=bool(flight),
                     passenger_name=name,
@@ -340,7 +368,7 @@ class ZohoCalendarService:
                     passenger_email=email,
                     passenger_count=1,
                     luggage_count=0,
-                    internal_notes=f"[Zoho Calendar] {title} {tag}"[:4000],
+                    internal_notes=" ".join(note_bits)[:4000],
                     legs=[BookingLegCreate(
                         leg_number=1,
                         pickup_address=pickup,

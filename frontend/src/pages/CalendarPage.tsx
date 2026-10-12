@@ -12,6 +12,8 @@ import {
   Mail,
   Car,
   Plane,
+  DollarSign,
+  FileText,
 } from 'lucide-react';
 import { zohoCalendarApi } from '../services/api';
 
@@ -36,6 +38,10 @@ interface ZohoEvent {
   vehicle?: string | null;
   flight?: string | null;
   name?: string | null;
+  fare?: string | null;
+  notes?: string | null;
+  booking_ref?: string | null;
+  description?: string | null;
 }
 
 const localDateKey = (d: Date) =>
@@ -337,6 +343,22 @@ export const CalendarPage: React.FC = () => {
                       <Plane className="w-3.5 h-3.5 text-slate-500 shrink-0" /> <span className="break-words">{e.flight}</span>
                     </div>
                   )}
+                  {e.fare && Number(e.fare) > 0 && (
+                    <div className="flex items-center gap-1.5">
+                      <DollarSign className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                      <span className="text-emerald-300 font-black">${Number(e.fare).toFixed(2)} AUD</span>
+                    </div>
+                  )}
+                  {e.booking_ref && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">Ref:</span> <span className="font-mono text-white">{e.booking_ref}</span>
+                    </div>
+                  )}
+                  {e.notes && (
+                    <div className="sm:col-span-2 flex items-start gap-1.5">
+                      <span className="text-slate-500 shrink-0">Extras:</span> <span className="break-words">{e.notes}</span>
+                    </div>
+                  )}
                   {e.location && !e.pickup && !e.dropoff && (
                     <div className="sm:col-span-2 flex items-start gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
@@ -344,6 +366,16 @@ export const CalendarPage: React.FC = () => {
                     </div>
                   )}
                 </div>
+                {e.description && (
+                  <details className="mt-1">
+                    <summary className="text-[11px] font-bold text-[#DFCAA8] cursor-pointer flex items-center gap-1.5">
+                      <FileText className="w-3.5 h-3.5" /> Poori detail (Zoho)
+                    </summary>
+                    <pre className="mt-2 text-[11px] text-slate-300 whitespace-pre-wrap break-words bg-[#06090F] border border-[#1E2738] rounded-lg p-2.5 font-sans">
+                      {e.description}
+                    </pre>
+                  </details>
+                )}
               </div>
             ))}
           </div>

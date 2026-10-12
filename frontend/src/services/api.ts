@@ -309,7 +309,8 @@ export const zohoCalendarApi = {
       warming?: boolean;
       events: { uid?: string; title: string; location: string; date: string; time: string; start: string; all_day: boolean;
                 pickup?: string | null; dropoff?: string | null; phone?: string | null; email?: string | null;
-                vehicle?: string | null; flight?: string | null; name?: string | null }[];
+                vehicle?: string | null; flight?: string | null; name?: string | null;
+                fare?: string | null; notes?: string | null; booking_ref?: string | null; description?: string | null }[];
     }>(`/zoho-calendar/events`, { params: { start, end } });
     return res.data;
   },
