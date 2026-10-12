@@ -27,17 +27,21 @@ async def zoho_calendar_events(
         )
 
 
-@router.post("/sync", dependencies=[Depends(require_ops)])
-async def zoho_calendar_sync(db: AsyncSession = Depends(get_db)):
-    """Import upcoming Zoho calendar jobs onto the Operate Board as dispatchable
-    bookings (idempotent). Runs automatically via cron too."""
+@router.post("/dispatch", dependencies=[Depends(require_ops)])
+async def zoho_calendar_dispatch(
+    uid: str = Query(..., description="The calendar event UID to turn into a booking"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Turn ONE calendar job into a dispatch-ready DRAFT booking on the Operate
+    Board (on demand). Idempotent — re-dispatching returns the existing one."""
     if not ZohoCalendarService.configured():
-        return {"configured": False, "created": 0, "skipped": 0}
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Zoho calendar is not connected.")
     try:
-        result = await ZohoCalendarService.sync_upcoming_to_bookings(db)
-        return {"configured": True, **result}
+        return await ZohoCalendarService.import_event(db, uid)
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Zoho sync failed: {exc}",
+            detail=f"Could not create the booking: {exc}",
         )

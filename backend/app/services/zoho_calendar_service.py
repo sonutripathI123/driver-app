@@ -321,3 +321,99 @@ class ZohoCalendarService:
         if created:
             logger.info("Zoho sync: created %d booking(s), skipped %d", created, skipped)
         return {"created": created, "skipped": skipped}
+
+    @staticmethod
+    async def import_event(db, uid: str) -> Dict[str, str]:
+        """Create ONE dispatch-ready DRAFT booking from a single calendar event
+        (by UID), using the event's full details. Idempotent. Automated manager
+        reminders are suppressed (the operator is dispatching it by hand)."""
+        import re
+        from datetime import datetime
+        from sqlalchemy import select
+        from app.models.booking import Booking
+        from app.models.enums import BookingSource
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        uid = (uid or "").strip()
+        if not uid:
+            raise ValueError("Missing event id.")
+        tag = f"[zoho-uid:{uid}]"
+
+        async with _sync_lock:
+            existing = (
+                await db.execute(select(Booking).where(Booking.internal_notes.ilike(f"%{tag}%")))
+            ).scalars().first()
+            if existing:
+                return {"booking_number": existing.booking_number, "status": "duplicate"}
+
+            evs = await ZohoCalendarService._all_events()
+            ev = next((e for e in evs if (e.get("uid") or "") == uid), None)
+            if not ev:
+                raise ValueError("Job not found in the calendar feed.")
+
+            title = (ev.get("title") or "Website booking").strip()
+            name = ((ev.get("name") or title) or "Website booking")[:120]
+            email = (ev.get("email") or "").strip() or None
+            phone = (ev.get("phone") or "").strip() or None
+
+            pickup = (ev.get("pickup") or "").strip()
+            dropoff = (ev.get("dropoff") or "").strip()
+            if not pickup or not dropoff:
+                p2, d2 = ZohoCalendarService._route_from_title(title)
+                pickup = pickup or p2 or "See job title"
+                dropoff = dropoff or d2 or "See job title"
+
+            def _norm(a: str) -> str:
+                a = (a or "").strip()
+                if a.upper() == "AP":
+                    return "Airport (AP)"
+                if len(a) < 3:
+                    a = f"{a} — see job title".strip()
+                return a[:500]
+
+            pickup = _norm(pickup)
+            dropoff = _norm(dropoff)
+            vehicle = ZohoCalendarService._guess_vehicle(f"{ev.get('vehicle') or ''} {title}")
+            flight = (ev.get("flight") or "").strip() or None
+            tl = title.lower()
+            is_airport = ("airport" in tl) or ("airport" in pickup.lower()) or bool(re.search(r"\bap\b", tl))
+            try:
+                when = datetime.fromisoformat(ev["start"])
+            except Exception:
+                raise ValueError("Job has no valid date/time.")
+
+            booking_in = BookingCreate(
+                customer_name=name,
+                customer_email=email or "calendar-import@opalchauffeurs.com.au",
+                customer_phone=phone or "+61000000000",
+                source=BookingSource.WEBSITE,
+                total_fare=0.0,
+                deposit_percentage=100.0,
+                flight_tracking_enabled=bool(flight),
+                passenger_name=name,
+                passenger_phone=phone,
+                passenger_email=email,
+                passenger_count=1,
+                luggage_count=0,
+                internal_notes=f"[Zoho Calendar] {title} {tag}"[:4000],
+                legs=[BookingLegCreate(
+                    leg_number=1,
+                    pickup_address=pickup,
+                    dropoff_address=dropoff,
+                    pickup_datetime=when,
+                    vehicle_category=vehicle,
+                    is_airport_pickup=is_airport,
+                    flight_number=(flight[:20] if flight else None),
+                )],
+            )
+            booking = await BookingService.create_booking(db, booking_in, notify=False)
+            # Suppress automated pre-trip/handover SMS for a job the operator is
+            # dispatching by hand (avoids surprise manager reminders).
+            try:
+                booking.driver_handover_sent = True
+                booking.customer_reminder_12_24h_sent = True
+                await db.commit()
+            except Exception:
+                await db.rollback()
+            return {"booking_number": booking.booking_number, "status": "created"}

@@ -310,9 +310,11 @@ export const zohoCalendarApi = {
     }>(`/zoho-calendar/events`, { params: { start, end } });
     return res.data;
   },
-  /** Import upcoming calendar jobs onto the Operate Board as dispatchable bookings. */
-  sync: async () => {
-    const res = await apiClient.post<{ configured: boolean; created: number; skipped: number }>(`/zoho-calendar/sync`);
+  /** Turn ONE calendar job into a dispatch-ready draft booking (on demand). */
+  dispatch: async (uid: string) => {
+    const res = await apiClient.post<{ booking_number: string; status: 'created' | 'duplicate' }>(
+      `/zoho-calendar/dispatch`, null, { params: { uid } }
+    );
     return res.data;
   },
 };

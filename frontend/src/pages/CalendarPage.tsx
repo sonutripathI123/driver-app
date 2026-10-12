@@ -8,6 +8,10 @@ import {
   AlertCircle,
   Clock,
   Send,
+  Phone,
+  Mail,
+  Car,
+  Plane,
 } from 'lucide-react';
 import { zohoCalendarApi } from '../services/api';
 
@@ -25,6 +29,13 @@ interface ZohoEvent {
   time: string; // e.g. "8:00 pm"
   start: string;
   all_day: boolean;
+  pickup?: string | null;
+  dropoff?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  vehicle?: string | null;
+  flight?: string | null;
+  name?: string | null;
 }
 
 const localDateKey = (d: Date) =>
@@ -40,8 +51,8 @@ export const CalendarPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string>(() => localDateKey(new Date()));
-  const [syncing, setSyncing] = useState(false);
-  const [syncMsg, setSyncMsg] = useState<string | null>(null);
+  const [dispatchingUid, setDispatchingUid] = useState<string | null>(null);
+  const [dispatchMsg, setDispatchMsg] = useState<string | null>(null);
 
   // The 42-cell grid starting on the Sunday on/before the 1st.
   const cells = useMemo(() => {
@@ -102,21 +113,22 @@ export const CalendarPage: React.FC = () => {
     [cells, byDay, cursor]
   );
 
-  const handleSync = async () => {
-    setSyncing(true);
-    setSyncMsg(null);
+  const handleDispatch = async (ev: ZohoEvent) => {
+    if (!ev.uid) return;
+    setDispatchingUid(ev.uid);
+    setDispatchMsg(null);
     try {
-      const r = await zohoCalendarApi.sync();
-      setSyncMsg(
-        r.created > 0
-          ? `✅ ${r.created} nayi job${r.created === 1 ? '' : 's'} Operate Board pe aa gayi — wahan se driver allocate karo.`
-          : '✅ Operate Board already up to date (koi nayi job nahi).'
+      const r = await zohoCalendarApi.dispatch(ev.uid);
+      setDispatchMsg(
+        r.status === 'duplicate'
+          ? `ℹ️ Ye job pehle se Operate Board pe hai (${r.booking_number}). Wahan jaake driver allocate karo.`
+          : `✅ ${r.booking_number} ban gayi — ab "Live Operate Board" pe jaake driver allocate karo.`
       );
     } catch (e: any) {
       const d = e?.response?.data?.detail;
-      setSyncMsg(typeof d === 'string' ? d : 'Sync fail hua, dobara try karo.');
+      setDispatchMsg(typeof d === 'string' ? d : 'Dispatch banane me dikkat aayi, dobara try karo.');
     } finally {
-      setSyncing(false);
+      setDispatchingUid(null);
     }
   };
 
@@ -152,27 +164,17 @@ export const CalendarPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <button
-            onClick={handleSync}
-            disabled={syncing || !configured}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] hover:opacity-90 transition disabled:opacity-50"
-            title="Upcoming jobs ko Operate Board pe dispatch ke liye bhejo"
-          >
-            <Send className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} /> {syncing ? 'Syncing…' : 'Send to Operate Board'}
-          </button>
-          <button
-            onClick={load}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#121824] text-white border border-[#1E2738] hover:bg-[#1A2233] transition-colors"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-          </button>
-        </div>
+        <button
+          onClick={load}
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#121824] text-white border border-[#1E2738] hover:bg-[#1A2233] transition-colors self-start sm:self-auto"
+        >
+          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+        </button>
       </div>
 
-      {syncMsg && (
+      {dispatchMsg && (
         <div className="rounded-xl border border-[#1E2738] bg-[#0B111C] text-slate-200 px-4 py-2.5 text-sm font-semibold">
-          {syncMsg}
+          {dispatchMsg}
         </div>
       )}
 
@@ -265,14 +267,60 @@ export const CalendarPage: React.FC = () => {
         ) : (
           <div className="space-y-2.5">
             {selectedEntries.map((e, idx) => (
-              <div key={e.uid || idx} className="flex items-start gap-3 bg-[#0B111C] border border-[#1E2738] rounded-lg px-3 py-2.5">
-                <div className="shrink-0 w-20 text-sm font-black text-[#DFCAA8] flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 shrink-0" /> {e.time || 'All day'}
+              <div key={e.uid || idx} className="bg-[#0B111C] border border-[#1E2738] rounded-lg p-3 space-y-2">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5 text-sm font-black text-[#DFCAA8]">
+                      <Clock className="w-3.5 h-3.5 shrink-0" /> {e.time || 'All day'}
+                    </div>
+                    <div className="text-sm font-bold text-white break-words mt-1">{e.title}</div>
+                  </div>
+                  {e.uid && (
+                    <button
+                      onClick={() => handleDispatch(e)}
+                      disabled={dispatchingUid === e.uid}
+                      className="shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] text-xs font-black hover:opacity-90 disabled:opacity-50"
+                      title="Is job ko dispatch-ready booking banao"
+                    >
+                      <Send className="w-3.5 h-3.5" /> {dispatchingUid === e.uid ? 'Creating…' : 'Dispatch'}
+                    </button>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-bold text-white break-words">{e.title}</div>
-                  {e.location && (
-                    <div className="flex items-start gap-1.5 text-xs text-slate-300 mt-0.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-slate-300">
+                  {(e.pickup || e.dropoff) && (
+                    <div className="sm:col-span-2 flex items-start gap-1.5">
+                      <MapPin className="w-3.5 h-3.5 text-[#DFCAA8] shrink-0 mt-0.5" />
+                      <span className="break-words">{e.pickup || '—'} ➔ {e.dropoff || '—'}</span>
+                    </div>
+                  )}
+                  {e.name && (
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-slate-500">Name:</span>
+                      <span className="text-white font-semibold break-words">{e.name}</span>
+                    </div>
+                  )}
+                  {e.phone && (
+                    <div className="flex items-center gap-1.5">
+                      <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" /> <span className="break-words">{e.phone}</span>
+                    </div>
+                  )}
+                  {e.email && (
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" /> <span className="break-words truncate">{e.email}</span>
+                    </div>
+                  )}
+                  {e.vehicle && (
+                    <div className="flex items-center gap-1.5">
+                      <Car className="w-3.5 h-3.5 text-slate-500 shrink-0" /> <span className="break-words">{e.vehicle}</span>
+                    </div>
+                  )}
+                  {e.flight && (
+                    <div className="flex items-center gap-1.5">
+                      <Plane className="w-3.5 h-3.5 text-slate-500 shrink-0" /> <span className="break-words">{e.flight}</span>
+                    </div>
+                  )}
+                  {e.location && !e.pickup && !e.dropoff && (
+                    <div className="sm:col-span-2 flex items-start gap-1.5">
                       <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0 mt-0.5" />
                       <span className="break-words">{e.location}</span>
                     </div>
