@@ -301,6 +301,17 @@ export const driverPortalApi = {
   },
 };
 
+export const zohoCalendarApi = {
+  /** Bookings from the connected Zoho calendar (all channels) in a date range. */
+  getEvents: async (start: string, end: string) => {
+    const res = await apiClient.get<{
+      configured: boolean;
+      events: { uid?: string; title: string; location: string; date: string; time: string; start: string; all_day: boolean }[];
+    }>(`/zoho-calendar/events`, { params: { start, end } });
+    return res.data;
+  },
+};
+
 export const customerPortalApi = {
   setPassword: async (token: string, password: string) => {
     const res = await apiClient.post(`/customer-portal/set-password`, { token, password });

@@ -176,6 +176,14 @@ class Settings(BaseSettings):
     GOOGLE_CALENDAR_REFRESH_TOKEN: str = ""
     GOOGLE_CALENDAR_ID: str = "primary"
 
+    # Zoho Calendar (private iCal feed, read-only). The business' bookings land
+    # in the book@opalchauffeurs Zoho calendar from every channel. The dashboard
+    # reads this private iCal URL server-side and shows the events — nothing is
+    # made public, no OAuth/app-password needed. Empty => the Zoho calendar panel
+    # is off. The feed is parsed and cached in memory for ZOHO_ICAL_CACHE_SECONDS.
+    ZOHO_ICAL_URL: str = ""
+    ZOHO_ICAL_CACHE_SECONDS: int = 300
+
     # Live flight tracking.
     # FLIGHT_PROVIDER: flightaware | aerodatabox | aviationstack | auto
     #   auto = whichever has a key, in that order. With none configured the
