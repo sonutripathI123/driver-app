@@ -7,6 +7,7 @@ import {
   MapPin,
   AlertCircle,
   Clock,
+  Send,
 } from 'lucide-react';
 import { zohoCalendarApi } from '../services/api';
 
@@ -39,6 +40,8 @@ export const CalendarPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string>(() => localDateKey(new Date()));
+  const [syncing, setSyncing] = useState(false);
+  const [syncMsg, setSyncMsg] = useState<string | null>(null);
 
   // The 42-cell grid starting on the Sunday on/before the 1st.
   const cells = useMemo(() => {
@@ -99,6 +102,24 @@ export const CalendarPage: React.FC = () => {
     [cells, byDay, cursor]
   );
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setSyncMsg(null);
+    try {
+      const r = await zohoCalendarApi.sync();
+      setSyncMsg(
+        r.created > 0
+          ? `✅ ${r.created} nayi job${r.created === 1 ? '' : 's'} Operate Board pe aa gayi — wahan se driver allocate karo.`
+          : '✅ Operate Board already up to date (koi nayi job nahi).'
+      );
+    } catch (e: any) {
+      const d = e?.response?.data?.detail;
+      setSyncMsg(typeof d === 'string' ? d : 'Sync fail hua, dobara try karo.');
+    } finally {
+      setSyncing(false);
+    }
+  };
+
   const goPrev = () => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() - 1, 1));
   const goNext = () => setCursor(new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1));
   const goToday = () => {
@@ -131,13 +152,29 @@ export const CalendarPage: React.FC = () => {
             </p>
           </div>
         </div>
-        <button
-          onClick={load}
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#121824] text-white border border-[#1E2738] hover:bg-[#1A2233] transition-colors self-start sm:self-auto"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <button
+            onClick={handleSync}
+            disabled={syncing || !configured}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-black bg-[#FAF6F0] text-[#0A0E1A] border border-[#DFCAA8] hover:opacity-90 transition disabled:opacity-50"
+            title="Upcoming jobs ko Operate Board pe dispatch ke liye bhejo"
+          >
+            <Send className={`w-3.5 h-3.5 ${syncing ? 'animate-pulse' : ''}`} /> {syncing ? 'Syncing…' : 'Send to Operate Board'}
+          </button>
+          <button
+            onClick={load}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold bg-[#121824] text-white border border-[#1E2738] hover:bg-[#1A2233] transition-colors"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
       </div>
+
+      {syncMsg && (
+        <div className="rounded-xl border border-[#1E2738] bg-[#0B111C] text-slate-200 px-4 py-2.5 text-sm font-semibold">
+          {syncMsg}
+        </div>
+      )}
 
       {!configured && !loading && (
         <div className="rounded-xl border border-amber-700 bg-[#2A1f12] text-amber-200 px-4 py-3 text-sm font-semibold flex items-start gap-2">

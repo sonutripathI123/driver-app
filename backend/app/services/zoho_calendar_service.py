@@ -152,3 +152,112 @@ class ZohoCalendarService:
         res = [e for e in evs if start <= e["date"] <= end]
         res.sort(key=lambda e: (e["date"], e["start"]))
         return res
+
+    # ------------------------------------------------------------------ dispatch sync
+
+    @staticmethod
+    def _guess_vehicle(title: str):
+        from app.models.enums import VehicleCategory
+        t = (title or "").lower()
+        if any(k in t for k in ("mini van", "minivan", "people mover", "van", "mpv")):
+            return VehicleCategory.PEOPLE_MOVER
+        if "suv" in t:
+            return VehicleCategory.SUV_PREMIUM
+        if "luxury" in t or "first class" in t or "s class" in t or "s-class" in t:
+            return VehicleCategory.SEDAN_EXECUTIVE
+        return VehicleCategory.SEDAN_PREMIUM
+
+    @staticmethod
+    def _route_from_title(title: str):
+        """Pull 'X to Y' out of the last (...) group in the title."""
+        import re
+        pickup = dropoff = None
+        groups = re.findall(r"\(([^()]*)\)", title or "")
+        if groups:
+            inner = groups[-1]
+            m = re.split(r"\s+to\s+", inner, maxsplit=1, flags=re.IGNORECASE)
+            if len(m) == 2:
+                pickup, dropoff = m[0].strip(), m[1].strip()
+        return pickup, dropoff
+
+    @staticmethod
+    async def sync_upcoming_to_bookings(db, days_back: int = 1, days_ahead: int = 14) -> Dict[str, int]:
+        """Create DRAFT, dispatchable bookings on the Operate Board from upcoming
+        Zoho calendar jobs. Idempotent per event UID. Skips cancelled / do-not-
+        dispatch jobs. Returns {created, skipped}."""
+        import re
+        from datetime import datetime, timedelta
+        from sqlalchemy import select
+        from app.models.booking import Booking
+        from app.models.enums import BookingSource, VehicleCategory
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        if not ZohoCalendarService.configured():
+            return {"created": 0, "skipped": 0}
+
+        today_mel = datetime.now(_MEL).date()
+        start = (today_mel - timedelta(days=days_back)).strftime("%Y-%m-%d")
+        end = (today_mel + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
+        events = await ZohoCalendarService.events_in_range(start, end)
+
+        created = skipped = 0
+        for e in events:
+            title = (e.get("title") or "").strip()
+            uid = (e.get("uid") or "").strip()
+            tl = title.lower()
+            if not uid or not title:
+                skipped += 1
+                continue
+            # Skip cancelled / explicitly not-for-dispatch jobs.
+            if any(k in tl for k in ("cancel", "donotdispatch", "do not dispatch", "do-not-dispatch")):
+                skipped += 1
+                continue
+
+            tag = f"[zoho-uid:{uid}]"
+            exists = (
+                await db.execute(select(Booking.id).where(Booking.internal_notes.ilike(f"%{tag}%")))
+            ).first()
+            if exists:
+                skipped += 1
+                continue
+
+            try:
+                when = datetime.fromisoformat(e["start"])
+            except Exception:
+                skipped += 1
+                continue
+
+            pickup, dropoff = ZohoCalendarService._route_from_title(title)
+            pickup = (pickup or "See job title")[:500]
+            dropoff = (dropoff or "See job title")[:500]
+            is_airport = ("airport" in tl) or bool(re.search(r"\bap\b", tl))
+
+            booking_in = BookingCreate(
+                customer_name=title[:120],
+                source=BookingSource.WEBSITE,
+                total_fare=0.0,
+                deposit_percentage=100.0,
+                passenger_name=title[:120],
+                passenger_count=1,
+                luggage_count=0,
+                internal_notes=f"[Zoho Calendar] {title} {tag}"[:4000],
+                legs=[BookingLegCreate(
+                    leg_number=1,
+                    pickup_address=pickup,
+                    dropoff_address=dropoff,
+                    pickup_datetime=when,
+                    vehicle_category=ZohoCalendarService._guess_vehicle(title),
+                    is_airport_pickup=is_airport,
+                )],
+            )
+            try:
+                await BookingService.create_booking(db, booking_in, notify=False)
+                created += 1
+            except Exception as exc:
+                logger.warning("Zoho->booking create failed for %s: %s", uid, exc)
+                skipped += 1
+
+        if created:
+            logger.info("Zoho sync: created %d booking(s), skipped %d", created, skipped)
+        return {"created": created, "skipped": skipped}

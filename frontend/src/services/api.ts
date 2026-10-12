@@ -310,6 +310,11 @@ export const zohoCalendarApi = {
     }>(`/zoho-calendar/events`, { params: { start, end } });
     return res.data;
   },
+  /** Import upcoming calendar jobs onto the Operate Board as dispatchable bookings. */
+  sync: async () => {
+    const res = await apiClient.post<{ configured: boolean; created: number; skipped: number }>(`/zoho-calendar/sync`);
+    return res.data;
+  },
 };
 
 export const customerPortalApi = {
