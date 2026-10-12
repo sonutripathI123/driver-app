@@ -64,7 +64,15 @@ class AnalyticsService:
         valid_bookings = [b for b in bookings if b.status != BookingStatus.CANCELLED]
         cancelled_bookings = [b for b in bookings if b.status == BookingStatus.CANCELLED]
 
-        gross_revenue = sum(b.total_fare for b in valid_bookings)
+        # Revenue is REALIZED only — count fares of bookings whose trip has
+        # actually happened (completed / financially closed), the same basis as
+        # the driver/partner costs below (completed legs). Counting DRAFT or
+        # pending bookings here would inflate revenue and profit with jobs that
+        # have not run yet.
+        REALIZED = (BookingStatus.COMPLETED, BookingStatus.FINANCIALLY_CLOSED)
+        realized_bookings = [b for b in valid_bookings if b.status in REALIZED]
+
+        gross_revenue = sum(b.total_fare for b in realized_bookings)
         net_revenue, gst_collected = calculate_australian_gst(gross_revenue)
 
         # 2. Fetch all completed/active journey legs in timeframe
@@ -89,7 +97,8 @@ class AnalyticsService:
         margin_pct = round((gross_profit / max(1.0, net_revenue)) * 100.0, 2) if net_revenue > 0 else 0.0
 
         cancellation_rate = round((len(cancelled_trips) / max(1, len(legs))) * 100.0, 2) if legs else 0.0
-        abv = round(gross_revenue / max(1, len(valid_bookings)), 2) if valid_bookings else 0.0
+        # Average over realized bookings so zero-fare / not-yet-run jobs do not dilute it.
+        abv = round(gross_revenue / max(1, len(realized_bookings)), 2) if realized_bookings else 0.0
 
         return ExecutiveDashboardSummary(
             date_from=date_from,
@@ -122,12 +131,14 @@ class AnalyticsService:
         from_utc = ensure_utc(date_from)
         to_utc = ensure_utc(date_to)
 
+        # Realized profit only: completed trips (matches the executive dashboard
+        # and the cost basis). Upcoming/draft legs are not profit yet.
         stmt = (
             select(BookingLeg)
             .where(
                 BookingLeg.pickup_datetime >= from_utc,
                 BookingLeg.pickup_datetime <= to_utc,
-                BookingLeg.status != LegStatus.CANCELLED
+                BookingLeg.status == LegStatus.COMPLETED
             )
             .options(selectinload(BookingLeg.booking).selectinload(Booking.legs))
             .order_by(desc(BookingLeg.pickup_datetime))
