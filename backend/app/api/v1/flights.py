@@ -58,6 +58,16 @@ async def poll_active_airport_flights(
     return await FlightTrackingService.poll_all_active_airport_legs(db=db)
 
 
+@router.get("/board", dependencies=[Depends(require_staff)])
+async def flight_board(
+    days_ahead: int = Query(7, ge=1, le=30),
+    db: AsyncSession = Depends(get_db),
+):
+    """Live board of every upcoming airport-pickup booking with a flight, plus its
+    latest tracked status/delay. Access: Staff."""
+    return {"flights": await FlightTrackingService.get_flight_board(db, days_ahead=days_ahead)}
+
+
 @router.post("/calculate-wait-time", response_model=FlightWaitTimeResponse)
 async def calculate_wait_time_charges(
     payload: FlightWaitTimeRequest

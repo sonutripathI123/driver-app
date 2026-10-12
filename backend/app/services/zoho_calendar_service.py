@@ -118,7 +118,12 @@ class ZohoCalendarService:
         out["dropoff"] = label(r"drop\s*-?\s*off")
         out["vehicle"] = label(r"vehicle")
         out["name"] = label(r"name")
-        out["flight"] = label(r"arriving flight") or label(r"flight number") or label(r"flight")
+        flight_raw = label(r"arriving flight") or label(r"flight number") or label(r"flight")
+        if flight_raw:
+            fm = re.search(r"([A-Za-z]{2,3})\s?(\d{1,4}[A-Za-z]?)", flight_raw)
+            out["flight"] = (fm.group(1) + fm.group(2)).upper() if fm else flight_raw.strip()
+        else:
+            out["flight"] = None
         out["notes"] = label(r"extras") or label(r"extra") or label(r"comments") or label(r"comment") or label(r"note")
         out["booking_ref"] = label(r"booking number") or label(r"booking")
         em = re.search(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", text)

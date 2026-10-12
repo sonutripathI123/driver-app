@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { RadarGlobeCanvas } from '../components/3d/RadarGlobeCanvas';
-import { flightsApi } from '../services/api';
+import { flightsApi, FlightBoardItem } from '../services/api';
 import {
   Plane,
   Clock,
@@ -10,7 +10,10 @@ import {
   MapPin,
   ShieldCheck,
   Zap,
-  ArrowRight
+  ArrowRight,
+  RefreshCw,
+  UserCheck,
+  Radio,
 } from 'lucide-react';
 
 interface FlightView {
@@ -39,6 +42,27 @@ export const FlightRadarPage: React.FC = () => {
 
   const [waitMinutes, setWaitMinutes] = useState(75);
   const excessWaitTimeCharge = Math.max(0, waitMinutes - 60) * 1.5;
+
+  // Live board of all upcoming flight bookings (auto-tracked).
+  const [board, setBoard] = useState<FlightBoardItem[]>([]);
+  const [boardLoading, setBoardLoading] = useState(true);
+
+  const loadBoard = async () => {
+    try {
+      const res = await flightsApi.getBoard(7);
+      setBoard(res.flights || []);
+    } catch {
+      // non-fatal; the panel just shows empty
+    } finally {
+      setBoardLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBoard();
+    const t = setInterval(loadBoard, 60000); // refresh every minute
+    return () => clearInterval(t);
+  }, []);
 
   const AEST = 'Australia/Melbourne';
   const fmtAest = (iso?: string | null) =>
@@ -156,6 +180,92 @@ export const FlightRadarPage: React.FC = () => {
             Track Flight ✈️
           </button>
         </form>
+      </div>
+
+      {/* Live Flight Board — all upcoming flight bookings, auto-tracked */}
+      <div className="glass-panel p-5 rounded-2xl shadow-xl">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <Radio className="w-5 h-5 text-[#0A0E1A]" />
+            <h2 className="text-base font-black text-[#0A0E1A]">
+              Live Flight Board — {board.length} flight booking{board.length === 1 ? '' : 's'} (next 7 days)
+            </h2>
+          </div>
+          <button
+            onClick={loadBoard}
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#06090F] border border-[#DFCAA8] text-white text-xs font-black hover:bg-[#1A2233]"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${boardLoading ? 'animate-spin' : ''}`} /> Refresh
+          </button>
+        </div>
+
+        {board.length === 0 ? (
+          <p className="text-xs text-[#0A0E1A] font-bold">
+            {boardLoading ? 'Loading…' : 'Koi upcoming flight booking nahi (agle 7 din me).'}
+          </p>
+        ) : (
+          <div className="space-y-2">
+            {board.map((f) => {
+              const delayed = (f.delay_minutes || 0) >= 15;
+              const statusText = delayed
+                ? `DELAYED +${f.delay_minutes}m`
+                : (f.flight_status || (f.tracking_live ? 'TRACKING' : 'SCHEDULED'));
+              return (
+                <div
+                  key={f.leg_id}
+                  className="rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] p-3 flex flex-col lg:flex-row lg:items-center gap-2 lg:gap-4 justify-between"
+                >
+                  {/* Left: flight + passenger */}
+                  <div className="flex items-start gap-3 min-w-0">
+                    <Plane className={`w-4 h-4 mt-0.5 shrink-0 ${delayed ? 'text-[#B91C1C]' : 'text-[#0A0E1A]'}`} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono font-black text-[#0A0E1A]">{f.flight_number}</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${
+                            delayed
+                              ? 'bg-[#FFF1F2] text-[#B91C1C] border-[#FECACA]'
+                              : 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
+                          }`}
+                        >
+                          {statusText}
+                        </span>
+                        {f.tracking_live && (
+                          <span className="inline-flex items-center gap-1 text-[9px] font-black text-[#047857]">
+                            ● LIVE
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-[11px] text-[#0A0E1A] font-bold mt-0.5 truncate">
+                        {f.passenger_name} · <span className="font-mono">{f.booking_number}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right: pickup / terminal / driver */}
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#0A0E1A] font-bold shrink-0">
+                    <span className="flex items-center gap-1">
+                      <Clock className="w-3.5 h-3.5" /> {fmtAest(f.pickup_datetime)}
+                    </span>
+                    {f.terminal && (
+                      <span className="flex items-center gap-1">
+                        <MapPin className="w-3.5 h-3.5" /> {f.terminal}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1">
+                      <UserCheck className={`w-3.5 h-3.5 ${f.driver_name ? 'text-[#047857]' : 'text-[#B91C1C]'}`} />
+                      {f.driver_name || 'Unallocated'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <p className="text-[10px] text-[#0A0E1A] font-bold mt-3 opacity-70">
+          Flights within 24h of pickup are tracked live; delay ≥15 min auto-reschedules the pickup and
+          alerts the passenger, the allocated driver and ops.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

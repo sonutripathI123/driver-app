@@ -355,6 +355,24 @@ export const customerPortalApi = {
   },
 };
 
+export interface FlightBoardItem {
+  leg_id: string;
+  booking_number: string | null;
+  passenger_name: string;
+  flight_number: string;
+  flight_status: string | null;
+  delay_minutes: number;
+  scheduled_arrival: string | null;
+  estimated_arrival: string | null;
+  terminal: string | null;
+  pickup_datetime: string | null;
+  pickup_address: string | null;
+  dropoff_address: string | null;
+  leg_status: string;
+  driver_name: string | null;
+  tracking_live: boolean;
+}
+
 export const flightsApi = {
   lookup: async (flightNumber: string, flightDate?: string) => {
     const res = await apiClient.get(`/flights/lookup`, {
@@ -364,6 +382,12 @@ export const flightsApi = {
   },
   syncLeg: async (legId: string) => {
     const res = await apiClient.post(`/flights/legs/${legId}/sync`);
+    return res.data;
+  },
+  getBoard: async (daysAhead = 7) => {
+    const res = await apiClient.get<{ flights: FlightBoardItem[] }>(`/flights/board`, {
+      params: { days_ahead: daysAhead },
+    });
     return res.data;
   },
   calculateWaitTime: async (payload: any) => {

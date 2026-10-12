@@ -335,6 +335,53 @@ class FlightTrackingService:
         return results
 
     @staticmethod
+    async def get_flight_board(db: AsyncSession, days_ahead: int = 7) -> List[dict]:
+        """Every upcoming airport-pickup booking that has a flight, with its latest
+        tracked status for the Flight Radar board. Legs within 24h are actively
+        polled by the cron, so those carry live delay/status."""
+        from sqlalchemy.orm import selectinload
+        from app.models.booking import Booking
+
+        now = utc_now()
+        stmt = (
+            select(BookingLeg)
+            .where(
+                BookingLeg.is_airport_pickup == True,  # noqa: E712
+                BookingLeg.flight_number != None,
+                BookingLeg.status.notin_([LegStatus.CANCELLED, LegStatus.COMPLETED]),
+                BookingLeg.pickup_datetime >= now - timedelta(hours=3),
+                BookingLeg.pickup_datetime <= now + timedelta(days=days_ahead),
+            )
+            .options(selectinload(BookingLeg.booking), selectinload(BookingLeg.driver))
+            .order_by(BookingLeg.pickup_datetime)
+        )
+        legs = list((await db.execute(stmt)).scalars().all())
+
+        board: List[dict] = []
+        for leg in legs:
+            b = leg.booking
+            drv = leg.driver
+            within_24h = leg.pickup_datetime <= now + timedelta(hours=24)
+            board.append({
+                "leg_id": leg.id,
+                "booking_number": b.booking_number if b else None,
+                "passenger_name": (b.passenger_name if b else None) or "—",
+                "flight_number": leg.flight_number,
+                "flight_status": leg.flight_status,
+                "delay_minutes": leg.flight_delay_minutes or 0,
+                "scheduled_arrival": leg.flight_scheduled_arrival.isoformat() if leg.flight_scheduled_arrival else None,
+                "estimated_arrival": leg.flight_actual_arrival.isoformat() if leg.flight_actual_arrival else None,
+                "terminal": leg.flight_terminal,
+                "pickup_datetime": leg.pickup_datetime.isoformat() if leg.pickup_datetime else None,
+                "pickup_address": leg.pickup_address,
+                "dropoff_address": leg.dropoff_address,
+                "leg_status": getattr(leg.status, "value", leg.status),
+                "driver_name": drv.full_name if drv else None,
+                "tracking_live": bool(within_24h),
+            })
+        return board
+
+    @staticmethod
     def calculate_wait_time(
         req: FlightWaitTimeRequest
     ) -> FlightWaitTimeResponse:
