@@ -228,30 +228,43 @@ class ZohoCalendarService:
                 skipped += 1
                 continue
 
-            pickup, dropoff = ZohoCalendarService._route_from_title(title)
-            pickup = (pickup or "See job title")[:500]
-            dropoff = (dropoff or "See job title")[:500]
+            def _norm_addr(a: Optional[str]) -> str:
+                a = (a or "").strip()
+                if a.upper() == "AP":
+                    return "Airport (AP)"
+                if len(a) < 3:
+                    a = f"{a} — see job title".strip()
+                return a[:500]
+
+            pickup_raw, dropoff_raw = ZohoCalendarService._route_from_title(title)
+            pickup = _norm_addr(pickup_raw or "See job title")
+            dropoff = _norm_addr(dropoff_raw or "See job title")
             is_airport = ("airport" in tl) or bool(re.search(r"\bap\b", tl))
 
-            booking_in = BookingCreate(
-                customer_name=title[:120],
-                source=BookingSource.WEBSITE,
-                total_fare=0.0,
-                deposit_percentage=100.0,
-                passenger_name=title[:120],
-                passenger_count=1,
-                luggage_count=0,
-                internal_notes=f"[Zoho Calendar] {title} {tag}"[:4000],
-                legs=[BookingLegCreate(
-                    leg_number=1,
-                    pickup_address=pickup,
-                    dropoff_address=dropoff,
-                    pickup_datetime=when,
-                    vehicle_category=ZohoCalendarService._guess_vehicle(title),
-                    is_airport_pickup=is_airport,
-                )],
-            )
             try:
+                booking_in = BookingCreate(
+                    customer_name=title[:120],
+                    # No contact details come from the calendar; attach all imports
+                    # to one pseudo-customer so dispatch works. The real job label
+                    # is the passenger_name / notes.
+                    customer_email="calendar-import@opalchauffeurs.local",
+                    customer_phone="+61000000000",
+                    source=BookingSource.WEBSITE,
+                    total_fare=0.0,
+                    deposit_percentage=100.0,
+                    passenger_name=title[:120],
+                    passenger_count=1,
+                    luggage_count=0,
+                    internal_notes=f"[Zoho Calendar] {title} {tag}"[:4000],
+                    legs=[BookingLegCreate(
+                        leg_number=1,
+                        pickup_address=pickup,
+                        dropoff_address=dropoff,
+                        pickup_datetime=when,
+                        vehicle_category=ZohoCalendarService._guess_vehicle(title),
+                        is_airport_pickup=is_airport,
+                    )],
+                )
                 await BookingService.create_booking(db, booking_in, notify=False)
                 created += 1
             except Exception as exc:
