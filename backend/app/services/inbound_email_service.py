@@ -160,6 +160,23 @@ class InboundEmailService:
             received_at=_parse_received_at(_first(item, "SentAtDate", "Date", "date", "received_at", "timestamp")),
         )
         db.add(record)
+
+        # If this is a booking-confirmation email (any of the sites' formats),
+        # auto-create a dispatchable booking from it. Never let a parse failure
+        # break inbox ingestion — the email is already stored above.
+        try:
+            from app.services.booking_email_parser import parse_booking_email
+            parsed = parse_booking_email(str(subject), str(body_text or ""), sender_email)
+            if parsed:
+                fields, website = parsed
+                from app.services.website_ingest_service import WebsiteIngestService
+                await WebsiteIngestService.ingest_form(db, fields, website=website, as_booking=True)
+        except Exception as exc:
+            import logging
+            logging.getLogger("booking_email").warning(
+                "Booking-email auto-create failed for subject %r: %s", subject, exc
+            )
+
         return record
 
     @staticmethod
