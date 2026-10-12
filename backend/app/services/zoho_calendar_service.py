@@ -374,7 +374,9 @@ class ZohoCalendarService:
         today_mel = datetime.now(_MEL).date()
         start = (today_mel - timedelta(days=days_back)).strftime("%Y-%m-%d")
         end = (today_mel + timedelta(days=days_ahead)).strftime("%Y-%m-%d")
-        events = await ZohoCalendarService.events_in_range(start, end)
+        # Backend job: wait for the feed if the cache is cold (unlike the UI path).
+        all_events = await ZohoCalendarService._all_events(wait_if_empty=True)
+        events = [e for e in all_events if start <= e["date"] <= end]
 
         created = skipped = 0
         for e in events:
