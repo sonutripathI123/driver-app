@@ -41,6 +41,18 @@ async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
     except Exception as ex:
         logger.error(f"[CRON MAILBOX] polling failed: {ex}")
 
+    # Auto-import upcoming Zoho calendar jobs onto the Operate Board as
+    # dispatchable DRAFT bookings. These have all automated reminders suppressed,
+    # so importing them never sends any SMS.
+    try:
+        from app.services.zoho_calendar_service import ZohoCalendarService
+        if ZohoCalendarService.configured():
+            z = await ZohoCalendarService.sync_upcoming_to_bookings(db=db)
+            if z.get("created"):
+                logger.info(f"[CRON ZOHO] imported {z['created']} booking(s) from the calendar")
+    except Exception as ex:
+        logger.error(f"[CRON ZOHO] calendar sync failed: {ex}")
+
     s1 = await AutomationService.process_balance_chasing(db=db)
     s2 = await AutomationService.process_pre_trip_confirmation_reminders(db=db)
     s3 = await AutomationService.process_pre_trip_handovers(db=db)
