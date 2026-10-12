@@ -8,6 +8,7 @@ in memory for a few minutes; callers ask for a date range and get just that
 slice. Times are converted to Australia/Melbourne so the day grouping matches
 what the operator sees in Zoho.
 """
+import asyncio
 import logging
 import time
 from datetime import datetime, timezone
@@ -27,6 +28,10 @@ except Exception:  # pragma: no cover
 
 # Module-level cache: {"at": epoch, "events": [...]}
 _cache: Dict[str, object] = {"at": 0.0, "events": None}
+
+# Serialise sync runs within this process so a manual sync and the cron sync
+# cannot race on booking-number generation.
+_sync_lock = asyncio.Lock()
 
 
 class ZohoCalendarService:
@@ -82,6 +87,38 @@ class ZohoCalendarService:
         )
 
     @staticmethod
+    def _parse_description(desc: str) -> Dict[str, Optional[str]]:
+        """Pull structured booking fields out of a Zoho event description.
+        Formats vary by source, so this is best-effort and label-driven."""
+        import re
+        out: Dict[str, Optional[str]] = {
+            "pickup": None, "dropoff": None, "phone": None,
+            "email": None, "vehicle": None, "flight": None, "name": None,
+        }
+        if not desc:
+            return out
+        text = (desc.replace("\\n", "\n").replace("\\N", "\n")
+                    .replace("\\,", ",").replace("\\;", ";").replace("\\\\", "\\"))
+
+        def label(pattern: str) -> Optional[str]:
+            m = re.search(rf"{pattern}\s*[:\-]\s*(.+)", text, re.IGNORECASE)
+            return m.group(1).strip() if m else None
+
+        out["pickup"] = label(r"pick\s*-?\s*up")
+        out["dropoff"] = label(r"drop\s*-?\s*off")
+        out["vehicle"] = label(r"vehicle")
+        out["name"] = label(r"name")
+        out["flight"] = label(r"arriving flight") or label(r"flight")
+        em = re.search(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}", text)
+        out["email"] = em.group(0).strip() if em else None
+        ph = label(r"contact") or label(r"phone") or label(r"mobile")
+        if not ph:
+            pm = re.search(r"(\+?\d[\d\s\-]{7,}\d)", text)
+            ph = pm.group(1).strip() if pm else None
+        out["phone"] = ph
+        return out
+
+    @staticmethod
     def _parse_ics(text: str) -> List[Dict]:
         events: List[Dict] = []
         cur: Optional[Dict] = None
@@ -98,6 +135,8 @@ class ZohoCalendarService:
                 is_date = "VALUE=DATE" in name_part.upper()
                 if name == "SUMMARY":
                     cur["title"] = ZohoCalendarService._unescape(val)
+                elif name == "DESCRIPTION":
+                    cur["_desc"] = val  # unescaped later in _parse_description
                 elif name == "LOCATION":
                     cur["location"] = ZohoCalendarService._unescape(val)
                 elif name == "DTSTART":
@@ -116,6 +155,7 @@ class ZohoCalendarService:
             s = e.get("_start")
             if not s:
                 continue
+            d = ZohoCalendarService._parse_description(e.get("_desc") or "")
             out.append({
                 "uid": e.get("uid"),
                 "title": e.get("title") or "(no title)",
@@ -124,6 +164,13 @@ class ZohoCalendarService:
                 "time": s[1],
                 "start": s[2],
                 "all_day": s[3],
+                "pickup": d["pickup"],
+                "dropoff": d["dropoff"],
+                "phone": d["phone"],
+                "email": d["email"],
+                "vehicle": d["vehicle"],
+                "flight": d["flight"],
+                "name": d["name"],
             })
         return out
 
