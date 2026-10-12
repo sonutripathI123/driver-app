@@ -148,7 +148,12 @@ class FlightTrackingService:
         leg.flight_scheduled_arrival = flight_data.scheduled_arrival
         leg.flight_actual_arrival = flight_data.actual_arrival or flight_data.estimated_arrival
         leg.flight_status = flight_data.status
+        prev_delay = leg.flight_delay_minutes or 0
         leg.flight_delay_minutes = flight_data.delay_minutes
+
+        # Only alert when the delay first appears or changes materially (>=10 min),
+        # so polling a delayed flight every few minutes does not re-send SMS.
+        notify_delay = flight_data.delay_minutes >= 15 and abs(flight_data.delay_minutes - prev_delay) >= 10
 
         # Automated Delay Handling: If delayed by >= 15 mins, adjust pickup time
         if flight_data.delay_minutes >= 15:
@@ -164,7 +169,7 @@ class FlightTrackingService:
             # now only the driver and the manager were told — the client would
             # have walked out to a car that was no longer coming at that time.
             booking = leg.booking
-            if booking:
+            if booking and notify_delay:
                 cust_name, cust_email, cust_phone = get_customer_contact(booking)
                 pickup_local = new_pickup.strftime("%d %b %Y at %H:%M UTC")
                 if cust_email:
@@ -204,22 +209,23 @@ class FlightTrackingService:
                         leg.booking_id
                     )
 
-            # Alert Driver via SMS if assigned
-            if leg.driver and leg.driver.phone:
+            # Alert Driver via SMS if assigned (only on a new/changed delay)
+            if leg.driver and leg.driver.phone and notify_delay:
                 sms_msg = f"Opal Chauffeurs Alert: Flight {leg.flight_number} delayed +{flight_data.delay_minutes}m. New pickup: {new_pickup.strftime('%I:%M %p')} at {leg.flight_terminal or 'Airport'}."
                 await NotificationService.record_and_dispatch_sms(
                     db, leg.driver.phone, "FLIGHT_DELAY_DRIVER_SMS", sms_msg, leg.booking_id
                 )
 
-            # Alert Manager Mobile directly
-            b_num = leg.booking.booking_number if leg.booking else ""
-            await NotificationService.dispatch_manager_mobile_alert(
-                db=db,
-                event_type="FLIGHT_DELAY",
-                title=f"Flight Delay Alert: {leg.flight_number} (+{flight_data.delay_minutes}m)",
-                message=f"Booking #{b_num}\nNew Pickup: {new_pickup.strftime('%I:%M %p')} @ {leg.flight_terminal or 'Airport'}\nDriver: {leg.driver.full_name if leg.driver else 'Unassigned'}",
-                booking_id=leg.booking_id
-            )
+            # Alert Manager Mobile directly (only on a new/changed delay)
+            if notify_delay:
+                b_num = leg.booking.booking_number if leg.booking else ""
+                await NotificationService.dispatch_manager_mobile_alert(
+                    db=db,
+                    event_type="FLIGHT_DELAY",
+                    title=f"Flight Delay Alert: {leg.flight_number} (+{flight_data.delay_minutes}m)",
+                    message=f"Booking #{b_num}\nNew Pickup: {new_pickup.strftime('%I:%M %p')} @ {leg.flight_terminal or 'Airport'}\nDriver: {leg.driver.full_name if leg.driver else 'Unassigned'}",
+                    booking_id=leg.booking_id
+                )
 
         # Critical Cancellation Handling.
         # Providers disagree on the spelling — AeroDataBox returns "Canceled" —
