@@ -50,7 +50,12 @@ export const FlightRadarPage: React.FC = () => {
   const loadBoard = async () => {
     try {
       const res = await flightsApi.getBoard(7);
-      setBoard(res.flights || []);
+      const list = res.flights || [];
+      setBoard(list);
+      // If any flight is being tracked live, the provider is clearly connected.
+      if (list.some((f) => f.tracking_live || f.flight_status)) {
+        setProviderConnected(true);
+      }
     } catch {
       // non-fatal; the panel just shows empty
     } finally {
