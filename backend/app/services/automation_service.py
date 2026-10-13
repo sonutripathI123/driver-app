@@ -113,12 +113,16 @@ class AutomationService:
         now = ensure_utc(reference_now or utc_now())
         summary = AutomationRunSummary()
 
-        # Query active bookings with outstanding balance
+        # Query active bookings with outstanding balance. Exclude calendar-imported
+        # jobs (Zoho) — those are external/already-handled bookings shown only for
+        # dispatch, so chasing their "balance" would SMS real customers (and cost
+        # Twilio) for payments the app does not actually manage.
         stmt = (
             select(Booking)
             .where(
                 Booking.status.notin_([BookingStatus.CANCELLED, BookingStatus.COMPLETED, BookingStatus.FINANCIALLY_CLOSED]),
-                Booking.balance_amount > 0.0
+                Booking.balance_amount > 0.0,
+                (Booking.internal_notes.is_(None) | ~Booking.internal_notes.ilike("%[Zoho Calendar]%")),
             )
             .options(
                 selectinload(Booking.legs),
