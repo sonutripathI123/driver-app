@@ -76,6 +76,14 @@ export const FlightRadarPage: React.FC = () => {
           timeZone: AEST, hour: '2-digit', minute: '2-digit', hour12: false,
         }).format(new Date(iso))} AEST`
       : '—';
+  // Date + time, for the flight board (so each job shows its day).
+  const fmtAestDT = (iso?: string | null) =>
+    iso
+      ? `${new Intl.DateTimeFormat('en-AU', {
+          timeZone: AEST, weekday: 'short', day: '2-digit', month: 'short',
+          hour: '2-digit', minute: '2-digit', hour12: false,
+        }).format(new Date(iso))} AEST`
+      : '—';
 
   /**
    * Shows only what the provider actually returned.
@@ -250,7 +258,7 @@ export const FlightRadarPage: React.FC = () => {
                   {/* Right: pickup / terminal / driver */}
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#0A0E1A] font-bold shrink-0">
                     <span className="flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5" /> {fmtAest(f.pickup_datetime)}
+                      <Clock className="w-3.5 h-3.5" /> {fmtAestDT(f.pickup_datetime)}
                     </span>
                     {f.terminal && (
                       <span className="flex items-center gap-1">
