@@ -242,6 +242,15 @@ class DispatchService:
             # A notification hiccup must never fail the allocation itself.
             pass
 
+        # Tell the CUSTOMER which chauffeur is coming (name, contact, vehicle).
+        # Per ops policy the manager is NOT alerted on allocation — the customer is.
+        try:
+            await NotificationService.send_customer_driver_allocated_notice(
+                db, booking, leg, driver_obj, veh_obj
+            )
+        except Exception:
+            pass
+
         await db.commit()
         await db.refresh(leg)
         return leg

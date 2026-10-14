@@ -57,13 +57,16 @@ class ManagerNotificationSettings(BaseModel):
     # on by default.
     manager_email_enabled: bool = True
     
-    # Event Triggers
+    # Event Triggers (which events alert the MANAGER).
+    # New bookings still notify the manager; but allocation, in-trip milestones
+    # and flight delays do NOT — on those the driver and/or customer are informed
+    # directly instead, so the manager inbox stays quiet.
     alert_on_new_booking: bool = True
-    alert_on_driver_allocation: bool = True
+    alert_on_driver_allocation: bool = False
     alert_on_driver_rejection: bool = True
     alert_on_unassigned_urgent: bool = True
-    alert_on_trip_milestones: bool = True  # En Route, Arrived, Picked Up, Completed
-    alert_on_flight_delay: bool = True
+    alert_on_trip_milestones: bool = False  # En Route, Arrived, Picked Up, Completed
+    alert_on_flight_delay: bool = False
     alert_on_payment_received: bool = True
 
 

@@ -513,6 +513,79 @@ class NotificationService:
         return notifs
 
     @staticmethod
+    async def send_customer_driver_allocated_notice(
+        db: AsyncSession,
+        booking: Booking,
+        leg: BookingLeg,
+        driver,
+        vehicle=None,
+    ) -> List[Notification]:
+        """
+        On allocation, tell the CUSTOMER which chauffeur is coming — SMS + email —
+        with the driver's name and contact and the vehicle, so the passenger knows
+        who to expect. (The manager is intentionally NOT alerted on allocation.)
+        """
+        notifs: List[Notification] = []
+        if not driver:
+            return notifs
+
+        cust_name, cust_email, cust_phone = get_customer_contact(booking)
+        drv_name = getattr(driver, "full_name", None) or "Your chauffeur"
+        drv_phone = getattr(driver, "phone", None)
+        veh_name = None
+        if vehicle is not None:
+            plate = getattr(vehicle, "registration_plate", "") or ""
+            veh_name = f"{getattr(vehicle, 'make', '')} {getattr(vehicle, 'model', '')}".strip()
+            if plate:
+                veh_name = f"{veh_name} ({plate})".strip()
+        pickup_str = (
+            leg.pickup_datetime.strftime("%d %b %Y at %I:%M %p AEST")
+            if leg.pickup_datetime else "your scheduled time"
+        )
+
+        if cust_phone:
+            parts = [
+                f"Opal Chauffeurs: Your chauffeur for booking #{booking.booking_number} "
+                f"({pickup_str}) is {drv_name}."
+            ]
+            if drv_phone:
+                parts.append(f"Contact: {drv_phone}.")
+            if veh_name:
+                parts.append(f"Vehicle: {veh_name}.")
+            sms = " ".join(parts)
+            notifs.append(await NotificationService.record_and_dispatch_sms(
+                db, cust_phone, "CUSTOMER_DRIVER_ALLOCATED_SMS", sms, booking.id
+            ))
+
+        if cust_email:
+            rows: List[Tuple[str, str]] = [
+                ("Booking", f"#{booking.booking_number}"),
+                ("Pickup", pickup_str),
+                ("From", leg.pickup_address),
+                ("To", leg.dropoff_address),
+                ("Your chauffeur", drv_name),
+            ]
+            if drv_phone:
+                rows.append(("Driver contact", drv_phone))
+            if veh_name:
+                rows.append(("Vehicle", veh_name))
+            html = NotificationService.build_branded_email(
+                heading="Your chauffeur has been assigned",
+                intro=(
+                    f"Dear {cust_name}, your chauffeur for booking "
+                    f"#{booking.booking_number} has been allocated. Details are below."
+                ),
+                rows=rows,
+            )
+            notifs.append(await NotificationService.record_and_dispatch_email(
+                db, cust_email, "CUSTOMER_DRIVER_ALLOCATED_EMAIL",
+                f"Your chauffeur is assigned — #{booking.booking_number} | Opal Chauffeurs",
+                html, booking.id
+            ))
+
+        return notifs
+
+    @staticmethod
     def build_branded_email(
         heading: str,
         intro: str,
