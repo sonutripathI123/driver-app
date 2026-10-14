@@ -230,9 +230,7 @@ class NotificationService:
         prefix = "🚨 [URGENT DISPATCH]" if urgency == "HIGH" else "🔔 [CHAUFFEUR OPS]"
         mobile_msg = f"{prefix} {title}\n{message}\nTime: {_melbourne_now_str('%H:%M')}"
 
-        channel = "WHATSAPP" if mgr.whatsapp_enabled else "SMS"
-        
-        # Dispatch WhatsApp/SMS
+        # Dispatch WhatsApp / SMS / in-app.
         if mgr.whatsapp_enabled:
             dispatch_res = await sms_gateway.send_whatsapp(mgr.manager_phone, mobile_msg)
             notif = Notification(
@@ -248,7 +246,7 @@ class NotificationService:
                 external_message_id=dispatch_res.get("message_id")
             )
             db.add(notif)
-        else:
+        elif mgr.sms_enabled:
             notif = await NotificationService.record_and_dispatch_sms(
                 db=db,
                 recipient_phone=mgr.manager_phone,
@@ -257,6 +255,22 @@ class NotificationService:
                 booking_id=booking_id,
                 channel="SMS"
             )
+        else:
+            # Manager SMS turned off (e.g. to avoid international SMS cost). Log
+            # the alert in-app so it still shows in the Mobile Alert Hub, and the
+            # email below (when the manager address differs from ops) carries it —
+            # no telco charge.
+            notif = Notification(
+                id=str(uuid.uuid4()),
+                booking_id=booking_id,
+                recipient=mgr.manager_phone,
+                channel="IN_APP",
+                template_name=f"MANAGER_{event_type}",
+                subject=title,
+                content=mobile_msg,
+                status="LOGGED",
+            )
+            db.add(notif)
 
         # Email the same alert. Unlike SMS/WhatsApp this needs no telco account,
         # so it is the one manager channel that works today.

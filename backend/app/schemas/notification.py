@@ -43,8 +43,13 @@ class AutomationRunSummary(BaseModel):
 class ManagerNotificationSettings(BaseModel):
     manager_phone: str = settings.MANAGER_PHONE
     manager_email: str = settings.MANAGER_EMAIL
-    whatsapp_enabled: bool = True
-    sms_enabled: bool = True
+    # Telco channels are OFF by default: WhatsApp needs a Twilio WhatsApp API the
+    # business does not have, and manager SMS to an international (+91) number is
+    # the main avoidable Twilio cost. Manager alerts instead land in-app (Mobile
+    # Alert Hub) and by email — both free. Flip these on in Manager Settings only
+    # once a cost-effective channel is in place.
+    whatsapp_enabled: bool = False
+    sms_enabled: bool = False
     telegram_bot_token: Optional[str] = None
     telegram_chat_id: Optional[str] = None
     browser_push_enabled: bool = True
