@@ -327,6 +327,11 @@ class ZohoCalendarService:
             name = ((ev.get("name") or title) or "Website booking")[:120]
             email = (ev.get("email") or "").strip() or None
             phone = (ev.get("phone") or "").strip() or None
+            # A calendar entry may carry placeholder text like "TBC" instead of a
+            # number; treat anything without a usable number as no phone so the
+            # booking still imports (with a placeholder) rather than being skipped.
+            if phone and len(re.sub(r"\D", "", phone)) < 6:
+                phone = None
             pickup = (ev.get("pickup") or "").strip()
             dropoff = (ev.get("dropoff") or "").strip()
             if not pickup or not dropoff:
