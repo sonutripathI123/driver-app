@@ -15,7 +15,7 @@ import imaplib
 import smtplib
 import ssl
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.header import decode_header, make_header
 from email.message import EmailMessage
 from email.utils import formataddr, parseaddr
@@ -69,6 +69,13 @@ def _extract_body(msg: email.message.Message) -> Tuple[str, str]:
         else:
             text = decoded
     return text, html
+
+
+# Circuit breaker for poll_all: {mailbox_id: datetime-until-skip}. A mailbox that
+# fails to connect is skipped for this cooldown so repeated dead IMAP connects do
+# not slow every cron tick.
+_MB_BLOCKED_UNTIL: dict = {}
+_MB_COOLDOWN = timedelta(minutes=60)
 
 
 class MailboxService:
@@ -270,8 +277,25 @@ class MailboxService:
     @staticmethod
     async def poll_all(db: AsyncSession) -> List[Dict[str, Any]]:
         results = []
+        now = datetime.now(timezone.utc)
         for mb in await MailboxService.list_mailboxes(db, active_only=True):
-            results.append(await MailboxService.poll_mailbox(db, mb))
+            # Circuit breaker: a mailbox whose IMAP is unreachable (e.g. Zoho
+            # geo-fencing blocks this server) fails on every tick and each failed
+            # connect wastes seconds. After a failure, skip it for a cooldown so
+            # the cron is not slowed by repeated dead connections; it is probed
+            # again once the cooldown passes, so it self-heals if access returns.
+            blocked_until = _MB_BLOCKED_UNTIL.get(mb.id)
+            if blocked_until and now < blocked_until:
+                results.append({"mailbox_id": mb.id, "label": mb.label, "stored": 0,
+                                "duplicates": 0, "error": "skipped (recent failure)"})
+                continue
+            res = await MailboxService.poll_mailbox(db, mb)
+            err = res.get("error")
+            if err and err not in (None, "skipped (recent failure)"):
+                _MB_BLOCKED_UNTIL[mb.id] = now + _MB_COOLDOWN
+            else:
+                _MB_BLOCKED_UNTIL.pop(mb.id, None)
+            results.append(res)
         return results
 
     # ------------------------------------------------------------------ AI draft
