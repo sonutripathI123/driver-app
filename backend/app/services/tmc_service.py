@@ -490,6 +490,11 @@ class TMCService:
 
             phone = (row.get("customerPhone") or "").strip()
             pkey = TMCService._digits(phone)
+            # TMC sometimes holds "TBC"/placeholder text instead of a number;
+            # anything without a usable number is treated as "no phone".
+            if len(pkey) < 6:
+                phone = ""
+                pkey = ""
             if pkey and any(abs((t - when).total_seconds()) <= 5400 for t in phone_times.get(pkey, [])):
                 skipped_dupe += 1
                 continue
