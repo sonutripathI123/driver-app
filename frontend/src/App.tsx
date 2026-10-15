@@ -105,7 +105,9 @@ const useLiveTripWatcher = (enabled: boolean) => {
     };
 
     poll();
-    const interval = setInterval(poll, 10000);
+    // 30s is plenty for trip/flight milestone toasts and cuts the app-wide
+    // live-feed polling to a third of what it was.
+    const interval = setInterval(poll, 30000);
     return () => {
       cancelled = true;
       clearInterval(interval);

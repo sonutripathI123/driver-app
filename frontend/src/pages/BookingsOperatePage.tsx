@@ -295,9 +295,24 @@ This removes the whole booking — all its legs, its invoice, payments and notif
   // legs actually on the board.
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 15000);
+    // Auto-refresh only the bookings (the thing that actually changes), and
+    // less often. The large driver/vehicle/partner lists are fetched once here
+    // and on a manual Refresh, instead of re-downloading all of them every few
+    // seconds — that polling was the bulk of this project's server traffic.
+    const interval = setInterval(refreshBookings, 45000);
     return () => clearInterval(interval);
   }, []);
+
+  // Lightweight poll: bookings only, no spinner, no driver/vehicle reload.
+  const refreshBookings = async () => {
+    try {
+      const bData = await bookingsApi.list(undefined, 200);
+      setBookings(bData.bookings || []);
+      setBoardError(null);
+    } catch {
+      // A transient poll failure keeps the last good board rather than blanking it.
+    }
+  };
 
   const loadData = async () => {
     try {
