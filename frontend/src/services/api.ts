@@ -565,6 +565,20 @@ export const fleetApi = {
     const res = await apiClient.get<{ configured: boolean }>(`/tmc/status`);
     return res.data;
   },
+  /** Import upcoming non-Zoho TrackMyChauffeur bookings as DRAFT bookings. */
+  syncBookingsFromTmc: async () => {
+    const res = await apiClient.post<{
+      fetched: number;
+      created: number;
+      skipped_existing: number;
+      skipped_zoho: number;
+      skipped_duplicate: number;
+      skipped_out_of_window: number;
+      failed: number;
+      errors: string[];
+    }>(`/tmc/sync-bookings`);
+    return res.data;
+  },
   /** Live driver GPS positions from TrackMyChauffeur (read-only). */
   getFleetLocations: async () => {
     const res = await apiClient.get<{ configured: boolean; count: number; drivers: FleetLocation[] }>(

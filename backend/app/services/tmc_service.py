@@ -21,9 +21,16 @@ Safety rules baked in:
 """
 import logging
 import re
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 
 import httpx
+
+try:
+    from zoneinfo import ZoneInfo
+    _MEL = ZoneInfo("Australia/Melbourne")
+except Exception:  # pragma: no cover
+    _MEL = timezone.utc
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -371,6 +378,204 @@ class TMCService:
             "skipped_existing": skipped_existing,
             "linked_existing": linked_existing,
             "vehicles_created": vehicles_created,
+            "failed": failed,
+            "errors": errors,
+        }
+
+    # ---- Bookings (Phase 3) ----------------------------------------------
+    @staticmethod
+    def _parse_tmc_time(s: Optional[str]) -> Optional[datetime]:
+        """Parse TMC's 'October 24th, 2026 10:30 AM' into a UTC datetime.
+
+        TMC shows Melbourne local time with an ordinal day; localise it to
+        Melbourne and convert to UTC for storage/comparison.
+        """
+        if not s:
+            return None
+        txt = re.sub(r"(\d+)(st|nd|rd|th)", r"\1", str(s)).strip()
+        for fmt in ("%B %d, %Y %I:%M %p", "%B %d, %Y %H:%M", "%b %d, %Y %I:%M %p"):
+            try:
+                naive = datetime.strptime(txt, fmt)
+                return naive.replace(tzinfo=_MEL).astimezone(timezone.utc)
+            except ValueError:
+                continue
+        return None
+
+    @staticmethod
+    def _digits(phone: Optional[str]) -> str:
+        d = re.sub(r"\D", "", phone or "")
+        return d[-9:] if len(d) >= 9 else d
+
+    @staticmethod
+    async def sync_bookings(db: AsyncSession, days_back: int = 1, days_ahead: int = 120) -> dict:
+        """Import UPCOMING non-Zoho TMC bookings as dispatch-ready DRAFT bookings.
+
+        Dedup is layered so nothing doubles up:
+          * Zoho-origin TMC rows are skipped — this app already imports those
+            straight from the Zoho calendar.
+          * Rows already imported from TMC before are skipped (marker in notes).
+          * A row matching an existing booking by phone + pickup time (±90 min)
+            is skipped.
+        All automated reminders are suppressed (no SMS), exactly like the Zoho
+        import. Read-only against TMC.
+        """
+        from sqlalchemy import select
+        from app.models.booking import Booking
+        from app.models.booking_leg import BookingLeg
+        from app.models.enums import BookingSource
+        from app.schemas.booking import BookingCreate, BookingLegCreate
+        from app.services.booking_service import BookingService
+
+        if not TMCService.configured():
+            raise RuntimeError("TrackMyChauffeur connector is not configured.")
+
+        base = settings.TMC_BASE_URL.strip().rstrip("/")
+        async with httpx.AsyncClient(
+            base_url=base, timeout=40.0, follow_redirects=True,
+            headers={"Accept": "application/json"},
+        ) as client:
+            await TMCService._authenticate(client)
+            rows = await TMCService._fetch(client, "/api/bookings")
+
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(days=days_back)
+        window_end = now + timedelta(days=days_ahead)
+
+        # Existing state for dedupe.
+        existing = (await db.execute(select(Booking))).scalars().all()
+        known_tmc = set()
+        for b in existing:
+            m = re.search(r"\[tmc-booking-id:([0-9a-fA-F-]{6,})\]", b.internal_notes or "")
+            if m:
+                known_tmc.add(m.group(1).lower())
+
+        leg_rows = (await db.execute(
+            select(Booking.customer_phone, Booking.passenger_phone, BookingLeg.pickup_datetime)
+            .join(BookingLeg, BookingLeg.booking_id == Booking.id)
+        )).all()
+        phone_times: Dict[str, List[datetime]] = {}
+        for cust_phone, pax_phone, pdt in leg_rows:
+            if pdt is None:
+                continue
+            pdt = pdt if pdt.tzinfo else pdt.replace(tzinfo=timezone.utc)
+            for ph in (cust_phone, pax_phone):
+                key = TMCService._digits(ph)
+                if key:
+                    phone_times.setdefault(key, []).append(pdt)
+
+        created = skipped_zoho = skipped_existing = skipped_dupe = skipped_past = failed = 0
+        errors: List[str] = []
+
+        for row in rows:
+            tmc_id = str(row.get("id") or "").strip()
+            if not tmc_id:
+                failed += 1
+                continue
+            if tmc_id.lower() in known_tmc:
+                skipped_existing += 1
+                continue
+
+            pickup_loc = (row.get("pickupLocation") or "").strip()
+            if "zoho" in pickup_loc.lower():
+                skipped_zoho += 1
+                continue
+
+            when = TMCService._parse_tmc_time(row.get("pickupTime"))
+            if not when or not (window_start <= when <= window_end):
+                skipped_past += 1
+                continue
+
+            phone = (row.get("customerPhone") or "").strip()
+            pkey = TMCService._digits(phone)
+            if pkey and any(abs((t - when).total_seconds()) <= 5400 for t in phone_times.get(pkey, [])):
+                skipped_dupe += 1
+                continue
+
+            name = (row.get("customerName") or "TMC booking").strip()[:120] or "TMC booking"
+            email = (row.get("customerEmail") or "").strip() or None
+            dropoff = (row.get("dropoffLocation") or "").strip()
+            flight = (row.get("flightNumber") or "").strip() or None
+            extra = (row.get("extra") or "").strip()
+            bref = (row.get("providerBookingRef") or "").strip()
+
+            def _norm_addr(a: str, fallback: str) -> str:
+                a = (a or "").strip()
+                if len(a) < 3:
+                    a = fallback
+                return a[:500]
+
+            pickup = _norm_addr(pickup_loc, "See booking notes")
+            dropoff = _norm_addr(dropoff, "See booking notes")
+
+            veh_text = ""
+            mveh = re.search(r"vehicle\s*:\s*([^\n|]+)", extra, re.I)
+            if mveh:
+                veh_text = mveh.group(1).strip()
+            category = TMCService._infer_category({"make": veh_text, "model": ""}) if veh_text and "next available" not in veh_text.lower() else None
+
+            is_airport = "airport" in pickup.lower() or bool(flight)
+            note_bits = ["[TMC Booking]"]
+            if bref:
+                note_bits.append(f"Ref: {bref}")
+            if extra:
+                note_bits.append(f"| {extra}")
+            if row.get("driverId"):
+                note_bits.append(f"| TMC driver id: {row.get('driverId')}")
+            note_bits.append(f"[tmc-booking-id:{tmc_id}]")
+
+            leg_kwargs = dict(
+                leg_number=1,
+                pickup_address=pickup,
+                dropoff_address=dropoff,
+                pickup_datetime=when,
+                is_airport_pickup=is_airport,
+                flight_number=(flight[:20] if flight else None),
+            )
+            if category is not None:
+                leg_kwargs["vehicle_category"] = category
+
+            try:
+                booking_in = BookingCreate(
+                    customer_name=name,
+                    customer_email=email or "tmc-import@opalchauffeurs.com.au",
+                    customer_phone=phone or "+61000000000",
+                    source=BookingSource.WEBSITE,
+                    total_fare=0.0,
+                    deposit_percentage=100.0,
+                    flight_tracking_enabled=bool(flight),
+                    passenger_name=name,
+                    passenger_phone=phone or None,
+                    passenger_email=email,
+                    passenger_count=1,
+                    luggage_count=0,
+                    internal_notes=" ".join(note_bits)[:4000],
+                    legs=[BookingLegCreate(**leg_kwargs)],
+                )
+                booking = await BookingService.create_booking(db, booking_in, notify=False)
+                booking.driver_handover_sent = True
+                booking.customer_reminder_12_24h_sent = True
+                await db.commit()
+                created += 1
+                known_tmc.add(tmc_id.lower())
+                if pkey:
+                    phone_times.setdefault(pkey, []).append(when)
+            except Exception as exc:
+                await db.rollback()
+                failed += 1
+                if len(errors) < 10:
+                    errors.append(f"{name}: {exc}")
+
+        logger.info(
+            "TMC bookings sync: %d created, %d existing, %d zoho-skip, %d dupe, %d out-of-window, %d failed (of %d)",
+            created, skipped_existing, skipped_zoho, skipped_dupe, skipped_past, failed, len(rows),
+        )
+        return {
+            "fetched": len(rows),
+            "created": created,
+            "skipped_existing": skipped_existing,
+            "skipped_zoho": skipped_zoho,
+            "skipped_duplicate": skipped_dupe,
+            "skipped_out_of_window": skipped_past,
             "failed": failed,
             "errors": errors,
         }

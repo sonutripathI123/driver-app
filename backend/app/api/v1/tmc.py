@@ -55,3 +55,27 @@ async def tmc_sync_drivers(db: AsyncSession = Depends(get_db)):
             status_code=status.HTTP_502_BAD_GATEWAY,
             detail=f"Could not sync from TrackMyChauffeur: {exc}",
         )
+
+
+@router.post("/sync-bookings", dependencies=[Depends(require_ops)])
+async def tmc_sync_bookings(db: AsyncSession = Depends(get_db)):
+    """Import upcoming non-Zoho TrackMyChauffeur bookings as dispatch-ready DRAFT
+    bookings. Read-only against TMC. Skips Zoho-origin rows (this app imports
+    those from Zoho directly), rows already imported, and rows matching an
+    existing booking by phone + pickup time. No SMS is sent.
+    Access: ADMIN, OPERATIONS_MANAGER.
+    """
+    if not TMCService.configured():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="TrackMyChauffeur connector is not configured. Set TMC_USERNAME and TMC_PASSWORD in .env.",
+        )
+    try:
+        return await TMCService.sync_bookings(db)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not sync bookings from TrackMyChauffeur: {exc}",
+        )

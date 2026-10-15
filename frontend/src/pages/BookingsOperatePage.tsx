@@ -50,6 +50,7 @@ export const BookingsOperatePage: React.FC = () => {
   // TrackMyChauffeur connector + driver roster management
   const [tmcConfigured, setTmcConfigured] = useState(false);
   const [syncingTmc, setSyncingTmc] = useState(false);
+  const [syncingBookings, setSyncingBookings] = useState(false);
   const [manageDriversOpen, setManageDriversOpen] = useState(false);
   const [driverSearch, setDriverSearch] = useState('');
   const [editDriver, setEditDriver] = useState<Driver | null>(null);
@@ -198,6 +199,32 @@ This removes the whole booking — all its legs, its invoice, payments and notif
       setDriverFormError(typeof detail === 'string' ? detail : err?.message || 'Could not sync from TrackMyChauffeur.');
     } finally {
       setSyncingTmc(false);
+    }
+  };
+
+  // Import upcoming non-Zoho bookings from the live TrackMyChauffeur app.
+  const handleSyncTmcBookings = async () => {
+    setSyncingBookings(true);
+    setDriverNotice(null);
+    setDriverFormError(null);
+    try {
+      const res = await fleetApi.syncBookingsFromTmc();
+      setDriverNotice(
+        `TrackMyChauffeur bookings sync — ${res.created} new booking(s) added` +
+          `, ${res.skipped_existing} already imported, ${res.skipped_zoho} Zoho-origin skipped, ` +
+          `${res.skipped_duplicate} duplicate(s) skipped` +
+          (res.failed ? `, ${res.failed} failed` : '') +
+          `. All added as DRAFT — no SMS sent.`
+      );
+      await loadData();
+      if (res.created > 0) {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.5 }, colors: ['#DFCAA8', '#C2A16B', '#FAF6F0'] });
+      }
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setDriverFormError(typeof detail === 'string' ? detail : err?.message || 'Could not sync bookings from TrackMyChauffeur.');
+    } finally {
+      setSyncingBookings(false);
     }
   };
 
@@ -547,7 +574,20 @@ This removes the whole booking — all its legs, its invoice, payments and notif
               title="Import the driver roster from TrackMyChauffeur"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${syncingTmc ? 'animate-spin' : ''}`} />
-              <span className="font-black">{syncingTmc ? 'Syncing…' : 'Sync from TrackMyChauffeur'}</span>
+              <span className="font-black">{syncingTmc ? 'Syncing…' : 'Sync Drivers (TMC)'}</span>
+            </button>
+          )}
+
+          {/* Import upcoming bookings from the live TrackMyChauffeur app */}
+          {tmcConfigured && (
+            <button
+              onClick={handleSyncTmcBookings}
+              disabled={syncingBookings}
+              className="px-4 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all disabled:opacity-60"
+              title="Import upcoming non-Zoho bookings from TrackMyChauffeur"
+            >
+              <CalendarDays className={`w-3.5 h-3.5 ${syncingBookings ? 'animate-pulse' : ''}`} />
+              <span className="font-black">{syncingBookings ? 'Importing…' : 'Sync Bookings (TMC)'}</span>
             </button>
           )}
 
