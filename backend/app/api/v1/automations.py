@@ -20,6 +20,55 @@ router = APIRouter(prefix="/automations", tags=["Automations & Scheduled Jobs"])
 _bg_tasks: set = set()
 
 
+def _spawn(coro) -> None:
+    """Launch a fire-and-forget background task, keeping a reference so it is not
+    garbage-collected before it completes."""
+    import asyncio
+    task = asyncio.create_task(coro)
+    _bg_tasks.add(task)
+    task.add_done_callback(_bg_tasks.discard)
+
+
+async def _due_and_claim(db: AsyncSession, key: str, min_minutes: int) -> bool:
+    """True (recording 'now') if this job is due again. Writing the timestamp up
+    front claims the slot so frequent cron ticks don't start overlapping runs."""
+    from datetime import datetime, timezone, timedelta
+    from app.models.app_setting import AppSetting
+    now = datetime.now(timezone.utc)
+    try:
+        row = await db.get(AppSetting, key)
+    except Exception:
+        await db.rollback()
+        row = None
+    last = None
+    if row and isinstance(row.value, dict):
+        try:
+            last = datetime.fromisoformat(row.value.get("at"))
+        except Exception:
+            last = None
+    if last and (now - last) < timedelta(minutes=min_minutes):
+        return False
+    if row:
+        row.value = {"at": now.isoformat()}
+    else:
+        db.add(AppSetting(key=key, value={"at": now.isoformat()}, updated_by="cron"))
+    await db.commit()
+    return True
+
+
+async def _zoho_sync_bg() -> None:
+    """Background Zoho calendar import on its own DB session (slow — must not
+    block the cron response or the dashboard)."""
+    from app.core.database import AsyncSessionLocal
+    from app.services.zoho_calendar_service import ZohoCalendarService
+    try:
+        async with AsyncSessionLocal() as db:
+            z = await ZohoCalendarService.sync_upcoming_to_bookings(db=db)
+            logger.info(f"[CRON ZOHO bg] imported {z.get('created', 0)} booking(s)")
+    except Exception as ex:
+        logger.error(f"[CRON ZOHO bg] calendar sync failed: {ex}")
+
+
 async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
     """Runs each scheduled job and merges the counts."""
     # Poll inbound flights first. Nothing else calls this, so without it a delay
@@ -45,29 +94,25 @@ async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
     except Exception as ex:
         logger.error(f"[CRON MAILBOX] polling failed: {ex}")
 
-    # Auto-import upcoming Zoho calendar jobs onto the Operate Board as
-    # dispatchable DRAFT bookings. These have all automated reminders suppressed,
-    # so importing them never sends any SMS.
+    # Auto-import upcoming Zoho calendar jobs (DRAFT, reminders suppressed, no
+    # SMS). Runs in the BACKGROUND at most every ~20 min: the 120-day scan is too
+    # slow to run inline every cron tick (it was timing out the whole cron call).
     try:
         from app.services.zoho_calendar_service import ZohoCalendarService
-        if ZohoCalendarService.configured():
-            z = await ZohoCalendarService.sync_upcoming_to_bookings(db=db)
-            if z.get("created"):
-                logger.info(f"[CRON ZOHO] imported {z['created']} booking(s) from the calendar")
+        if ZohoCalendarService.configured() and await _due_and_claim(db, "zoho_last_auto_sync", 20):
+            _spawn(_zoho_sync_bg())
+            logger.info("[CRON ZOHO] background import launched")
     except Exception as ex:
-        logger.error(f"[CRON ZOHO] calendar sync failed: {ex}")
+        logger.error(f"[CRON ZOHO] schedule failed: {ex}")
 
     # Daily auto-sync from TrackMyChauffeur (drivers + bookings). The cron fires
     # often, so this runs at most once per ~20h and in the background (its own DB
     # session) — the booking import can take a while and must not block this
     # response or the dashboard. Read-only against TMC.
     try:
-        import asyncio
         from app.services.tmc_service import TMCService
         if TMCService.configured() and await TMCService.auto_sync_due_and_claim(db):
-            task = asyncio.create_task(TMCService.run_daily_sync_background())
-            _bg_tasks.add(task)
-            task.add_done_callback(_bg_tasks.discard)
+            _spawn(TMCService.run_daily_sync_background())
             logger.info("[CRON TMC] daily sync launched in background")
     except Exception as ex:
         logger.error(f"[CRON TMC] daily sync schedule failed: {ex}")
