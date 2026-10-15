@@ -125,7 +125,7 @@ const AuthenticatedApp: React.FC = () => {
       case 'operate':
         return <BookingsOperatePage />;
       case 'calendar':
-        return <CalendarPage />;
+        return <CalendarPage onNavigate={setActiveTab} />;
       case 'quotes':
         return <QuoteBookingPage />;
       case 'enquiries':

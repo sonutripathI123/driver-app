@@ -16,6 +16,7 @@ import {
   FileText,
 } from 'lucide-react';
 import { zohoCalendarApi } from '../services/api';
+import type { NavTab } from '../components/layout/Sidebar';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [
@@ -47,7 +48,11 @@ interface ZohoEvent {
 const localDateKey = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-export const CalendarPage: React.FC = () => {
+interface CalendarPageProps {
+  onNavigate?: (tab: NavTab) => void;
+}
+
+export const CalendarPage: React.FC<CalendarPageProps> = ({ onNavigate }) => {
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth(), 1);
@@ -139,9 +144,19 @@ export const CalendarPage: React.FC = () => {
       const r = await zohoCalendarApi.dispatch(ev.uid);
       setDispatchMsg(
         r.status === 'duplicate'
-          ? `ℹ️ Ye job pehle se Operate Board pe hai (${r.booking_number}). Wahan jaake driver allocate karo.`
-          : `✅ ${r.booking_number} ban gayi — ab "Live Operate Board" pe jaake driver allocate karo.`
+          ? `ℹ️ Ye job pehle se Operate Board pe hai (${r.booking_number}). Khol rahe hain…`
+          : `✅ ${r.booking_number} ban gayi — Operate Board khol rahe hain…`
       );
+      // Jump straight to the Operate Board and auto-open this booking's
+      // allocation, so the dispatcher can assign a driver without hunting for it.
+      if (r.booking_number && onNavigate) {
+        try {
+          localStorage.setItem('operate_focus_booking', r.booking_number);
+        } catch {
+          /* private mode / storage blocked — the board just won't auto-open */
+        }
+        setTimeout(() => onNavigate('operate'), 600);
+      }
     } catch (e: any) {
       const d = e?.response?.data?.detail;
       setDispatchMsg(typeof d === 'string' ? d : 'Dispatch banane me dikkat aayi, dobara try karo.');

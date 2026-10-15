@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { bookingsApi, dispatchApi, fleetApi, notificationsApi, partnersApi, DriverAvailabilityItem } from '../services/api';
 import { Booking, BookingLeg, Driver, LegStatus, Partner, Vehicle } from '../types';
 import {
@@ -302,6 +302,27 @@ This removes the whole booking — all its legs, its invoice, payments and notif
     const interval = setInterval(refreshBookings, 45000);
     return () => clearInterval(interval);
   }, []);
+
+  // When the user clicks "Dispatch" on the Calendar, we land here with the
+  // target booking number in localStorage — open its allocation automatically so
+  // they can assign a driver straight away, then clear the marker.
+  const focusHandledRef = useRef(false);
+  useEffect(() => {
+    if (focusHandledRef.current || bookings.length === 0) return;
+    focusHandledRef.current = true;
+    let target: string | null = null;
+    try {
+      target = localStorage.getItem('operate_focus_booking');
+      localStorage.removeItem('operate_focus_booking');
+    } catch {
+      target = null;
+    }
+    if (!target) return;
+    const b = bookings.find((x) => x.booking_number === target);
+    const leg = b?.legs?.[0];
+    if (b && leg) handleOpenAllocation(b, leg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings]);
 
   // Lightweight poll: bookings only, no spinner, no driver/vehicle reload.
   const refreshBookings = async () => {
