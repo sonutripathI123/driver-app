@@ -560,7 +560,33 @@ class NotificationService:
             if leg.pickup_datetime else "your scheduled time"
         )
 
-        if cust_phone:
+        # Customer portal link: a set-password link the first time (activate the
+        # account), else the plain sign-in link — so the passenger can track this
+        # trip on their dashboard, same idea as the driver's activation link.
+        portal_url = (settings.PUBLIC_APP_URL or "").rstrip("/")
+        portal_link = portal_url + "/"
+        first_time = True
+        try:
+            from app.models.customer import Customer
+            from app.core.security import create_customer_setup_token
+            cust_rec = await db.get(Customer, booking.customer_id) if booking.customer_id else None
+            if cust_rec:
+                if cust_rec.user_id:
+                    first_time = False
+                else:
+                    portal_link = f"{portal_url}/set-password?token={create_customer_setup_token(cust_rec.id)}"
+        except Exception:
+            pass
+        cta = "Set up your account & track your booking" if first_time else "Track your booking"
+
+        # Skip placeholder contacts carried by imported bookings.
+        real_phone = cust_phone and cust_phone != "+61000000000"
+        real_email = cust_email and not any(
+            cust_email.lower().endswith(d) for d in
+            ("@import.opalchauffeurs.com.au", "calendar-import@opalchauffeurs.com.au", "tmc-import@opalchauffeurs.com.au")
+        )
+
+        if real_phone:
             parts = [
                 f"Opal Chauffeurs: Your chauffeur for booking #{booking.booking_number} "
                 f"({pickup_str}) is {drv_name}."
@@ -569,12 +595,13 @@ class NotificationService:
                 parts.append(f"Contact: {drv_phone}.")
             if veh_name:
                 parts.append(f"Vehicle: {veh_name}.")
+            parts.append(f"{cta}: {portal_link}")
             sms = " ".join(parts)
             notifs.append(await NotificationService.record_and_dispatch_sms(
                 db, cust_phone, "CUSTOMER_DRIVER_ALLOCATED_SMS", sms, booking.id
             ))
 
-        if cust_email:
+        if real_email:
             rows: List[Tuple[str, str]] = [
                 ("Booking", f"#{booking.booking_number}"),
                 ("Pickup", pickup_str),
@@ -593,6 +620,10 @@ class NotificationService:
                     f"#{booking.booking_number} has been allocated. Details are below."
                 ),
                 rows=rows,
+                footer_note=(
+                    f"<a href=\"{portal_link}\" style=\"color:#0A0E1A;font-weight:800;\">{cta}</a> — "
+                    f"sign in any time to see your booking."
+                ),
             )
             notifs.append(await NotificationService.record_and_dispatch_email(
                 db, cust_email, "CUSTOMER_DRIVER_ALLOCATED_EMAIL",
