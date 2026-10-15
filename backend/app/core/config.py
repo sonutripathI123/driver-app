@@ -200,6 +200,21 @@ class Settings(BaseSettings):
     VAPID_PRIVATE_KEY: str = "8aVp7hlfMtpQX5W_S14oeoMZLqD7QG4GA0-8G_Q_r6k"
     VAPID_CLAIMS_EMAIL: str = "mailto:book@opalchauffeurs.com.au"
 
+    # TrackMyChauffeur connector (READ-ONLY). The business runs a second, live
+    # operations app at trackmychauffeur.com holding the real driver roster,
+    # vehicles, companies and bookings. This connector logs in with the admin
+    # credentials below and only READS its JSON API (GET) to pull data into this
+    # dashboard — it never writes, changes or deletes anything on that app.
+    # Empty username/password => the connector is off (the sync endpoint refuses
+    # and the cron hook is skipped). Credentials are entered in .env on the
+    # server, never in code. TMC_SYNC_ENABLED turns on the automatic periodic
+    # sync in the automation cron; the manual "Sync" button works whenever the
+    # credentials are set, regardless of this flag.
+    TMC_BASE_URL: str = "https://trackmychauffeur.com"
+    TMC_USERNAME: str = ""
+    TMC_PASSWORD: str = ""
+    TMC_SYNC_ENABLED: bool = False
+
     # Business Defaults
     DEFAULT_CURRENCY: str = "AUD"
     DEFAULT_TIMEZONE: str = "Australia/Melbourne"

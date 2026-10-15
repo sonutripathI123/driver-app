@@ -538,8 +538,28 @@ export const fleetApi = {
     const res = await apiClient.post<Driver>(`/drivers/`, data);
     return res.data;
   },
+  updateDriver: async (driverId: string, data: any) => {
+    const res = await apiClient.patch<Driver>(`/drivers/${driverId}`, data);
+    return res.data;
+  },
   deleteDriver: async (driverId: string) => {
     const res = await apiClient.delete(`/drivers/${driverId}`);
+    return res.data;
+  },
+  /** Whether the read-only TrackMyChauffeur connector is configured on the server. */
+  getTmcStatus: async () => {
+    const res = await apiClient.get<{ configured: boolean }>(`/tmc/status`);
+    return res.data;
+  },
+  /** Pull the driver roster from the live TrackMyChauffeur app (read-only there). */
+  syncDriversFromTmc: async () => {
+    const res = await apiClient.post<{
+      fetched: number;
+      created: number;
+      skipped_existing: number;
+      failed: number;
+      errors: string[];
+    }>(`/tmc/sync-drivers`);
     return res.data;
   },
   createVehicle: async (data: any) => {

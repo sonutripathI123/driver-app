@@ -47,6 +47,21 @@ export const BookingsOperatePage: React.FC = () => {
   const [driverFormError, setDriverFormError] = useState<string | null>(null);
   const [driverNotice, setDriverNotice] = useState<string | null>(null);
 
+  // TrackMyChauffeur connector + driver roster management
+  const [tmcConfigured, setTmcConfigured] = useState(false);
+  const [syncingTmc, setSyncingTmc] = useState(false);
+  const [manageDriversOpen, setManageDriversOpen] = useState(false);
+  const [driverSearch, setDriverSearch] = useState('');
+  const [editDriver, setEditDriver] = useState<Driver | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editLicense, setEditLicense] = useState('');
+  const [editVehicleId, setEditVehicleId] = useState('');
+  const [editNotes, setEditNotes] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
   // Allocation Modal State
   const [selectedLeg, setSelectedLeg] = useState<{ bookingId: string; leg: BookingLeg } | null>(null);
   const [allocationDriverId, setAllocationDriverId] = useState('');
@@ -157,6 +172,93 @@ This removes the whole booking — all its legs, its invoice, payments and notif
       setSavingDriver(false);
     }
   };
+
+  // Pull the driver roster from the live TrackMyChauffeur app (read-only there).
+  // Creates only drivers not already here; existing imports are left untouched
+  // so manual corrections (licence/email/plate) survive a re-sync.
+  const handleSyncTmc = async () => {
+    setSyncingTmc(true);
+    setDriverNotice(null);
+    setDriverFormError(null);
+    try {
+      const res = await fleetApi.syncDriversFromTmc();
+      setDriverNotice(
+        `TrackMyChauffeur sync done — ${res.created} new driver(s) added, ${res.skipped_existing} already here` +
+          (res.failed ? `, ${res.failed} skipped (bad data)` : '') +
+          `. Licence & email are placeholders — use Manage Drivers → Edit to correct them.`
+      );
+      await loadData();
+      if (res.created > 0) {
+        confetti({ particleCount: 90, spread: 70, origin: { y: 0.5 }, colors: ['#DFCAA8', '#C2A16B', '#FAF6F0'] });
+      }
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setDriverFormError(typeof detail === 'string' ? detail : err?.message || 'Could not sync from TrackMyChauffeur.');
+    } finally {
+      setSyncingTmc(false);
+    }
+  };
+
+  const openEditDriver = (d: Driver) => {
+    setEditDriver(d);
+    setEditName(d.full_name || '');
+    setEditPhone(d.phone || '');
+    setEditEmail(d.email || '');
+    setEditLicense(d.license_number || '');
+    setEditVehicleId((d as any).default_vehicle_id || '');
+    setEditNotes((d as any).notes || '');
+    setEditError(null);
+  };
+
+  const handleUpdateDriver = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editDriver) return;
+    setSavingEdit(true);
+    setEditError(null);
+    try {
+      const updated = await fleetApi.updateDriver(editDriver.id, {
+        full_name: editName.trim(),
+        phone: editPhone.trim(),
+        email: editEmail.trim(),
+        license_number: editLicense.trim(),
+        default_vehicle_id: editVehicleId || null,
+        notes: editNotes,
+      });
+      setDrivers((prev) => prev.map((d) => (d.id === updated.id ? updated : d)));
+      setEditDriver(null);
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      setEditError(
+        typeof detail === 'string'
+          ? detail
+          : Array.isArray(detail) && detail.length
+            ? detail.map((d: any) => `${(d.loc || []).slice(1).join('.') || 'field'}: ${d.msg}`).join(' • ')
+            : err?.message || 'Could not update this driver.'
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const handleDeleteDriver = async (d: Driver) => {
+    if (!window.confirm(`Remove ${d.full_name} from the roster? This also removes their portal login.`)) return;
+    try {
+      await fleetApi.deleteDriver(d.id);
+      setDrivers((prev) => prev.filter((x) => x.id !== d.id));
+    } catch (err: any) {
+      const detail = err?.response?.data?.detail;
+      alert(typeof detail === 'string' ? detail : 'Could not remove this driver.');
+    }
+  };
+
+  // Load connector availability once so the Sync button only shows when the
+  // server has TMC credentials configured.
+  useEffect(() => {
+    fleetApi
+      .getTmcStatus()
+      .then((s) => setTmcConfigured(!!s.configured))
+      .catch(() => setTmcConfigured(false));
+  }, []);
 
   // Poll the board so a chauffeur advancing a trip on their phone shows up
   // here. This used to patch a hardcoded "CCM-2026-9901" booking from the
@@ -407,6 +509,29 @@ This removes the whole booking — all its legs, its invoice, payments and notif
             <UserPlus className="w-3.5 h-3.5" />
             <span className="font-black">+ Onboard Driver</span>
           </button>
+
+          {/* Manage Drivers (roster: edit / delete) */}
+          <button
+            onClick={() => setManageDriversOpen(true)}
+            className="px-4 py-2.5 rounded-xl bg-[#FAF6F0] border border-[#DFCAA8] text-[#0A0E1A] font-black text-xs flex items-center gap-1.5 shadow-sm hover:bg-white transition-all"
+            title="View, edit or remove drivers"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span className="font-black">Manage Drivers ({drivers.length})</span>
+          </button>
+
+          {/* Sync drivers from the live TrackMyChauffeur app (read-only there) */}
+          {tmcConfigured && (
+            <button
+              onClick={handleSyncTmc}
+              disabled={syncingTmc}
+              className="px-4 py-2.5 rounded-xl bg-[#06090F] hover-sky border border-[#DFCAA8] text-white font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all disabled:opacity-60"
+              title="Import the driver roster from TrackMyChauffeur"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${syncingTmc ? 'animate-spin' : ''}`} />
+              <span className="font-black">{syncingTmc ? 'Syncing…' : 'Sync from TrackMyChauffeur'}</span>
+            </button>
+          )}
 
           {/* Refresh Button */}
           <button
@@ -1103,6 +1228,226 @@ This removes the whole booking — all its legs, its invoice, payments and notif
                     <Check className="w-4 h-4 text-white" />
                   )}
                   <span>{savingDriver ? 'Saving…' : 'Save & Onboard Driver'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Drivers Roster Modal (list, edit, delete) */}
+      {manageDriversOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-3xl w-full p-6 sm:p-7 rounded-3xl relative shadow-2xl text-[#0A0E1A] max-h-[88vh] flex flex-col">
+            <button
+              onClick={() => setManageDriversOpen(false)}
+              className="absolute top-5 right-5 text-[#0A0E1A] hover:bg-[#E6D8C3] p-1.5 rounded-xl bg-white border border-[#E6D8C3]"
+            >
+              <X className="w-5 h-5 text-[#0A0E1A]" />
+            </button>
+
+            <div className="flex items-center gap-2.5 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] shadow-sm">
+                <Users className="w-5 h-5 text-[#0A0E1A]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[#0A0E1A]">Driver Roster ({drivers.length})</h3>
+                <p className="text-xs text-[#0A0E1A] font-bold">
+                  Edit a driver to fix imported placeholders (licence, email, vehicle).
+                </p>
+              </div>
+            </div>
+
+            <div className="relative mb-3">
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-[#0A0E1A]" />
+              <input
+                type="text"
+                placeholder="Search name, phone, email or licence…"
+                value={driverSearch}
+                onChange={(e) => setDriverSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 bg-[#FFFFFF] border border-[#E6D8C3] rounded-xl text-xs text-[#0A0E1A] placeholder-slate-600 font-black focus:outline-none focus:border-[#0A0E1A]"
+              />
+            </div>
+
+            <div className="overflow-y-auto flex-1 rounded-xl border border-[#E6D8C3] bg-white">
+              {drivers.length === 0 ? (
+                <p className="p-6 text-center text-xs font-bold text-slate-600">
+                  No drivers yet. Use “Sync from TrackMyChauffeur” or “+ Onboard Driver”.
+                </p>
+              ) : (
+                drivers
+                  .filter((d) => {
+                    const q = driverSearch.trim().toLowerCase();
+                    if (!q) return true;
+                    return (
+                      (d.full_name || '').toLowerCase().includes(q) ||
+                      (d.phone || '').toLowerCase().includes(q) ||
+                      (d.email || '').toLowerCase().includes(q) ||
+                      (d.license_number || '').toLowerCase().includes(q)
+                    );
+                  })
+                  .map((d) => {
+                    const placeholder =
+                      (d.license_number || '').startsWith('TMC-') ||
+                      (d.email || '').includes('@import.opalchauffeurs.com.au');
+                    return (
+                      <div
+                        key={d.id}
+                        className="flex items-center justify-between gap-3 px-4 py-3 border-b border-[#F0E8DA] last:border-b-0"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-black text-sm text-[#0A0E1A] truncate">{d.full_name}</span>
+                            {placeholder && (
+                              <span className="px-2 py-0.5 rounded-full bg-amber-100 border border-amber-300 text-amber-900 text-[9px] font-black whitespace-nowrap">
+                                NEEDS DETAILS
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-[11px] font-bold text-slate-600 truncate">
+                            {d.phone} · {d.email}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button
+                            onClick={() => openEditDriver(d)}
+                            className="px-3 py-1.5 rounded-lg bg-[#06090F] text-white border border-[#DFCAA8] text-[11px] font-black hover:scale-[1.03] transition-all"
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDriver(d)}
+                            className="p-1.5 rounded-lg bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 transition-all"
+                            title="Remove driver"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Driver Modal */}
+      {editDriver && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
+          <div className="bg-[#FAF6F0] border border-[#DFCAA8] max-w-lg w-full p-6 sm:p-7 rounded-3xl relative space-y-5 shadow-2xl text-[#0A0E1A]">
+            <button
+              onClick={() => setEditDriver(null)}
+              className="absolute top-5 right-5 text-[#0A0E1A] hover:bg-[#E6D8C3] p-1.5 rounded-xl bg-white border border-[#E6D8C3]"
+            >
+              <X className="w-5 h-5 text-[#0A0E1A]" />
+            </button>
+
+            <div className="flex items-center gap-2.5">
+              <div className="w-10 h-10 rounded-2xl bg-[#FFFFFF] border border-[#DFCAA8] flex items-center justify-center text-[#0A0E1A] shadow-sm">
+                <UserCheck className="w-5 h-5 text-[#0A0E1A]" />
+              </div>
+              <div>
+                <h3 className="text-lg font-black text-[#0A0E1A]">Edit Driver</h3>
+                <p className="text-xs text-[#0A0E1A] font-bold">Correct imported details and assign a vehicle.</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleUpdateDriver} className="space-y-4 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Phone *</label>
+                  <input
+                    type="tel"
+                    required
+                    value={editPhone}
+                    onChange={(e) => setEditPhone(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-mono font-black focus:outline-none focus:border-[#0A0E1A]"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                <div>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Email *</label>
+                  <input
+                    type="email"
+                    required
+                    value={editEmail}
+                    onChange={(e) => setEditEmail(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
+                  />
+                </div>
+                <div>
+                  <label className="block font-black text-[#0A0E1A] mb-1">Licence No *</label>
+                  <input
+                    type="text"
+                    required
+                    minLength={3}
+                    value={editLicense}
+                    onChange={(e) => setEditLicense(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-mono font-black focus:outline-none focus:border-[#0A0E1A]"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block font-black text-[#0A0E1A] mb-1">Default Vehicle</label>
+                <select
+                  value={editVehicleId}
+                  onChange={(e) => setEditVehicleId(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
+                >
+                  <option value="">No default vehicle</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.make} {v.model} — {v.registration_plate}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block font-black text-[#0A0E1A] mb-1">Notes</label>
+                <textarea
+                  rows={2}
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-bold focus:outline-none focus:border-[#0A0E1A]"
+                />
+              </div>
+
+              {editError && (
+                <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-rose-900 text-[11px] font-bold break-words">
+                  {editError}
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-[#E6D8C3] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setEditDriver(null)}
+                  className="px-4 py-2.5 rounded-xl bg-[#FFFFFF] hover:bg-[#FAF6F0] text-[#0A0E1A] border border-[#E6D8C3] text-xs font-black transition-all shadow-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingEdit}
+                  className="px-6 py-2.5 rounded-xl bg-[#06090F] hover:bg-[#1A2233] text-white border border-[#DFCAA8] font-black text-xs flex items-center gap-1.5 shadow-md hover:scale-[1.02] transition-all disabled:opacity-60"
+                >
+                  {savingEdit ? <RefreshCw className="w-4 h-4 text-white animate-spin" /> : <Check className="w-4 h-4 text-white" />}
+                  <span>{savingEdit ? 'Saving…' : 'Save Changes'}</span>
                 </button>
               </div>
             </form>

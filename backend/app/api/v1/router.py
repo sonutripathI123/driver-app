@@ -20,6 +20,7 @@ from app.api.v1.pricing import router as pricing_router
 from app.api.v1.quotes import router as quotes_router
 from app.api.v1.users import router as users_router
 from app.api.v1.vehicles import router as vehicles_router
+from app.api.v1.tmc import router as tmc_router
 from app.api.v1.website_ingest import router as website_ingest_router
 from app.api.v1.zoho_calendar import router as zoho_calendar_router
 from app.core.rbac import (
@@ -58,6 +59,7 @@ api_router.include_router(analytics_router)
 api_router.include_router(website_ingest_router)
 api_router.include_router(enquiries_router)
 api_router.include_router(zoho_calendar_router)
+api_router.include_router(tmc_router)
 
 
 # RBAC Role Test / Verification Endpoints
