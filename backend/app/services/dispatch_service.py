@@ -761,18 +761,30 @@ class DispatchService:
 
         results: List[DriverAvailabilityResponse] = []
         for drv in drivers:
-            has_conf, conf_msg = await DispatchService.check_driver_conflicts(
+            veh = drv.default_vehicle
+
+            # Vehicle match: when the job asks for a specific class, show only
+            # drivers whose fixed vehicle is that class. Drivers with NO fixed
+            # vehicle are flexible and shown for every job.
+            if vehicle_category is not None and veh is not None and veh.category != vehicle_category:
+                continue
+
+            # Hide drivers already committed in this pickup window entirely — the
+            # dispatcher should only see drivers they can actually assign now.
+            has_conf, _conf_msg = await DispatchService.check_driver_conflicts(
                 db, drv.id, pickup_datetime, duration_minutes
             )
-            veh = drv.default_vehicle
+            if has_conf:
+                continue
+
             results.append(
                 DriverAvailabilityResponse(
                     driver_id=drv.id,
                     driver_name=drv.full_name,
                     status=drv.status.value,
                     rating=drv.rating,
-                    is_available=not has_conf,
-                    conflict_reason=conf_msg if has_conf else None,
+                    is_available=True,
+                    conflict_reason=None,
                     assigned_vehicle_id=veh.id if veh else None,
                     assigned_vehicle_plate=veh.registration_plate if veh else None
                 )

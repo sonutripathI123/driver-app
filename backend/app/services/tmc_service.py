@@ -30,7 +30,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.models.driver import Driver
-from app.models.enums import DriverStatus
+from app.models.enums import DriverStatus, VehicleCategory
+from app.models.vehicle import Vehicle
 
 logger = logging.getLogger("tmc")
 
@@ -140,61 +141,164 @@ class TMCService:
     def _placeholder_email(tmc_id: str) -> str:
         return f"tmc-{tmc_id[:8]}@import.opalchauffeurs.com.au"
 
+    @staticmethod
+    def _infer_category(veh: dict) -> VehicleCategory:
+        """Best-effort map of a free-text TMC vehicle to this app's category.
+
+        TMC stores vehicles as free text (make/model/colour), with no class, so
+        the dispatch vehicle-match needs a category guessed from the words. The
+        operator can correct any vehicle later under the fleet.
+        """
+        text = f"{veh.get('make', '')} {veh.get('model', '')}".lower()
+        if any(w in text for w in ("sprinter", "minibus", "coaster", "bus")):
+            return VehicleCategory.MINIBUS
+        if any(w in text for w in ("v-class", "vclass", "v class", "viano", "valente",
+                                   "van", "carnival", "people", "mover", "staria", "multivan")):
+            return VehicleCategory.PEOPLE_MOVER
+        if any(w in text for w in ("suv", "q7", "q8", "x5", "x7", "gle", "gls", "prado",
+                                   "landcruiser", "land cruiser", "lx", "gx", "rx", "cayenne",
+                                   "range rover", "discovery", "defender", "4wd")):
+            return VehicleCategory.SUV_PREMIUM
+        if any(w in text for w in ("s class", "s-class", "sclass", "7 series", "7series",
+                                   "a8", "ls", "maybach", "ls500")):
+            return VehicleCategory.SEDAN_PREMIUM
+        # Default: an executive sedan (E-Class, 5 Series, Camry, Lexus sedan, …).
+        return VehicleCategory.SEDAN_EXECUTIVE
+
+    @staticmethod
+    def _norm_plate(plate: Optional[str]) -> str:
+        return re.sub(r"\s+", "", (plate or "").strip()).upper()
+
     # ---- Sync -------------------------------------------------------------
     @staticmethod
+    async def _ensure_vehicles(db: AsyncSession, veh_by_id: Dict[str, dict],
+                               errors: List[str]) -> Tuple[Dict[str, str], int]:
+        """Ensure a fleet Vehicle exists for each TMC vehicle (deduped by plate).
+
+        Returns (tmc_vehicle_id -> app vehicle id, created_count). TMC plates are
+        often duplicated or junk, so plates are normalised, reused when already
+        present, and replaced with a unique placeholder when missing/junk (the
+        column is unique). Category is guessed; year is a placeholder to edit.
+        """
+        existing = (await db.execute(select(Vehicle))).scalars().all()
+        plate_to_id: Dict[str, str] = {v.registration_plate.upper(): v.id for v in existing}
+        tmcveh_to_appid: Dict[str, str] = {}
+        created = 0
+
+        for tmc_vid, tv in veh_by_id.items():
+            make = (tv.get("make") or "").strip() or "Unknown"
+            model = (tv.get("model") or "").strip() or "Vehicle"
+            plate = TMCService._norm_plate(tv.get("licensePlate"))
+            junk = (
+                not plate
+                or not re.search(r"[A-Z0-9]", plate)
+                or plate == TMCService._norm_plate(f"{make} {model}")
+            )
+            if junk:
+                plate = f"TMC-{tmc_vid[:8]}".upper()
+            plate = plate[:20]
+
+            if plate in plate_to_id:
+                tmcveh_to_appid[tmc_vid] = plate_to_id[plate]
+                continue
+
+            veh = Vehicle(
+                category=TMCService._infer_category(tv),
+                make=make[:100],
+                model=model[:100],
+                year=2020,  # TMC holds no year — placeholder for the operator.
+                color=((tv.get("color") or "").strip() or None),
+                registration_plate=plate,
+                is_active=True,
+            )
+            try:
+                async with db.begin_nested():
+                    db.add(veh)
+                    await db.flush()
+                plate_to_id[plate] = veh.id
+                tmcveh_to_appid[tmc_vid] = veh.id
+                created += 1
+            except Exception as exc:
+                if len(errors) < 10:
+                    errors.append(f"vehicle {plate}: {getattr(exc, 'orig', exc)}")
+        await db.commit()
+        return tmcveh_to_appid, created
+
+    @staticmethod
     async def sync_drivers(db: AsyncSession) -> dict:
-        """Import TMC drivers into this app. Creates new ones only; leaves
-        already-imported drivers untouched so manual edits are preserved."""
+        """Import TMC drivers + their vehicles into this app.
+
+        - Creates fleet vehicles and links each driver to their fixed vehicle.
+        - Creates drivers not here yet; existing imports keep their fields
+          untouched (manual edits preserved) but DO get their vehicle linked if
+          they have none yet (additive only).
+        """
         if not TMCService.configured():
             raise RuntimeError("TrackMyChauffeur connector is not configured.")
 
         drivers, veh_by_id = await TMCService.fetch_roster()
+        errors: List[str] = []
 
-        # Which TMC ids are already here? (parsed from existing notes)
+        # Map every TMC vehicle to a fleet vehicle first, so drivers can link.
+        tmcveh_to_appid, vehicles_created = await TMCService._ensure_vehicles(db, veh_by_id, errors)
+
+        # Existing imported drivers, keyed by their TMC id (parsed from notes).
         existing = (await db.execute(select(Driver))).scalars().all()
-        known_ids = set()
+        drivers_by_tmcid: Dict[str, Driver] = {}
         for d in existing:
             m = _TMC_ID_RE.search(d.notes or "")
             if m:
-                known_ids.add(m.group(1).lower())
+                drivers_by_tmcid[m.group(1).lower()] = d
+        known_ids = set(drivers_by_tmcid.keys())
 
+        to_create: List[Driver] = []
         skipped_existing = 0
+        linked_existing = 0
         failed = 0
-        errors: List[str] = []
 
-        def _build(row: dict) -> Optional[Driver]:
+        for row in drivers:
             tmc_id = str(row.get("id") or "").strip()
-            if not tmc_id or tmc_id.lower() in known_ids:
-                return None
+            if not tmc_id:
+                failed += 1
+                continue
+            key = tmc_id.lower()
+            app_vehicle_id = tmcveh_to_appid.get(str(row.get("vehicleId") or ""))
+
+            if key in known_ids:
+                skipped_existing += 1
+                drv = drivers_by_tmcid.get(key)
+                # Link a vehicle only when the driver has none — never override a
+                # vehicle the operator may have assigned by hand.
+                if drv is not None and not drv.default_vehicle_id and app_vehicle_id:
+                    drv.default_vehicle_id = app_vehicle_id
+                    linked_existing += 1
+                continue
+
             name = (row.get("name") or "").strip() or "Unnamed Driver"
             phone = (row.get("phone") or "").strip() or "+61000000000"
             email = (row.get("email") or "").strip().lower()
             if not email or email == "—":
                 email = TMCService._placeholder_email(tmc_id)
-            veh = veh_by_id.get(str(row.get("vehicleId") or ""))
-            veh_text = TMCService._vehicle_text(veh)
+            veh_text = TMCService._vehicle_text(veh_by_id.get(str(row.get("vehicleId") or "")))
             username = (row.get("linkedUsername") or "").strip()
-            # License is not held by TMC — use a unique, clearly-marked
-            # placeholder (fits the 50-char column) the operator edits later.
             license_number = f"TMC-{tmc_id}".upper()[:50]
             note_bits = ["[TMC Import]", f"Vehicle: {veh_text}"]
             if username:
                 note_bits.append(f"TMC user: {username}")
             note_bits.append("(license/email are placeholders — edit to correct)")
             note_bits.append(f"[tmc-id:{tmc_id}]")
-            known_ids.add(tmc_id.lower())
-            return Driver(
+            to_create.append(Driver(
                 full_name=name, phone=phone, email=email,
                 license_number=license_number, status=DriverStatus.AVAILABLE,
                 rating=5.0, is_active=True, notes=" | ".join(note_bits),
-            )
+                default_vehicle_id=app_vehicle_id,
+            ))
+            known_ids.add(key)
 
-        to_create = [d for d in (_build(r) for r in drivers) if d is not None]
-        skipped_existing = len(drivers) - len(to_create)
+        # Persist the vehicle links on existing drivers first, so a later
+        # per-row fallback on the new-driver insert can't roll them back.
+        await db.commit()
 
-        # One bulk insert (fast — a single round trip) with a per-row fallback
-        # only if the batch hits an unexpected constraint, so one bad row can't
-        # lose the whole import.
         created = 0
         if to_create:
             db.add_all(to_create)
@@ -214,14 +318,17 @@ class TMCService:
                         if len(errors) < 10:
                             errors.append(f"{driver.full_name}: {getattr(exc, 'orig', exc)}")
                 await db.commit()
+
         logger.info(
-            "TMC sync: %d created, %d already here, %d failed (of %d fetched)",
-            created, skipped_existing, failed, len(drivers),
+            "TMC sync: %d drivers created, %d linked, %d already here, %d vehicles created, %d failed (of %d)",
+            created, linked_existing, skipped_existing, vehicles_created, failed, len(drivers),
         )
         return {
             "fetched": len(drivers),
             "created": created,
             "skipped_existing": skipped_existing,
+            "linked_existing": linked_existing,
+            "vehicles_created": vehicles_created,
             "failed": failed,
             "errors": errors,
         }

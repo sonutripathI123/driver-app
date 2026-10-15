@@ -183,7 +183,9 @@ This removes the whole booking — all its legs, its invoice, payments and notif
     try {
       const res = await fleetApi.syncDriversFromTmc();
       setDriverNotice(
-        `TrackMyChauffeur sync done — ${res.created} new driver(s) added, ${res.skipped_existing} already here` +
+        `TrackMyChauffeur sync done — ${res.created} new driver(s), ${res.skipped_existing} already here` +
+          (res.vehicles_created ? `, ${res.vehicles_created} vehicle(s) added` : '') +
+          (res.linked_existing ? `, ${res.linked_existing} driver(s) linked to their vehicle` : '') +
           (res.failed ? `, ${res.failed} skipped (bad data)` : '') +
           `. Licence & email are placeholders — use Manage Drivers → Edit to correct them.`
       );
@@ -317,8 +319,24 @@ This removes the whole booking — all its legs, its invoice, payments and notif
     setAvailabilityError(null);
     try {
       const durationMinutes = leg.duration_minutes && leg.duration_minutes > 0 ? leg.duration_minutes : 90;
-      const res = await dispatchApi.getDriverAvailability(leg.pickup_datetime, durationMinutes);
-      setAvailability(Array.isArray(res) ? res : []);
+      // Pass the customer's chosen vehicle class so the server returns only
+      // drivers who drive that class (plus flexible drivers with no fixed car),
+      // and never a driver already busy at this pickup time.
+      const res = await dispatchApi.getDriverAvailability(
+        leg.pickup_datetime,
+        durationMinutes,
+        (leg as any).vehicle_category || null
+      );
+      const list = Array.isArray(res) ? res : [];
+      setAvailability(list);
+      // Default the selection to the first eligible chauffeur, and if they have
+      // a fixed vehicle, pre-select it too.
+      if (list.length > 0) {
+        setAllocationDriverId(list[0].driver_id);
+        if (list[0].assigned_vehicle_id) setAllocationVehicleId(list[0].assigned_vehicle_id);
+      } else {
+        setAllocationDriverId('');
+      }
     } catch (err: any) {
       const detail = err?.response?.data?.detail;
       setAvailabilityError(
@@ -918,39 +936,41 @@ This removes the whole booking — all its legs, its invoice, payments and notif
                     <span className="text-[10px] font-bold text-[#0A0E1A] opacity-60">checking availability…</span>
                   ) : availability ? (
                     <span className="text-[10px] font-black text-[#0A0E1A]">
-                      {availability.filter((a) => a.is_available).length} of {availability.length} free at this pickup
+                      {availability.length} eligible for this vehicle &amp; time
                     </span>
                   ) : null}
                 </div>
-                <select
-                  value={allocationDriverId}
-                  onChange={(e) => setAllocationDriverId(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
-                >
-                  {drivers.map((d) => {
-                    const avail = availabilityFor(d.id);
-                    const marker = !avail ? '' : avail.is_available ? ' — FREE' : ' — BUSY';
-                    return (
-                      <option key={d.id} value={d.id} className="text-[#0A0E1A]">
-                        {d.full_name} (⭐ {d.rating.toFixed(2)}){marker}
+
+                {/* Only eligible chauffeurs: they drive the requested vehicle
+                    (or have no fixed car) AND are free at this pickup time.
+                    Busy / wrong-vehicle drivers are filtered out by the server. */}
+                {availability && availability.length === 0 ? (
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 text-[11px] font-bold">
+                    No free chauffeur for the requested vehicle at this pickup time. Free up a driver, or assign a vehicle
+                    to a driver under Manage Drivers, or offload to a partner below.
+                  </div>
+                ) : (
+                  <select
+                    value={allocationDriverId}
+                    onChange={(e) => {
+                      setAllocationDriverId(e.target.value);
+                      const a = availabilityFor(e.target.value);
+                      if (a?.assigned_vehicle_id) setAllocationVehicleId(a.assigned_vehicle_id);
+                    }}
+                    className="w-full px-3.5 py-2.5 rounded-xl bg-[#FFFFFF] border border-[#E6D8C3] text-[#0A0E1A] font-black focus:outline-none focus:border-[#0A0E1A]"
+                  >
+                    {(availability || []).map((a) => (
+                      <option key={a.driver_id} value={a.driver_id} className="text-[#0A0E1A]">
+                        {a.driver_name} (⭐ {a.rating.toFixed(2)})
+                        {a.assigned_vehicle_plate ? ` — ${a.assigned_vehicle_plate}` : ' — any vehicle'}
                       </option>
-                    );
-                  })}
-                </select>
+                    ))}
+                  </select>
+                )}
 
                 {availabilityError && (
                   <p className="mt-1.5 text-[11px] font-bold text-[#B91C1C]">{availabilityError}</p>
                 )}
-
-                {(() => {
-                  const avail = availabilityFor(allocationDriverId);
-                  if (!avail || avail.is_available) return null;
-                  return (
-                    <p className="mt-1.5 text-[11px] font-black text-[#B91C1C]">
-                      ⚠ Schedule conflict: {avail.conflict_reason || 'already committed during this pickup window.'}
-                    </p>
-                  );
-                })()}
               </div>
 
               <div>

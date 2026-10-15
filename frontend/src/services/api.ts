@@ -206,10 +206,12 @@ export const dispatchApi = {
     const res = await apiClient.get(`/dispatch/board`, { params: { target_date: date } });
     return res.data;
   },
-  getDriverAvailability: async (pickupTime: string, durationMinutes = 90) => {
+  getDriverAvailability: async (pickupTime: string, durationMinutes = 90, vehicleCategory?: string | null) => {
+    const params: Record<string, any> = { pickup_datetime: pickupTime, duration_minutes: durationMinutes };
+    if (vehicleCategory) params.vehicle_category = vehicleCategory;
     const res = await apiClient.get<DriverAvailabilityItem[]>(
       `/dispatch/available-drivers`,
-      { params: { pickup_datetime: pickupTime, duration_minutes: durationMinutes } }
+      { params }
     );
     return res.data;
   },
@@ -559,6 +561,8 @@ export const fleetApi = {
       fetched: number;
       created: number;
       skipped_existing: number;
+      linked_existing?: number;
+      vehicles_created?: number;
       failed: number;
       errors: string[];
     }>(`/tmc/sync-drivers`);
