@@ -158,20 +158,14 @@ class TMCService:
             if m:
                 known_ids.add(m.group(1).lower())
 
-        created = 0
         skipped_existing = 0
         failed = 0
         errors: List[str] = []
 
-        for row in drivers:
+        def _build(row: dict) -> Optional[Driver]:
             tmc_id = str(row.get("id") or "").strip()
-            if not tmc_id:
-                failed += 1
-                continue
-            if tmc_id.lower() in known_ids:
-                skipped_existing += 1
-                continue
-
+            if not tmc_id or tmc_id.lower() in known_ids:
+                return None
             name = (row.get("name") or "").strip() or "Unnamed Driver"
             phone = (row.get("phone") or "").strip() or "+61000000000"
             email = (row.get("email") or "").strip().lower()
@@ -180,46 +174,46 @@ class TMCService:
             veh = veh_by_id.get(str(row.get("vehicleId") or ""))
             veh_text = TMCService._vehicle_text(veh)
             username = (row.get("linkedUsername") or "").strip()
-
             # License is not held by TMC — use a unique, clearly-marked
             # placeholder (fits the 50-char column) the operator edits later.
             license_number = f"TMC-{tmc_id}".upper()[:50]
-
-            note_bits = [
-                "[TMC Import]",
-                f"Vehicle: {veh_text}",
-            ]
+            note_bits = ["[TMC Import]", f"Vehicle: {veh_text}"]
             if username:
                 note_bits.append(f"TMC user: {username}")
             note_bits.append("(license/email are placeholders — edit to correct)")
             note_bits.append(f"[tmc-id:{tmc_id}]")
-            notes = " | ".join(note_bits)
-
-            driver = Driver(
-                full_name=name,
-                phone=phone,
-                email=email,
-                license_number=license_number,
-                status=DriverStatus.AVAILABLE,
-                rating=5.0,
-                is_active=True,
-                notes=notes,
+            known_ids.add(tmc_id.lower())
+            return Driver(
+                full_name=name, phone=phone, email=email,
+                license_number=license_number, status=DriverStatus.AVAILABLE,
+                rating=5.0, is_active=True, notes=" | ".join(note_bits),
             )
-            try:
-                async with db.begin_nested():
-                    db.add(driver)
-                created += 1
-                known_ids.add(tmc_id.lower())
-            except IntegrityError as exc:
-                failed += 1
-                if len(errors) < 10:
-                    errors.append(f"{name}: {getattr(exc, 'orig', exc)}")
-            except Exception as exc:
-                failed += 1
-                if len(errors) < 10:
-                    errors.append(f"{name}: {exc}")
 
-        await db.commit()
+        to_create = [d for d in (_build(r) for r in drivers) if d is not None]
+        skipped_existing = len(drivers) - len(to_create)
+
+        # One bulk insert (fast — a single round trip) with a per-row fallback
+        # only if the batch hits an unexpected constraint, so one bad row can't
+        # lose the whole import.
+        created = 0
+        if to_create:
+            db.add_all(to_create)
+            try:
+                await db.commit()
+                created = len(to_create)
+            except IntegrityError:
+                await db.rollback()
+                created = 0
+                for driver in to_create:
+                    try:
+                        async with db.begin_nested():
+                            db.add(driver)
+                        created += 1
+                    except Exception as exc:
+                        failed += 1
+                        if len(errors) < 10:
+                            errors.append(f"{driver.full_name}: {getattr(exc, 'orig', exc)}")
+                await db.commit()
         logger.info(
             "TMC sync: %d created, %d already here, %d failed (of %d fetched)",
             created, skipped_existing, failed, len(drivers),
