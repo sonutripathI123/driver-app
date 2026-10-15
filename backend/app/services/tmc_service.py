@@ -125,6 +125,48 @@ class TMCService:
         veh_by_id = {str(v.get("id")): v for v in vehicles if v.get("id")}
         return drivers, veh_by_id
 
+    @staticmethod
+    async def fetch_active_locations() -> List[dict]:
+        """Live driver GPS positions from TMC (read-only). Normalised to a flat
+        list of {driver_id, name, lat, lng, heading, updated_at}. Empty when no
+        driver is currently sharing a location (e.g. no active trips)."""
+        base = settings.TMC_BASE_URL.strip().rstrip("/")
+        async with httpx.AsyncClient(
+            base_url=base, timeout=30.0, follow_redirects=True,
+            headers={"Accept": "application/json"},
+        ) as client:
+            await TMCService._authenticate(client)
+            raw = await TMCService._fetch(client, "/api/locations/active")
+
+        def _num(*vals):
+            for v in vals:
+                if v is None:
+                    continue
+                try:
+                    return float(v)
+                except (TypeError, ValueError):
+                    continue
+            return None
+
+        out: List[dict] = []
+        for r in raw:
+            if not isinstance(r, dict):
+                continue
+            lat = _num(r.get("lat"), r.get("latitude"), r.get("Lat"))
+            lng = _num(r.get("lng"), r.get("longitude"), r.get("lon"), r.get("lng_"))
+            if lat is None or lng is None:
+                continue
+            out.append({
+                "driver_id": r.get("driverId") or r.get("driver_id") or r.get("id"),
+                "name": r.get("name") or r.get("driverName") or r.get("driver_name") or "Driver",
+                "lat": lat,
+                "lng": lng,
+                "heading": r.get("heading") or r.get("bearing"),
+                "updated_at": r.get("updatedAt") or r.get("timestamp") or r.get("updated_at"),
+                "booking": r.get("bookingRef") or r.get("booking") or None,
+            })
+        return out
+
     # ---- Mapping helpers --------------------------------------------------
     @staticmethod
     def _vehicle_text(veh: Optional[dict]) -> str:

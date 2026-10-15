@@ -17,6 +17,7 @@ import {
   X,
   Inbox,
   ClipboardList,
+  MapPin,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { ChangePasswordModal } from '../ChangePasswordModal';
@@ -32,6 +33,7 @@ export type NavTab =
   | 'notifications'
   | 'email'
   | 'flights'
+  | 'fleet-map'
   | 'invoicing'
   | 'analytics'
   | 'partners-fleet';
@@ -87,6 +89,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         { id: 'notifications', label: 'Mobile Alert Hub', icon: Bell, badge: 'Pings', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'email', label: 'Email Inbox & Comms', icon: Inbox, badge: 'Email', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'flights', label: 'Airport Flight Radar', icon: Plane, badge: 'Radar', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
+        { id: 'fleet-map', label: 'Live Fleet Map', icon: MapPin, badge: 'GPS', badgeColor: 'bg-[#FAF6F0] text-[#0A0E1A] border-[#E6D8C3]' },
         { id: 'partners-fleet', label: 'Partner Network & Fleet', icon: Users },
       ],
     },

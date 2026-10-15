@@ -10,6 +10,11 @@ import { QuoteBookingPage } from './pages/QuoteBookingPage';
 import { DriverPortalPage } from './pages/DriverPortalPage';
 import { EnquiriesPage } from './pages/EnquiriesPage';
 import { FlightRadarPage } from './pages/FlightRadarPage';
+// Lazy-loaded: pulls in the Leaflet map library only when the Fleet Map is
+// opened, so it never weighs down the initial app load.
+const FleetMapPage = React.lazy(() =>
+  import('./pages/FleetMapPage').then((m) => ({ default: m.FleetMapPage }))
+);
 import { NotificationsHubPage } from './pages/NotificationsHubPage';
 import { InvoicingTaxPage } from './pages/InvoicingTaxPage';
 import { AnalyticsProfitPage } from './pages/AnalyticsProfitPage';
@@ -133,6 +138,8 @@ const AuthenticatedApp: React.FC = () => {
         return <EmailHubPage />;
       case 'flights':
         return <FlightRadarPage />;
+      case 'fleet-map':
+        return <FleetMapPage />;
       case 'invoicing':
         return <InvoicingTaxPage />;
       case 'analytics':
@@ -146,7 +153,11 @@ const AuthenticatedApp: React.FC = () => {
 
   return (
     <Shell activeTab={activeTab} onTabChange={setActiveTab}>
-      {renderActivePage()}
+      <React.Suspense
+        fallback={<div className="p-8 text-xs font-bold text-[#0A0E1A]">Loading…</div>}
+      >
+        {renderActivePage()}
+      </React.Suspense>
     </Shell>
   );
 };

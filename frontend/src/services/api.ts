@@ -249,6 +249,16 @@ const DRIVER_STEP_ENDPOINTS: Record<string, string> = {
   COMPLETED: 'complete',
 };
 
+export interface FleetLocation {
+  driver_id?: string | null;
+  name: string;
+  lat: number;
+  lng: number;
+  heading?: number | null;
+  updated_at?: string | null;
+  booking?: string | null;
+}
+
 export interface DriverAvailabilityItem {
   driver_id: string;
   driver_name: string;
@@ -553,6 +563,13 @@ export const fleetApi = {
   /** Whether the read-only TrackMyChauffeur connector is configured on the server. */
   getTmcStatus: async () => {
     const res = await apiClient.get<{ configured: boolean }>(`/tmc/status`);
+    return res.data;
+  },
+  /** Live driver GPS positions from TrackMyChauffeur (read-only). */
+  getFleetLocations: async () => {
+    const res = await apiClient.get<{ configured: boolean; count: number; drivers: FleetLocation[] }>(
+      `/tmc/fleet-locations`
+    );
     return res.data;
   },
   /** Pull the driver roster from the live TrackMyChauffeur app (read-only there). */

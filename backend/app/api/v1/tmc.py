@@ -14,6 +14,25 @@ async def tmc_status():
     return {"configured": TMCService.configured()}
 
 
+@router.get("/fleet-locations", dependencies=[Depends(require_staff)])
+async def tmc_fleet_locations():
+    """Live driver GPS positions from TrackMyChauffeur (read-only).
+
+    Returns {configured, count, drivers:[{driver_id,name,lat,lng,heading,updated_at}]}.
+    An empty list means no driver is currently sharing a location.
+    """
+    if not TMCService.configured():
+        return {"configured": False, "count": 0, "drivers": []}
+    try:
+        drivers = await TMCService.fetch_active_locations()
+        return {"configured": True, "count": len(drivers), "drivers": drivers}
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Could not read live fleet locations: {exc}",
+        )
+
+
 @router.post("/sync-drivers", dependencies=[Depends(require_ops)])
 async def tmc_sync_drivers(db: AsyncSession = Depends(get_db)):
     """Pull the driver roster from the live TrackMyChauffeur app into this one.
