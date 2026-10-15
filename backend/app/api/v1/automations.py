@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/automations", tags=["Automations & Scheduled Jobs"])
 
+# Strong references to fire-and-forget background tasks, so the event loop does
+# not garbage-collect them before they finish.
+_bg_tasks: set = set()
+
 
 async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
     """Runs each scheduled job and merges the counts."""
@@ -52,6 +56,21 @@ async def _run_every_automation(db: AsyncSession) -> AutomationRunSummary:
                 logger.info(f"[CRON ZOHO] imported {z['created']} booking(s) from the calendar")
     except Exception as ex:
         logger.error(f"[CRON ZOHO] calendar sync failed: {ex}")
+
+    # Daily auto-sync from TrackMyChauffeur (drivers + bookings). The cron fires
+    # often, so this runs at most once per ~20h and in the background (its own DB
+    # session) — the booking import can take a while and must not block this
+    # response or the dashboard. Read-only against TMC.
+    try:
+        import asyncio
+        from app.services.tmc_service import TMCService
+        if TMCService.configured() and await TMCService.auto_sync_due_and_claim(db):
+            task = asyncio.create_task(TMCService.run_daily_sync_background())
+            _bg_tasks.add(task)
+            task.add_done_callback(_bg_tasks.discard)
+            logger.info("[CRON TMC] daily sync launched in background")
+    except Exception as ex:
+        logger.error(f"[CRON TMC] daily sync schedule failed: {ex}")
 
     s1 = await AutomationService.process_balance_chasing(db=db)
     s2 = await AutomationService.process_pre_trip_confirmation_reminders(db=db)

@@ -50,6 +50,9 @@ _LOGIN_PATHS = ["/api/login", "/api/auth/login", "/api/auth", "/api/session"]
 # already-imported driver and skip it (never overwriting manual edits).
 _TMC_ID_RE = re.compile(r"\[tmc-id:([0-9a-fA-F-]{6,})\]")
 
+# AppSetting key holding the last daily auto-sync timestamp.
+_TMC_SYNC_KEY = "tmc_last_auto_sync"
+
 
 class TMCService:
     @staticmethod
@@ -587,3 +590,51 @@ class TMCService:
             "failed": failed,
             "errors": errors,
         }
+
+    # ---- Daily auto-sync --------------------------------------------------
+    @staticmethod
+    async def auto_sync_due_and_claim(db: AsyncSession, min_hours: int = 20) -> bool:
+        """True (and records 'now') if a daily TMC sync is due. Writing the
+        timestamp up front claims the slot, so overlapping cron ticks don't start
+        two syncs at once."""
+        from app.models.app_setting import AppSetting
+
+        now = datetime.now(timezone.utc)
+        try:
+            row = await db.get(AppSetting, _TMC_SYNC_KEY)
+        except Exception:
+            await db.rollback()
+            row = None
+
+        last = None
+        if row and isinstance(row.value, dict):
+            try:
+                last = datetime.fromisoformat(row.value.get("at"))
+            except Exception:
+                last = None
+        if last and (now - last) < timedelta(hours=min_hours):
+            return False
+
+        if row:
+            row.value = {"at": now.isoformat()}
+        else:
+            db.add(AppSetting(key=_TMC_SYNC_KEY, value={"at": now.isoformat()}, updated_by="tmc-auto"))
+        await db.commit()
+        return True
+
+    @staticmethod
+    async def run_daily_sync_background() -> None:
+        """Run drivers + bookings sync on a fresh session (fire-and-forget).
+
+        Opens its own DB session so it is safe to launch from the cron handler
+        without blocking the response, and its failures never touch the request.
+        """
+        from app.core.database import AsyncSessionLocal
+        try:
+            async with AsyncSessionLocal() as db:
+                d = await TMCService.sync_drivers(db)
+            async with AsyncSessionLocal() as db:
+                b = await TMCService.sync_bookings(db)
+            logger.info("[TMC DAILY] drivers=%s | bookings=%s", d, b)
+        except Exception as exc:
+            logger.error("[TMC DAILY] sync failed: %s", exc)
