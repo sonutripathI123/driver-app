@@ -759,6 +759,25 @@ class DispatchService:
         res = await db.execute(stmt)
         drivers = list(res.scalars().all())
 
+        # Which drivers are busy in this pickup window? Fetch all committed legs
+        # in the window in ONE query and test membership in memory, instead of a
+        # per-driver conflict query (177 drivers was 177 round trips → slow).
+        dur = duration_minutes or 60
+        safe_pickup = ensure_utc(pickup_datetime)
+        window_start = safe_pickup - timedelta(minutes=45)
+        window_end = safe_pickup + timedelta(minutes=dur + 45)
+        busy_stmt = (
+            select(BookingLeg.driver_id)
+            .where(
+                BookingLeg.driver_id.isnot(None),
+                BookingLeg.status.notin_([LegStatus.CANCELLED, LegStatus.COMPLETED]),
+                BookingLeg.pickup_datetime >= window_start,
+                BookingLeg.pickup_datetime <= window_end,
+            )
+            .distinct()
+        )
+        busy_ids = set((await db.execute(busy_stmt)).scalars().all())
+
         results: List[DriverAvailabilityResponse] = []
         for drv in drivers:
             veh = drv.default_vehicle
@@ -771,10 +790,7 @@ class DispatchService:
 
             # Hide drivers already committed in this pickup window entirely — the
             # dispatcher should only see drivers they can actually assign now.
-            has_conf, _conf_msg = await DispatchService.check_driver_conflicts(
-                db, drv.id, pickup_datetime, duration_minutes
-            )
-            if has_conf:
+            if drv.id in busy_ids:
                 continue
 
             results.append(
