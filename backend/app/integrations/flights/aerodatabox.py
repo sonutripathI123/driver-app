@@ -1,4 +1,4 @@
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 import logging
 from typing import Any, Dict, List, Optional
 
@@ -9,6 +9,13 @@ from app.integrations.flights._parsing import delay_minutes, first_str, parse_dt
 from app.integrations.flights.base import BaseFlightProvider, FlightData
 
 logger = logging.getLogger(__name__)
+
+# Circuit breaker: once RapidAPI returns 429 (monthly quota exhausted), every
+# subsequent lookup would also 429. Repeating them each cron tick floods the API
+# and slows the run for nothing, so pause all lookups until this time, then probe
+# again (quota may have reset or the plan upgraded).
+_quota_blocked_until: Optional[datetime] = None
+_QUOTA_COOLDOWN = timedelta(hours=6)
 
 
 def _select_segment(segments: List[Dict[str, Any]], flight_date: Optional[date]) -> Dict[str, Any]:
@@ -71,6 +78,12 @@ class AeroDataBoxProvider(BaseFlightProvider):
         if not self.api_key or not self.api_host:
             return None
 
+        # Skip entirely while the quota circuit breaker is open.
+        global _quota_blocked_until
+        now = datetime.now(timezone.utc)
+        if _quota_blocked_until and now < _quota_blocked_until:
+            return None
+
         clean_flight = flight_number.strip().upper().replace(" ", "")
         # With a date, ask for that date. Without one, use the nearest-day form:
         # that is what an operator means by "look this flight up now", and
@@ -103,6 +116,11 @@ class AeroDataBoxProvider(BaseFlightProvider):
                     f"AeroDataBox: no flight found for {clean_flight}"
                     + (f" on {flight_date.isoformat()}" if flight_date else "")
                 )
+                return None
+            if res.status_code == 429:
+                _quota_blocked_until = now + _QUOTA_COOLDOWN
+                self.last_error = "AeroDataBox quota exceeded (429) — pausing flight lookups for 6h"
+                logger.warning(self.last_error)
                 return None
             if res.status_code != 200:
                 self.last_error = f"AeroDataBox HTTP {res.status_code}: {res.text[:200]}"
