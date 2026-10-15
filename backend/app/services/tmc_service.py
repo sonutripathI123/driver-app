@@ -422,6 +422,7 @@ class TMCService:
         from sqlalchemy import select
         from app.models.booking import Booking
         from app.models.booking_leg import BookingLeg
+        from app.models.customer import Customer
         from app.models.enums import BookingSource
         from app.schemas.booking import BookingCreate, BookingLegCreate
         from app.services.booking_service import BookingService
@@ -450,8 +451,10 @@ class TMCService:
                 known_tmc.add(m.group(1).lower())
 
         leg_rows = (await db.execute(
-            select(Booking.customer_phone, Booking.passenger_phone, BookingLeg.pickup_datetime)
+            select(Customer.phone, Booking.passenger_phone, BookingLeg.pickup_datetime)
+            .select_from(Booking)
             .join(BookingLeg, BookingLeg.booking_id == Booking.id)
+            .join(Customer, Customer.id == Booking.customer_id, isouter=True)
         )).all()
         phone_times: Dict[str, List[datetime]] = {}
         for cust_phone, pax_phone, pdt in leg_rows:
