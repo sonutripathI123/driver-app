@@ -215,6 +215,10 @@ class Settings(BaseSettings):
     TMC_PASSWORD: str = ""
     TMC_SYNC_ENABLED: bool = False
 
+    # Initial password given to driver logins created in bulk (drivers sign in
+    # with their phone or email + this, then change it from the driver app).
+    DRIVER_INITIAL_PASSWORD: str = "Opal@2026"
+
     # Business Defaults
     DEFAULT_CURRENCY: str = "AUD"
     DEFAULT_TIMEZONE: str = "Australia/Melbourne"

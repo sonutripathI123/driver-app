@@ -25,6 +25,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DriverApplyPage } from './pages/DriverApplyPage';
 import { CustomerPortalPage } from './pages/CustomerPortalPage';
 import { SetPasswordPage } from './pages/SetPasswordPage';
+import { DriverActivatePage } from './pages/DriverActivatePage';
 import { dispatchApi } from './services/api';
 import { triggerNativeNotification } from './utils/notificationSound';
 
@@ -174,6 +175,11 @@ const isDriverApplyLink = window.location.pathname.replace(/\/+$/, '').endsWith(
 // Public customer set-password link (/set-password?token=…). No login required.
 const isSetPasswordLink = window.location.pathname.replace(/\/+$/, '').endsWith('/set-password');
 
+// Public driver activation link (/driver-activate?token=…). No login required.
+// Checked before the generic "/driver" match so it shows the activation form,
+// not the (auth-gated) driver portal.
+const isDriverActivateLink = window.location.pathname.replace(/\/+$/, '').endsWith('/driver-activate');
+
 const AppRoutes: React.FC = () => {
   const { isAuthenticated, isBootstrapping, currentRole } = useAuth();
 
@@ -185,6 +191,8 @@ const AppRoutes: React.FC = () => {
   if (isDriverApplyLink) return <DriverApplyPage />;
   // The public customer set-password form, opened from the first-booking link.
   if (isSetPasswordLink) return <SetPasswordPage />;
+  // The public driver activation form, opened from the first-job link.
+  if (isDriverActivateLink) return <DriverActivatePage />;
 
   if (isBootstrapping) return <BootSplash />;
   if (!isAuthenticated) return <LoginPage />;

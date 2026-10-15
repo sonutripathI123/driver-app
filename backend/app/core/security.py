@@ -97,6 +97,20 @@ def create_customer_setup_token(customer_id: str, expires_days: int = 14) -> str
     return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
 
+def create_driver_setup_token(driver_id: str, expires_days: int = 30) -> str:
+    """Signed token embedded in a chauffeur's first job SMS/email so they can
+    activate their driver-app login (set contact + password). Distinct `purpose`
+    so it can never be used as an access token."""
+    now = datetime.now(timezone.utc)
+    to_encode: Dict[str, Any] = {
+        "sub": driver_id,
+        "purpose": "driver_setup",
+        "iat": int(now.timestamp()),
+        "exp": int((now + timedelta(days=expires_days)).timestamp()),
+    }
+    return jwt.encode(to_encode, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
 def decode_token(token: str) -> Dict[str, Any]:
     """Decodes and validates a JWT token signature and expiration."""
     return jwt.decode(

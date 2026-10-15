@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 import jwt
 from fastapi import HTTPException, status
@@ -24,11 +25,28 @@ class AuthService:
         email: str,
         password: str
     ) -> User:
-        """Authenticates a user with email and password."""
+        """Authenticates a user with email+password, or (for drivers) phone+password.
+
+        Most imported chauffeurs have no email, so a driver may sign in with their
+        phone number instead: if the identifier is not a known email but matches a
+        driver's phone (by its last digits, ignoring +61/0 prefixes), that
+        driver's linked login is used.
+        """
         normalized_email = email.strip().lower()
         stmt = select(User).where(User.email == normalized_email)
         result = await db.execute(stmt)
         user = result.scalar_one_or_none()
+
+        if user is None:
+            digits = re.sub(r"\D", "", email or "")
+            if len(digits) >= 6:
+                from app.models.driver import Driver
+                tail = digits[-9:]
+                drv = (await db.execute(
+                    select(Driver).where(Driver.phone.ilike(f"%{tail}"), Driver.user_id.isnot(None))
+                )).scalars().first()
+                if drv and drv.user_id:
+                    user = await db.get(User, drv.user_id)
 
         if not user or not verify_password(password, user.hashed_password):
             raise HTTPException(

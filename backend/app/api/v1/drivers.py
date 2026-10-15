@@ -1,6 +1,7 @@
 import hmac
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import settings
 from app.core.database import get_db
@@ -61,6 +62,17 @@ async def create_driver(
         db=db,
         driver_in=driver_in
     )
+
+
+@router.post("/provision-logins", dependencies=[Depends(require_ops)])
+async def provision_driver_logins(db: AsyncSession = Depends(get_db)):
+    """Create portal logins for all drivers that have none (e.g. imported ones).
+
+    Drivers then sign in with their phone (or email) + the shared initial password
+    (DRIVER_INITIAL_PASSWORD) and change it in the app. Idempotent.
+    Access: ADMIN, OPERATIONS_MANAGER.
+    """
+    return await DriverService.provision_logins(db, settings.DRIVER_INITIAL_PASSWORD)
 
 
 @router.get("/signup-link", response_model=DriverSignupLinkResponse, dependencies=[Depends(require_ops)])
@@ -138,6 +150,40 @@ async def driver_self_apply(
         "message": "You are on the roster. Sign in to the driver app with your email and the password you just set.",
         "full_name": driver.full_name,
     }
+
+
+class DriverActivateRequest(BaseModel):
+    token: str
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    password: str = Field(..., min_length=8, max_length=128)
+
+
+@router.get("/activate")
+async def driver_activation_info(
+    token: str = Query(..., description="Activation token from the driver's job link"),
+    db: AsyncSession = Depends(get_db),
+):
+    """Public: details to prefill the driver activation form. Gated by the token."""
+    driver = await DriverService.get_setup_driver(db, token)
+    email = driver.email
+    if email and email.lower().endswith("@import.opalchauffeurs.com.au"):
+        email = None  # don't prefill a placeholder
+    return {
+        "full_name": driver.full_name,
+        "email": email,
+        "phone": driver.phone if driver.phone and driver.phone != "+61000000000" else None,
+        "activated": driver.user_id is not None,
+    }
+
+
+@router.post("/activate")
+async def driver_activate(payload: DriverActivateRequest, db: AsyncSession = Depends(get_db)):
+    """Public: a driver activates their app login from the job link (mobile and/or
+    email + password). Gated by the token — no prior login needed."""
+    return await DriverService.activate_login(
+        db, payload.token, payload.email, payload.phone, payload.password
+    )
 
 
 @router.get("/{driver_id}", response_model=DriverRead)

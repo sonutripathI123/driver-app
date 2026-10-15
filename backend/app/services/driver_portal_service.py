@@ -72,6 +72,21 @@ class DriverPortalService:
         return driver
 
     @staticmethod
+    async def change_password(db: AsyncSession, driver: Driver, new_password: str) -> dict:
+        """Change the signed-in driver's portal password."""
+        from app.core.security import hash_password
+        if not driver.user_id:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No login is linked to this driver.")
+        if not new_password or len(new_password) < 8:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters.")
+        user = await db.get(User, driver.user_id)
+        if not user:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Linked login not found.")
+        user.hashed_password = hash_password(new_password)
+        await db.commit()
+        return {"status": "ok", "message": "Password updated. Use it next time you sign in."}
+
+    @staticmethod
     async def update_shift_status(
         db: AsyncSession,
         driver_id: str,

@@ -239,6 +239,127 @@ class DriverService:
         return name
 
     @staticmethod
+    async def get_setup_driver(db: AsyncSession, token: str) -> Driver:
+        """Resolve a driver from an activation token (from their first job link)."""
+        from app.core.security import decode_token
+        try:
+            payload = decode_token(token)
+        except Exception:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This link is invalid or has expired.")
+        if payload.get("purpose") != "driver_setup":
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid activation link.")
+        driver = await DriverService.get_by_id(db, payload.get("sub"))
+        if not driver:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Driver not found.")
+        return driver
+
+    @staticmethod
+    async def activate_login(db: AsyncSession, token: str, email: Optional[str],
+                             phone: Optional[str], password: str) -> dict:
+        """Driver activates their app login from the job link: they give a mobile
+        and/or email (at least one) and a password; we create/update their login
+        so they can sign in now and with the same credentials next time."""
+        from app.core.security import hash_password
+        from sqlalchemy.exc import IntegrityError
+
+        driver = await DriverService.get_setup_driver(db, token)
+        email = (email or "").strip().lower() or None
+        phone = (phone or "").strip() or None
+        if not email and not phone:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Enter your mobile number or email.")
+        if not password or len(password) < 8:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 8 characters.")
+
+        if phone:
+            driver.phone = phone
+        if email:
+            driver.email = email
+        login_email = email or f"drv-{driver.id}@drivers.opalchauffeurs.com.au"
+
+        user = await db.get(User, driver.user_id) if driver.user_id else None
+        if user is None:
+            existing = (await db.execute(select(User).where(User.email == login_email))).scalar_one_or_none()
+            if existing is not None:
+                user = existing
+                if existing.role != UserRole.DRIVER:
+                    existing.role = UserRole.DRIVER
+            else:
+                user = User(
+                    email=login_email, hashed_password=hash_password(password),
+                    full_name=driver.full_name, phone=driver.phone,
+                    role=UserRole.DRIVER, is_active=True, is_verified=True,
+                )
+                db.add(user)
+                await db.flush()
+            driver.user_id = user.id
+        else:
+            user.email = login_email
+            user.phone = driver.phone
+            user.hashed_password = hash_password(password)
+
+        try:
+            await db.commit()
+        except IntegrityError:
+            await db.rollback()
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST,
+                                detail="That email is already in use. Try your mobile number instead.")
+        return {"status": "activated", "login": email or phone}
+
+    @staticmethod
+    async def provision_logins(db: AsyncSession, default_password: str) -> dict:
+        """Create a portal login (role DRIVER) for every driver that has none.
+
+        Drivers sign in with their phone (or real email) + the shared initial
+        password, then change it in the driver app. The login's email is the
+        driver's real email when present, else a unique synthetic address (the
+        driver still signs in by phone). Idempotent — drivers already linked are
+        skipped, so it is safe to re-run after importing more drivers.
+        """
+        from app.core.security import hash_password
+
+        drivers = (await db.execute(select(Driver).where(Driver.user_id.is_(None)))).scalars().all()
+        created = 0
+        skipped = 0
+        failed = 0
+        for drv in drivers:
+            real_email = bool(drv.email) and not drv.email.lower().endswith("@import.opalchauffeurs.com.au")
+            login_email = drv.email.strip().lower() if real_email else f"drv-{drv.id}@drivers.opalchauffeurs.com.au"
+
+            # If that email already belongs to a user, link it (don't duplicate);
+            # if it's a real email already taken, fall back to the synthetic one.
+            existing_user = (await db.execute(select(User).where(User.email == login_email))).scalar_one_or_none()
+            if existing_user:
+                already = (await db.execute(select(Driver).where(Driver.user_id == existing_user.id))).scalar_one_or_none()
+                if already is None:
+                    drv.user_id = existing_user.id
+                    if existing_user.role != UserRole.DRIVER:
+                        existing_user.role = UserRole.DRIVER
+                    skipped += 1
+                    continue
+                login_email = f"drv-{drv.id}@drivers.opalchauffeurs.com.au"
+
+            try:
+                async with db.begin_nested():
+                    user = User(
+                        email=login_email,
+                        hashed_password=hash_password(default_password),
+                        full_name=drv.full_name,
+                        phone=drv.phone,
+                        role=UserRole.DRIVER,
+                        is_active=True,
+                        is_verified=True,
+                    )
+                    db.add(user)
+                    await db.flush()
+                    drv.user_id = user.id
+                created += 1
+            except Exception:
+                failed += 1
+        await db.commit()
+        return {"total_without_login": len(drivers), "created": created,
+                "linked_existing": skipped, "failed": failed}
+
+    @staticmethod
     async def update_status(
         db: AsyncSession,
         driver_id: str,

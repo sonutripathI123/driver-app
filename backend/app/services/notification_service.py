@@ -465,7 +465,7 @@ class NotificationService:
         if not driver:
             return notifs
 
-        url = (settings.PUBLIC_APP_URL or "").rstrip("/")
+        base = (settings.PUBLIC_APP_URL or "").rstrip("/")
         cust_name, _, cust_phone = get_customer_contact(booking)
         pickup_str = (
             leg.pickup_datetime.strftime("%d %b %Y at %I:%M %p AEST")
@@ -473,17 +473,37 @@ class NotificationService:
         )
         passenger = booking.passenger_name or cust_name
 
-        if getattr(driver, "phone", None):
+        # First job for a driver without a login → an activation link to set up
+        # their app (mobile/email + password). Afterwards → the plain sign-in link.
+        if not getattr(driver, "user_id", None):
+            from app.core.security import create_driver_setup_token
+            link = f"{base}/driver-activate?token={create_driver_setup_token(driver.id)}"
+            sms_cta = f"Set up your driver app (one time): {link}"
+            email_cta = (
+                f"Set up your driver app login (mobile or email + a password), then you can "
+                f"sign in any time: <a href=\"{link}\" style=\"color:#0A0E1A;font-weight:800;\">{link}</a>"
+            )
+        else:
+            link = base + "/"
+            sms_cta = f"Open your driver app: {link}"
+            email_cta = (
+                f"Open your driver app and sign in: "
+                f"<a href=\"{link}\" style=\"color:#0A0E1A;font-weight:800;\">{link}</a>"
+            )
+
+        real_phone = getattr(driver, "phone", None) and driver.phone != "+61000000000"
+        if real_phone:
             sms = (
-                f"Opal Chauffeurs: New job assigned to you. Booking #{booking.booking_number} — "
-                f"pickup {pickup_str} at {leg.pickup_address}. Passenger: {passenger}. "
-                f"Open your driver dashboard: {url}"
+                f"Opal Chauffeurs: New job assigned. Booking #{booking.booking_number} — "
+                f"pickup {pickup_str} at {leg.pickup_address}. Passenger: {passenger}. {sms_cta}"
             )
             notifs.append(await NotificationService.record_and_dispatch_sms(
                 db, driver.phone, "DRIVER_ALLOCATION_SMS", sms, booking.id
             ))
 
-        if getattr(driver, "email", None):
+        # Only email a real address — many imported drivers carry a placeholder.
+        drv_email = getattr(driver, "email", None)
+        if drv_email and not drv_email.lower().endswith("@import.opalchauffeurs.com.au"):
             rows: List[Tuple[str, str]] = [
                 ("Booking", f"#{booking.booking_number}"),
                 ("Pickup", pickup_str),
@@ -499,13 +519,10 @@ class NotificationService:
                     f"Open your dashboard to see the full details and update the trip status as you go."
                 ),
                 rows=rows,
-                footer_note=(
-                    f"Open your driver dashboard and sign in with your email: "
-                    f"<a href=\"{url}\" style=\"color:#0A0E1A;font-weight:800;\">{url}</a>"
-                ),
+                footer_note=email_cta,
             )
             notifs.append(await NotificationService.record_and_dispatch_email(
-                db, driver.email, "DRIVER_ALLOCATION_EMAIL",
+                db, drv_email, "DRIVER_ALLOCATION_EMAIL",
                 f"New job assigned — #{booking.booking_number} | Opal Chauffeurs",
                 html, booking.id
             ))

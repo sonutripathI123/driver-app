@@ -311,6 +311,10 @@ export const driverPortalApi = {
     const res = await apiClient.patch(`/driver-portal/me`, data);
     return res.data;
   },
+  changePassword: async (newPassword: string) => {
+    const res = await apiClient.post(`/driver-portal/change-password`, { new_password: newPassword });
+    return res.data;
+  },
 };
 
 export const zohoCalendarApi = {
@@ -556,6 +560,16 @@ export const fleetApi = {
     const res = await apiClient.patch<Driver>(`/drivers/${driverId}`, data);
     return res.data;
   },
+  /** Create portal logins for all drivers that have none (phone/email + initial password). */
+  provisionDriverLogins: async () => {
+    const res = await apiClient.post<{
+      total_without_login: number;
+      created: number;
+      linked_existing: number;
+      failed: number;
+    }>(`/drivers/provision-logins`);
+    return res.data;
+  },
   deleteDriver: async (driverId: string) => {
     const res = await apiClient.delete(`/drivers/${driverId}`);
     return res.data;
@@ -605,6 +619,21 @@ export const fleetApi = {
   },
   updateVehicle: async (vehicleId: string, data: any) => {
     const res = await apiClient.patch<Vehicle>(`/vehicles/${vehicleId}`, data);
+    return res.data;
+  },
+};
+
+export const driverActivationApi = {
+  /** Public: prefill info for the driver activation form (gated by token). */
+  getInfo: async (token: string) => {
+    const res = await apiClient.get<{ full_name: string; email: string | null; phone: string | null; activated: boolean }>(
+      `/drivers/activate`, { params: { token } }
+    );
+    return res.data;
+  },
+  /** Public: activate the driver login (mobile and/or email + password). */
+  activate: async (payload: { token: string; email?: string; phone?: string; password: string }) => {
+    const res = await apiClient.post<{ status: string; login: string }>(`/drivers/activate`, payload);
     return res.data;
   },
 };

@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, Query, status
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.rbac import get_current_active_user, require_driver
@@ -44,6 +45,22 @@ async def update_my_driver_profile(
     """
     driver = await DriverPortalService.get_driver_by_user(db, current_user)
     return await DriverPortalService.update_profile(db, driver, payload)
+
+
+class DriverChangePassword(BaseModel):
+    new_password: str = Field(..., min_length=8, max_length=128)
+
+
+@router.post("/change-password", dependencies=[Depends(require_driver)])
+async def change_my_password(
+    payload: DriverChangePassword,
+    current_user: User = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Let the signed-in driver change their own portal password (e.g. off the
+    shared initial password). Access: DRIVER role only."""
+    driver = await DriverPortalService.get_driver_by_user(db, current_user)
+    return await DriverPortalService.change_password(db, driver, payload.new_password)
 
 
 @router.patch("/status", response_model=DriverPortalProfile, dependencies=[Depends(require_driver)])
