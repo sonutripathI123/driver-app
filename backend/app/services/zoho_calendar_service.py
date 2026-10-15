@@ -402,9 +402,12 @@ class ZohoCalendarService:
                 return {"status": "error"}
 
     @staticmethod
-    async def sync_upcoming_to_bookings(db, days_back: int = 1, days_ahead: int = 14) -> Dict[str, int]:
+    async def sync_upcoming_to_bookings(db, days_back: int = 1, days_ahead: int = 120) -> Dict[str, int]:
         """Auto-import upcoming Zoho calendar jobs onto the Operate Board as DRAFT,
-        dispatchable bookings (full details, idempotent, NO reminder SMS)."""
+        dispatchable bookings (full details, idempotent, NO reminder SMS).
+
+        Window is 120 days ahead so far-future bookings are not missing from the
+        board (it used to be 14, which hid anything more than two weeks out)."""
         from datetime import datetime, timedelta
 
         if not ZohoCalendarService.configured():
