@@ -521,7 +521,9 @@ export const analyticsApi = {
 
 export const fleetApi = {
   getDrivers: async () => {
-    const res = await apiClient.get<Driver[]>(`/drivers/`);
+    // Default server page size is 100; the roster can be larger (e.g. after a
+    // TrackMyChauffeur import), so ask for the full allowed page.
+    const res = await apiClient.get<Driver[]>(`/drivers/`, { params: { limit: 500 } });
     return res.data;
   },
   getDriverSignupLink: async () => {
